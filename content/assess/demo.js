@@ -6,7 +6,7 @@ import { percentOf, formatCents } from '../../js/money.js';
 const money = (cents) => `$${formatCents(cents)}`;
 
 const savingShare = {
-  id: 'demo-saving-share', module: 'm01', kind: 'numeric', part: 'interpreting', points: 2,
+  id: 'demo-saving-share', module: 'm03', kind: 'numeric', part: 'interpreting', points: 2,
   params: { pay: { min: 90000, max: 130000, step: 100 }, opening: { min: 5000, max: 40000, step: 500 }, name: { pick: ['Jordan', 'Maya', 'Luis', 'Ana'] } },
   build: (p) => {
     const share = percentOf(p.pay, 0.15);
@@ -27,7 +27,7 @@ const savingShare = {
 };
 
 const blowMoney = {
-  id: 'demo-blow-money', module: 'm01', kind: 'numeric', part: 'interpreting', points: 2,
+  id: 'demo-blow-money', module: 'm03', kind: 'numeric', part: 'interpreting', points: 2,
   params: { pay: { min: 90000, max: 130000, step: 100 } },
   build: (p) => ({
     prompt: `A paycheck of ${money(p.pay)} is split with 10% going to blow money. How much is that?`,

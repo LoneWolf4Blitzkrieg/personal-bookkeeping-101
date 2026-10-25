@@ -52,3 +52,14 @@ export function percentOf(cents, rate) {
   const wholeCents = tenthsOfCents / 10n + (thousandthsDigit >= 5n ? 1n : 0n);
   return Number(wholeCents * sign);
 }
+
+// Divides whole cents by a whole number (for example an annual tax by 26
+// paychecks), rounding to the cent by the same thousandths rule.
+export function divideRound(cents, divisor) {
+  assertCents(cents);
+  if (!Number.isSafeInteger(divisor) || divisor <= 0) throw new RangeError(`Divisor must be a positive whole number, got ${divisor}`);
+  const sign = cents < 0 ? -1 : 1;
+  const tenthsOfCents = Math.floor((Math.abs(cents) * 10) / divisor);
+  const thousandthsDigit = tenthsOfCents % 10;
+  return sign * (Math.floor(tenthsOfCents / 10) + (thousandthsDigit >= 5 ? 1 : 0));
+}

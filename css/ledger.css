@@ -70,3 +70,11 @@
   width: 100%; min-height: 1.3em; border: none; background: transparent; font: inherit; color: inherit; cursor: pointer;
 }
 .ledger .tick:focus-visible { outline: 2px solid #b45309; }
+
+/* Journal pages: five columns, credited accounts indented */
+.ledger.journal .col-date { width: 12%; }
+.ledger.journal .col-items { width: 46%; }
+.ledger.journal .col-folio { width: 8%; text-align: center; }
+.ledger.journal .col-debit, .ledger.journal .col-credit { width: 17%; border-left: 3px double var(--rule-strong); }
+.ledger.journal .journal-credit { padding-left: 1.6em; }
+.ledger.journal .journal-explanation { font-style: italic; padding-left: .8em; }

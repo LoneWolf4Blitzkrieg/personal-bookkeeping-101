@@ -1,10 +1,13 @@
-// The lesson page controller: course map, lock notice, time on the module
-// and step progress. Task 5 adds the step-by-step lesson renderer.
+// The lesson page controller: course map, lock notice, the lesson's steps
+// with the ledger pinned beside them, step progress and time on the module.
 
 import { MODULES, PHASES } from '../../content/course.js';
 import { renderCourseMap, moduleIdFromParam } from './nav.js';
 import { isUnlocked, markStep } from '../progress.js';
 import { escapeHTML } from '../html.js';
+import { MODULE_CONTENT } from '../../content/modules/index.js';
+import { DEMO_LESSON } from '../../content/modules/demo.js';
+import { stepHTML, ledgerPanelHTML, gradePrediction } from '../lessonView.js';
 import { store, update, mountChrome, onExternalChange, trackTime } from './chrome.js';
 
 const CHECK_NAMES = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C', a3: 'Add-on A3' };
@@ -22,8 +25,10 @@ export function startLessonPage(search) {
   mountChrome();
 
   const param = new URLSearchParams(search).get('m');
-  const id = param === null ? 'm01' : moduleIdFromParam(param);
-  const module = MODULES.find((m) => m.id === id);
+  const isDemo = param === 'demo';
+  const id = param === null ? 'm01' : isDemo ? 'demo' : moduleIdFromParam(param);
+  const module = isDemo ? { id: 'demo', title: DEMO_LESSON.title, phase: null } : MODULES.find((m) => m.id === id);
+  const content = isDemo ? DEMO_LESSON : MODULE_CONTENT[id];
   const mapBox = document.getElementById('course-map');
   const title = document.getElementById('module-title');
   const body = document.getElementById('lesson-body');
@@ -35,33 +40,79 @@ export function startLessonPage(search) {
     return;
   }
   title.textContent = module.title;
-  document.getElementById('crumb').textContent = PHASES[module.phase];
+  document.getElementById('crumb').textContent = isDemo ? 'Sample lesson' : PHASES[module.phase];
   document.title = `${module.title} · Personal Bookkeeping 101`;
+
+  const ledgerBox = document.getElementById('ledger');
+  let index = null;
+  const revealed = new Set();
+  const feedback = {};
+
+  function drawStep(focus) {
+    const step = content.steps[index];
+    body.innerHTML = stepHTML(content, index, { revealed: revealed.has(index), feedback: feedback[index] });
+    const panel = ledgerPanelHTML(step, { revealed: revealed.has(index) });
+    ledgerBox.className = panel ? 'ledger-content' : 'ledger-placeholder';
+    ledgerBox.innerHTML = panel || 'No ledger page for this step.';
+    if (focus) (body.querySelector('#prediction') ?? body.querySelector('#step-title'))?.focus();
+    // Reaching the end of the lesson counts the last step as done.
+    const last = index === content.steps.length - 1;
+    const waiting = step.kind === 'predict' && !revealed.has(index);
+    if (!isDemo && last && !waiting && !store.load().modules[module.id]?.steps.includes(index)) update((p) => markStep(p, module.id, index));
+  }
+
+  body.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    if (!action || index === null) return;
+    if (action === 'next') {
+      if (!isDemo) update((p) => markStep(p, module.id, index));
+      index += 1;
+      drawStep(true);
+    }
+    if (action === 'back') { index -= 1; drawStep(true); }
+    if (action === 'reread') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      body.querySelector('#step-title')?.focus();
+    }
+  });
+
+  body.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (e.target.dataset.kind !== 'predict') return;
+    const result = gradePrediction(content.steps[index], e.target.prediction.value);
+    feedback[index] = result;
+    if (!result.invalid) revealed.add(index);
+    drawStep(!result.invalid);
+    if (result.invalid) body.querySelector('#prediction')?.focus();
+  });
 
   function draw() {
     const progress = store.load();
-    renderCourseMap(mapBox, progress, module.id, { headingLevel: 3 });
-    const access = isUnlocked(module.id, progress);
+    renderCourseMap(mapBox, progress, isDemo ? null : module.id, { headingLevel: 3 });
+    const access = isDemo ? { unlocked: true } : isUnlocked(module.id, progress);
     if (!access.unlocked) {
       body.innerHTML = `<div class="lock-notice"><p><strong>This module is locked.</strong> ${escapeHTML(access.reason)}</p>
         <p>Each module opens when you pass the check at the end of the one before it, so you never build on a gap.</p>${nextLink(access.next)}</div>`;
       document.getElementById('ledger').textContent = 'The ledger page appears when the module opens.';
       return false;
     }
-    // Placeholder first step until Task 5 renders real lesson steps.
-    const done = progress.modules[module.id]?.steps.includes(0);
-    body.innerHTML = `<p>This module's lessons are being written.</p>
-      <p><button class="button" type="button" id="mark-step" ${done ? 'disabled' : ''}>${done ? 'Introduction read ✓' : 'Mark the introduction as read'}</button></p>`;
-    document.getElementById('mark-step')?.addEventListener('click', () => {
-      update((p) => markStep(p, module.id, 0));
-      draw();
-    });
+    if (!content) {
+      body.innerHTML = '<p>This module\'s lessons are being written.</p>';
+      return true;
+    }
+    if (index === null) {
+      // Pick up at the first step not yet done.
+      const done = new Set(progress.modules[module.id]?.steps ?? []);
+      index = content.steps.findIndex((_, i) => !done.has(i));
+      if (index === -1) index = 0;
+    }
+    drawStep(false);
     return true;
   }
 
   const opened = draw();
-  onExternalChange(draw);
-  if (opened) trackTime(module.id);
+  onExternalChange(() => { if (index === null || !content) draw(); else renderCourseMap(mapBox, store.load(), isDemo ? null : module.id, { headingLevel: 3 }); });
+  if (opened && !isDemo) trackTime(module.id);
 }
 
 export function wireLayoutButtons() {

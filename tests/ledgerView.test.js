@@ -143,3 +143,20 @@ test('attribute values are escaped', () => {
   assert.match(html, /aria-label="Ledger page: A&quot;B"/);
   assert.match(html, /value="say &quot;hi&quot;"/);
 });
+
+test('a journal page shows date, accounts with credits indented, folio, debits and credits', async () => {
+  const { journalHTML } = await import('../js/ledgerView.js');
+  const html = journalHTML({
+    sheetNo: 1, name: 'Jordan',
+    entries: [{ date: '2026-06-06', folio: 'J1', explanation: 'Paycheck split into buckets', lines: [
+      { account: 'saving', label: 'Saving bucket', debit: 18180, credit: 0, folio: 3 },
+      { account: 'checking', label: 'Checking', debit: 0, credit: 18180, folio: 1 },
+    ] }],
+  });
+  const heads = [...html.matchAll(/<th[^>]*scope="col"[^>]*>(.*?)<\/th>/g)].map((m) => m[1]);
+  assert.deepEqual(heads, ['Date', 'Items', 'Folio', 'Debits', 'Credits']);
+  assert.match(html, /aria-label="Journal page 1"/);
+  assert.match(html, /class="journal-credit"[^>]*>Checking/);
+  assert.ok(html.includes('Paycheck split into buckets'));
+  assert.equal((html.match(/181\.80/g) || []).length, 2);
+});

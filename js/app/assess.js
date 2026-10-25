@@ -8,9 +8,7 @@ import { assessmentVersions } from '../items.js';
 import { createSession, resumeSession, submit, currentItem, isComplete, summary } from '../session.js';
 import { isUnlocked, nextVersion, attemptsFor, openSession, saveSession, sessionMatches, recordGate, recordCheckpoint, recordExam, recordPlacement, recordOther, failureStep, addErrorEntry } from '../progress.js';
 import { store, update, mountChrome, trackTime } from './chrome.js';
-import { DEMO_GATE } from '../../content/assess/demo.js';
-
-const ASSESSMENTS = { demo: DEMO_GATE };
+import { ASSESSMENTS } from '../../content/assess/index.js';
 
 const PART_LABELS = { interpreting: 'Read and predict', producing: 'Record it yourself', explaining: 'Explain why' };
 

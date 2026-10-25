@@ -159,3 +159,32 @@ ${body}
 </div>
 </div>`;
 }
+
+// A journal page (book of original entry): Date, Items (debited accounts,
+// then credited accounts indented, then the explanation), Folio (ledger
+// account number once posted), Debits, Credits.
+export function journalHTML(page, { highlightEntry = null } = {}) {
+  const rows = page.entries.map((entry, e) => {
+    const cls = e === highlightEntry ? ' class="highlight"' : '';
+    const ordered = [...entry.lines.filter((l) => l.debit > 0), ...entry.lines.filter((l) => !(l.debit > 0))];
+    const lines = ordered.map((l, i) => {
+      const date = i === 0 ? escapeHTML(formatDate(entry.date)) : '';
+      const label = escapeHTML(l.label ?? l.account);
+      const item = l.debit > 0 ? `<span class="journal-debit">${label}</span>` : `<span class="journal-credit">${label}</span>`;
+      return `<tr data-entry="${e}"${cls}><td class="col-date">${date}</td><td class="col-items">${item}</td><td class="col-folio">${escapeHTML(l.folio ?? '')}</td><td class="col-debit money">${l.debit ? formatCents(l.debit) : ''}</td><td class="col-credit money">${l.credit ? formatCents(l.credit) : ''}</td></tr>`;
+    }).join('');
+    const why = `<tr data-entry="${e}"${cls}><td class="col-date"></td><td class="col-items journal-explanation">${escapeHTML(entry.explanation ?? '')}</td><td></td><td class="money"></td><td class="money"></td></tr>`;
+    return lines + why;
+  }).join('\n');
+  return `<div class="ledger-sheet journal-sheet">
+<div class="ledger-head"><div class="ledger-head-row"><div class="ledger-field"><span class="ledger-field-label">Journal</span><span class="ledger-field-value">Page ${escapeHTML(page.sheetNo ?? '')}</span></div><div class="ledger-field"><span class="ledger-field-label">Name</span><span class="ledger-field-value">${escapeHTML(page.name ?? '')}</span></div></div></div>
+<div class="ledger-scroll">
+<table class="ledger journal" aria-label="Journal page ${escapeHTML(page.sheetNo ?? '')}">
+<thead><tr><th scope="col" class="col-date">Date</th><th scope="col" class="col-items">Items</th><th scope="col" class="col-folio">Folio</th><th scope="col" class="col-debit">Debits</th><th scope="col" class="col-credit">Credits</th></tr></thead>
+<tbody>
+${rows}
+</tbody>
+</table>
+</div>
+</div>`;
+}

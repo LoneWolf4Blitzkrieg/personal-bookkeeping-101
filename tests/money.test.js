@@ -70,3 +70,12 @@ test('only the thousandths digit decides: later digits never push it up', () => 
   assert.equal(percentOf(4999, 0.0999), 499);    // 499.4001 cents = $4.994001 -> 4 -> $4.99
   assert.equal(percentOf(10, 0.0449999), 0);     // 0.449999 cents = $0.00449999 -> 4 -> $0.00
 });
+
+test('divideRound splits whole cents with the thousandths rule', async () => {
+  const { divideRound } = await import('../js/money.js');
+  assert.equal(divideRound(160144, 26), 6159);  // $61.5938 -> 3 -> $61.59
+  assert.equal(divideRound(1001, 2), 501);      // $5.005  -> 5 -> $5.01
+  assert.equal(divideRound(1009, 2), 505);      // $5.045  -> 5 -> $5.05
+  assert.equal(divideRound(1003, 3), 334);      // $3.34333 -> 3 -> $3.34
+  assert.throws(() => divideRound(100, 0), RangeError);
+});

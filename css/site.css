@@ -113,7 +113,9 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
     order: -1; width: auto; position: sticky; top: 0; z-index: 2;
     border-left: none; border-bottom: 1px solid var(--rule); padding: .6rem; max-height: 45vh; overflow: auto;
   }
-  .ledger-pin { position: static; }
+  .ledger-pin { position: static; max-height: none; }
+  .ledger-panel { flex: none; }
+  .ledger-caption, .ledger-sheet .ledger-head-minor { display: none; }
   .ledger-placeholder { min-height: 8rem; }
   .lesson-text { padding: 1rem; min-width: 0; scroll-margin-top: 46vh; }
   html { scroll-padding-top: 46vh; }
@@ -176,3 +178,18 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 .button-secondary:hover { background: #e7e3d8; }
 #import-progress:focus-visible + label { outline: 3px solid var(--focus); outline-offset: 2px; }
 .error-log td { vertical-align: top; }
+
+/* Lesson steps */
+.step-title { font-size: 1.15rem; margin: .4rem 0 .6rem; }
+.step-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.2rem; }
+.self-explain { margin-top: 1rem; display: grid; gap: .4rem; max-width: 40rem; }
+.self-explain label { font-weight: 600; }
+.self-explain textarea { font: inherit; padding: .45rem .55rem; border: 1px solid #b9b3a3; border-radius: 6px; }
+.lesson-end { margin-top: 1.4rem; padding: .9rem 1rem; border-radius: 8px; background: var(--accent-soft); }
+.ledger-content > * + * { margin-top: .8rem; }
+.source-doc { margin: 0; background: #fff; border: 1px solid #cfcab9; border-radius: 4px; padding: .6rem .8rem; font-size: .85rem; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.source-doc figcaption { font-weight: 700; margin-bottom: .3rem; }
+.source-doc table { border-collapse: collapse; width: 100%; }
+.source-doc th { text-align: left; font-weight: 400; color: var(--ink-soft); padding: .1rem .4rem .1rem 0; }
+.source-doc td { text-align: right; font-family: "Courier New", ui-monospace, monospace; }
+.source-note { font-size: .78rem; color: var(--ink-soft); margin: .4rem 0 0; }
