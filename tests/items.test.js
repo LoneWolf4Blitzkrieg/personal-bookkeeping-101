@@ -79,14 +79,18 @@ test('gate versions are deterministic', () => {
   assert.deepEqual(gateVersions(gateTemplates, 'm03'), gateVersions(gateTemplates, 'm03'));
 });
 
-test('a gate must total 10 points: interpreting 4, producing 4, explaining 2', () => {
-  assert.throws(() => gateVersions(gateTemplates.slice(0, 3), 'm03'), /explaining/);
+test('a gate is 10 questions: 7 interpreting × 2, 2 producing × 4, 1 explaining × 2 (24 points)', () => {
+  assert.equal(gateTemplates.length, 10);
+  assert.equal(gateTemplates.reduce((s, t) => s + t.points, 0), 24);
+  assert.throws(() => gateVersions(gateTemplates.slice(0, 9), 'm03'), /explaining/);
+  assert.throws(() => gateVersions(gateTemplates.filter((t) => t.id !== 'fx-record-split-2'), 'm03'), /producing/);
 });
 
-test('a gate needs two 2-point interpreting items and rejects unknown parts', () => {
-  const [a, b, c, d] = gateTemplates;
-  assert.throws(() => gateVersions([{ ...a, points: 4 }, c, d], 'm03'), /interpreting/);
-  assert.throws(() => gateVersions([a, { ...b, part: 'interpretting' }, c, d], 'm03'), /interpretting/);
+test('a gate needs seven 2-point interpreting items and rejects unknown parts', () => {
+  const [a, b, ...rest] = gateTemplates;
+  assert.throws(() => gateVersions([{ ...a, points: 4 }, b, ...rest], 'm03'), /interpreting/);
+  assert.throws(() => gateVersions([a, { ...b, part: 'interpretting' }, ...rest], 'm03'), /interpretting/);
+  assert.throws(() => gateVersions([b, ...rest], 'm03'), /interpreting/);
 });
 
 test('an amounts template must have one field per point', () => {

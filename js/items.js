@@ -66,9 +66,10 @@ export function generateItem(template, seed, { version = null } = {}) {
   };
 }
 
-// A module gate (proposal: "What a gate contains"): two 2-point interpreting
-// items, one 4-point producing item, one 2-point explaining item.
-const GATE_SHAPE = { interpreting: [2, 2], producing: [4], explaining: [2] };
+// A module gate: 10 questions (author's rule): seven 2-point interpreting
+// items, two 4-point producing items and one 2-point explaining item, 24
+// points in all.
+const GATE_SHAPE = { interpreting: [2, 2, 2, 2, 2, 2, 2], producing: [4, 4], explaining: [2] };
 const PARTS = new Set(['interpreting', 'producing', 'explaining']);
 const MAX_TRIES = 200;
 

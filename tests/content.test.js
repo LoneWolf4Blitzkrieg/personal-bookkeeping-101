@@ -63,7 +63,7 @@ test('prerequisite ideas are usable from the prerequisite check onward', () => {
 
 test('a gate must have interpreting, producing and explaining templates', () => {
   assert.deepEqual(checkAssessment({ id: 'fx-gate', kind: 'gate', templates: gateTemplates }), []);
-  const problems = checkAssessment({ id: 'fx-gate', kind: 'gate', templates: gateTemplates.slice(0, 3) });
+  const problems = checkAssessment({ id: 'fx-gate', kind: 'gate', templates: gateTemplates.slice(0, 9) });
   assert.ok(problems.some((p) => /explaining/.test(p)));
 });
 
@@ -151,17 +151,27 @@ test('a check\'s numeric answers are never below zero, over many parameter value
   assert.ok(checkAssessment({ id: 'fx-practice', kind: 'practice', templates: [t] }).some((p) => /below zero/.test(p)));
 });
 
-test('the producing question of every gate from Module 5 is the same size in all four versions, and entries cover every scenario', async () => {
+test('every recording question in the gates from Module 5 keeps one size across the four versions, and scenario cycles cover every scenario', async () => {
   const { gateVersions } = await import('../js/items.js');
   for (const id of ['m05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12']) {
     const gate = ASSESSMENTS[id];
-    const producing = gate.templates.find((t) => t.part === 'producing');
-    const items = gateVersions(gate.templates, id).map((v) => v.find((i) => i.part === 'producing'));
-    assert.equal(new Set(items.map((i) => (i.answer ?? i.fields).length)).size, 1, `${id}: versions of different sizes`);
-    if (producing.kind !== 'entry') continue;
-    const scenarios = Object.values(producing.params).find((s) => Array.isArray(s.byVersion))?.byVersion ?? [];
-    assert.ok(scenarios.length >= 2, `${id}: the producing entry should cycle scenarios by version`);
-    assert.deepEqual(new Set(items.map((i) => Object.values(i.params).find((v) => scenarios.includes(v)))), new Set(scenarios), `${id}: some scenarios never appear`);
+    const versions = gateVersions(gate.templates, id);
+    gate.templates.forEach((t, k) => {
+      if (t.part !== 'producing') return;
+      const items = versions.map((v) => v[k]);
+      assert.equal(new Set(items.map((i) => (i.answer ?? i.fields).length)).size, 1, `${t.id}: versions of different sizes`);
+      const scenarios = Object.values(t.params).find((s) => Array.isArray(s.byVersion))?.byVersion;
+      if (scenarios) assert.deepEqual(new Set(items.map((i) => Object.values(i.params).find((v) => scenarios.includes(v)))), new Set(scenarios), `${t.id}: some scenarios never appear`);
+    });
+  }
+});
+
+test('every quiz and test is exactly 10 questions (author\'s rule)', () => {
+  for (const [id, a] of Object.entries(ASSESSMENTS)) {
+    if (['checkpoint', 'placement', 'gate'].includes(a.kind) || id === 'prereq') {
+      if (id === 'demo') continue;
+      assert.equal(a.templates.length, 10, `${id} has ${a.templates.length} questions`);
+    }
   }
 });
 

@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { gateVersions } from '../js/items.js';
+import { assessmentVersions } from '../js/items.js';
 import { createSession, submit, currentItem, isComplete, summary } from '../js/session.js';
-import { gateTemplates } from './fixtures/templates.js';
+import { fourTemplates } from './fixtures/templates.js';
 import { formatCents } from '../js/money.js';
 
-const items = gateVersions(gateTemplates, 'm03')[0];
+const items = assessmentVersions(fourTemplates, 'm03', { count: 4 })[0];
 
 function answerAllCorrectly(session) {
   let s = session;

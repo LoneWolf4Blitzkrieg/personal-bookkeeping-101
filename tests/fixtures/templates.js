@@ -43,4 +43,14 @@ export const explainDebit = {
   }),
 };
 
-export const gateTemplates = [splitBalance, splitRemainder, recordSplit, explainDebit];
+// A module gate: 7 interpreting (2 points), 2 producing (4), 1 explaining (2).
+const asInterpreting = (t, n) => ({ ...t, id: `${t.id}-${n}` });
+export const gateTemplates = [
+  splitBalance, splitRemainder,
+  ...[1, 2, 3].map((n) => asInterpreting(splitBalance, n)), ...[1, 2].map((n) => asInterpreting(splitRemainder, n)),
+  recordSplit, { ...recordSplit, id: 'fx-record-split-2' },
+  explainDebit,
+];
+
+// Four items of each kind, for tests of a single sitting.
+export const fourTemplates = [splitBalance, splitRemainder, recordSplit, explainDebit];

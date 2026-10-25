@@ -184,6 +184,21 @@ const weekBalances = {
   },
 };
 
+// Only purchases lower net worth; transfers between your own pages do not.
+const worthAfterWeek = num('m07-worth-after-week', 'interpreting', { ...WEEK, worth: { min: 50000, max: 200000, step: 1 } }, (p) => ({
+  prompt: `${p.name}'s net worth is ${money(p.worth)}. In one week, ${week(p)} What is ${p.name}'s net worth now?`,
+  answer: p.worth - p.groc - p.lunch,
+  misconceptions: [{ cents: p.worth - p.atm - p.groc - p.save - p.lunch, explanation: 'The ATM withdrawal and the move to Saving are transfers between your own pages: they do not change net worth.' }],
+  explanation: `Only the purchases are expenses: ${money(p.worth)} − ${money(p.groc)} − ${money(p.lunch)} = ${money(p.worth - p.groc - p.lunch)}.`,
+}));
+
+const donation = num('m07-donation', 'interpreting', { charity: { min: 3000, max: 20000, step: 1 }, gift: { min: 500, max: 2900, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s Charity bucket shows ${money(p.charity)}. ${p.name} gives ${money(p.gift)} to a food bank by debit card, from the Charity bucket, and keeps the receipt. What does the Charity bucket show after the entry is posted?`,
+  answer: p.charity - p.gift,
+  misconceptions: [{ cents: p.charity + p.gift, explanation: 'Donations (the expense) is debited; the Charity bucket gave the money, so it is credited: subtract.' }],
+  explanation: `Debit Donations, credit the Charity bucket: ${money(p.charity)} − ${money(p.gift)} = ${money(p.charity - p.gift)}.`,
+}));
+
 // --- Lesson -------------------------------------------------------------------
 
 export const M07_LESSON = {
@@ -314,7 +329,6 @@ export const M07_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M07_GATE = { id: 'm07', kind: 'gate', title: 'Module 7 check', templates: [receiptSplit, spent, recordFromDoc, explainSpending] };
 
 // Fluency drill on the core operation: a debit-card purchase.
 const drill = [1, 2, 3].map((n) => num(`m07-drill-${n}`, 'interpreting', { a: { min: 10000, max: 50000, step: 1 }, b: { min: 150, max: 9000, step: 1 } }, (p) => ({
@@ -331,7 +345,7 @@ export const M07_PRACTICE = {
 
 export const M07_EXTRA = {
   id: 'm07-extra', kind: 'practice', module: 'm07', title: 'Module 7 extra practice',
-  templates: [receiptSplit, cashPage, recordFromDoc].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [receiptSplit, cashPage, worthAfterWeek, donation, recordFromDoc].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M07_REMEDIAL = {
@@ -339,5 +353,12 @@ export const M07_REMEDIAL = {
   templates: [bucketDrop, weekBalances, recordPurchase].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why). recordFromDoc comes first: later modules mix it in.
+export const M07_GATE = {
+  id: 'm07', kind: 'gate', title: 'Module 7 check',
+  templates: [receiptSplit, spent, bucketDrop, cashPage, worthAfterWeek, donation, drill[0], recordFromDoc, weekBalances, explainSpending],
+};
+
 // Questions Checkpoint B draws from this module.
-export const M07_CHECKPOINT = [receiptSplit, spent, recordFromDoc];
+export const M07_CHECKPOINT = [receiptSplit, recordFromDoc];

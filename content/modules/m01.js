@@ -108,6 +108,21 @@ const explainJobs = explainTemplate({
   ],
 });
 
+// Production: each bucket page's new balance after payday (one page per bucket).
+const bucketPages = {
+  id: 'm01-bucket-pages', module: 'm01', kind: 'amounts', part: 'producing', points: 4,
+  params: { take: TAKE_HOME, sv: { min: 5000, max: 90000, step: 1 }, inv: { min: 2000, max: 60000, step: 1 }, ch: { min: 500, max: 9000, step: 1 }, bl: { min: 0, max: 6000, step: 1 }, name: { pick: NAMES } },
+  build: (p) => {
+    const b = splitBuckets(p.take);
+    const pages = [['Saving', p.sv, b.saving], ['Investing', p.inv, b.investing], ['Charity', p.ch, b.charity], ['Blow money', p.bl, b.blow]];
+    return {
+      prompt: `Before payday, ${p.name}'s bucket pages show Saving ${money(p.sv)}, Investing ${money(p.inv)}, Charity ${money(p.ch)} and Blow money ${money(p.bl)}. A take-home pay of ${money(p.take)} is split into the buckets. Write each page's new balance.`,
+      fields: pages.map(([label, before, share]) => ({ label: `${label} page after payday`, answer: before + share })),
+      explanation: pages.map(([label, before, share]) => `${label}: ${money(before)} + ${money(share)} = ${money(before + share)}`).join('; ') + '.',
+    };
+  },
+};
+
 // --- Lesson -------------------------------------------------------------------
 
 export const M01_LESSON = {
@@ -215,8 +230,6 @@ export const M01_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M01_GATE = { id: 'm01', kind: 'gate', title: 'Module 1 check', templates: [savingShare, charityShare, splitFour, explainSplit] };
-
 const asPractice = (t) => ({ ...t, part: t.kind === 'amounts' ? 'producing' : t.kind === 'explain' ? 'explaining' : 'interpreting' });
 
 // Fluency drill: short, quick questions on the core operation, done for
@@ -233,7 +246,7 @@ export const M01_PRACTICE = {
 
 export const M01_EXTRA = {
   id: 'm01-extra', kind: 'practice', module: 'm01', title: 'Module 1 extra practice',
-  templates: [savingShare, charityShare, blowShare, splitFour].map((t) => asPractice({ ...t, id: `${t.id}-extra` })),
+  templates: [savingShare, charityShare, blowShare, splitFour, bucketPages].map((t) => asPractice({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M01_REMEDIAL = {
@@ -241,5 +254,13 @@ export const M01_REMEDIAL = {
   templates: [savingShare, spendingLeft, totalCheck].map((t) => asPractice({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why). Practice items count as 2-point interpreting items here.
+const asGate = (t) => ({ ...t, part: 'interpreting', points: 2 });
+export const M01_GATE = {
+  id: 'm01', kind: 'gate', title: 'Module 1 check',
+  templates: [savingShare, charityShare, spendingLeft, asGate(blowShare), asGate(investingShare), asGate(totalCheck), drill[0], splitFour, bucketPages, explainSplit],
+};
+
 // Questions Checkpoint A draws from this module.
-export const M01_CHECKPOINT = [savingShare, spendingLeft, splitFour];
+export const M01_CHECKPOINT = [savingShare, splitFour];

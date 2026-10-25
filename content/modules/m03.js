@@ -110,6 +110,43 @@ const otherSide = num('m03-other-side', 'interpreting', { a: { min: 5000, max: 2
   explanation: `The two sides must be equal: ${money(p.a)} + ${money(p.b)} = ${money(p.a + p.b)}.`,
 }));
 
+// The equation worked for what is owed.
+const oweFromWorth = num('m03-owe-from-worth', 'interpreting', { own: { min: 80000, max: 400000, step: 1 }, owe: { min: 5000, max: 70000, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name} owns ${money(p.own)} and is worth ${money(p.own - p.owe)}. Use what you own = what you owe + what you are worth. How much does ${p.name} owe?`,
+  answer: p.owe,
+  misconceptions: [{ cents: 2 * p.own - p.owe, explanation: 'What you owe is what you own minus what you are worth, so subtract.' }],
+  explanation: `${money(p.own)} − ${money(p.own - p.owe)} = ${money(p.owe)}.`,
+}));
+
+// Borrowing raises what you own and what you owe by the same amount.
+const ownAfterBorrow = num('m03-own-after-borrow', 'interpreting', { own: { min: 50000, max: 300000, step: 1 }, borrow: { min: 2000, max: 30000, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name} owns ${money(p.own)}. ${p.name} borrows ${money(p.borrow)} from a friend, and it goes into Checking. How much does ${p.name} own now?`,
+  answer: p.own + p.borrow,
+  misconceptions: [{ cents: p.own - p.borrow, explanation: 'The borrowed money is in Checking now, so what you own goes up. What you owe goes up by the same amount.' }],
+  explanation: `Checking (an asset) is debited ${money(p.borrow)}: ${money(p.own)} + ${money(p.borrow)} = ${money(p.own + p.borrow)}. "Owed to a friend" is credited the same amount, so net worth does not change.`,
+}));
+
+// Production: borrowing from a friend and paying the friend back, a different
+// one in each version; both are two-line entries.
+const BORROW_ACCOUNTS = [...ACCOUNTS, { id: 'groceries', label: 'Groceries (expense)' }];
+const recordBorrow = {
+  id: 'm03-record-borrow', module: 'm03', kind: 'entry', part: 'producing', points: 4,
+  params: { amount: { min: 2000, max: 20000, step: 1 }, event: { byVersion: ['borrow', 'repay', 'borrow', 'repay'] } },
+  build: (p) => (p.event === 'borrow'
+    ? {
+      prompt: `Write the debits and credits: you borrow ${money(p.amount)} from a friend, and it goes into Checking.`,
+      accounts: BORROW_ACCOUNTS,
+      answer: [{ account: 'checking', debit: p.amount, credit: 0 }, { account: 'owed-friend', debit: 0, credit: p.amount }],
+      explanation: 'Checking (an asset) goes up: debit. Owed to a friend (a liability) goes up: credit.',
+    }
+    : {
+      prompt: `Write the debits and credits: you pay a friend back ${money(p.amount)} from Checking.`,
+      accounts: BORROW_ACCOUNTS,
+      answer: [{ account: 'owed-friend', debit: p.amount, credit: 0 }, { account: 'checking', debit: 0, credit: p.amount }],
+      explanation: 'Owed to a friend (a liability) goes down: debit. Checking (an asset) goes down: credit.',
+    }),
+};
+
 // --- Lesson -------------------------------------------------------------------
 
 export const M03_LESSON = {
@@ -227,7 +264,6 @@ export const M03_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M03_GATE = { id: 'm03', kind: 'gate', title: 'Module 3 check', templates: [netWorth, ruleBalance, recordTransfer, explainRules] };
 
 // Fluency drill on the core operation.
 const drill = [1, 2, 3].map((n) => num(`m03-drill-${n}`, 'interpreting', { a: { min: 5000, max: 50000, step: 1 }, b: { min: 100, max: 4999, step: 1 } }, (p) => ({
@@ -242,12 +278,19 @@ export const M03_PRACTICE = {
 
 export const M03_EXTRA = {
   id: 'm03-extra', kind: 'practice', module: 'm03', title: 'Module 3 extra practice',
-  templates: [assetAfterDebit, otherSide, recordTransfer].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [assetAfterDebit, otherSide, oweFromWorth, ownAfterBorrow, recordTransfer, recordBorrow].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M03_REMEDIAL = {
   id: 'm03-remedial', kind: 'practice', module: 'm03', title: 'Module 3: common mistakes',
   templates: [ruleBalance, netWorth, recordTransfer].map((t) => ({ ...t, id: `${t.id}-remedial` })),
+};
+
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why).
+export const M03_GATE = {
+  id: 'm03', kind: 'gate', title: 'Module 3 check',
+  templates: [netWorth, oweFromWorth, ownAfterBorrow, ruleBalance, assetAfterDebit, otherSide, drill[0], recordTransfer, recordBorrow, explainRules],
 };
 
 // Questions Checkpoint A draws from this module.

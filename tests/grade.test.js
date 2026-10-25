@@ -114,20 +114,24 @@ test('a blank explanation is not accepted', () => {
 
 const part = (p, points, max) => ({ part: p, points, max });
 
-test('scoreGate: 9/10 with producing 4/4 passes', () => {
-  const r = scoreGate([part('interpreting', 2, 2), part('interpreting', 2, 2), part('producing', 4, 4), part('explaining', 1, 2)]);
-  assert.deepEqual(r, { points: 9, max: 10, producing: 4, passed: true });
+// A gate: 7 interpreting × 2, 2 producing × 4, 1 explaining × 2 = 24 points.
+const gate = ({ interp = 14, prod = [4, 4], explain = 2 } = {}) => [
+  ...Array.from({ length: 7 }, (_, i) => part('interpreting', Math.max(0, Math.min(2, interp - 2 * i)), 2)),
+  ...prod.map((p) => part('producing', p, 4)),
+  part('explaining', explain, 2),
+];
+
+test('scoreGate: 80% of the points passes, with no other condition', () => {
+  assert.deepEqual(scoreGate(gate({ interp: 14, prod: [4, 0], explain: 2 })), { points: 20, max: 24, producing: 4, passed: true });
+  assert.equal(scoreGate(gate({ interp: 13, prod: [4, 0], explain: 2 })).passed, false, '19 of 24 is below 80%');
 });
 
-test('scoreGate: 9/10 with producing 3/4 fails', () => {
-  const r = scoreGate([part('interpreting', 2, 2), part('interpreting', 2, 2), part('producing', 3, 4), part('explaining', 2, 2)]);
-  assert.equal(r.points, 9);
-  assert.equal(r.passed, false);
+test('scoreGate: missing both recording questions cannot pass', () => {
+  assert.deepEqual(scoreGate(gate({ interp: 14, prod: [0, 0], explain: 2 })), { points: 16, max: 24, producing: 0, passed: false });
 });
 
-test('scoreGate: 7/10 fails', () => {
-  const r = scoreGate([part('interpreting', 2, 2), part('interpreting', 0, 2), part('producing', 4, 4), part('explaining', 1, 2)]);
-  assert.equal(r.passed, false);
+test('scoreGate: a full score passes', () => {
+  assert.equal(scoreGate(gate()).passed, true);
 });
 
 const cp = (module, points, max) => ({ module, points, max });

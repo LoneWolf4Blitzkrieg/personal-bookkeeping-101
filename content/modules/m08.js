@@ -161,6 +161,18 @@ const cardMonth = {
   },
 };
 
+// Interest is a credit that raises what is owed.
+const afterInterest = num('m08-after-interest', 'interpreting', { balance: { min: 10000, max: 150000, step: 1 }, name: { pick: NAMES } }, (p) => {
+  const i = monthlyInterest(p.balance, APR);
+  return {
+    prompt: `${p.name}'s card page shows a credit balance of ${money(p.balance)}. This month's interest at ${APR_TEXT} APR (balance × APR ÷ 12, rounded to the cent) is posted. What does the card page show now?`,
+    answer: p.balance + i,
+    misconceptions: [{ cents: p.balance - i, explanation: 'Interest adds to what you owe: Card interest is debited and the card is credited, so add.' }],
+    explanation: `Interest: ${exactMonthlyInterest(p.balance, APR)}, which rounds to ${money(i)}. ${money(p.balance)} + ${money(i)} = ${money(p.balance + i)}.`,
+    sources: APR_SOURCES,
+  };
+});
+
 // --- Lesson -------------------------------------------------------------------
 
 const minOnly = payoff(100000, APR);
@@ -328,7 +340,6 @@ export const M08_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M08_GATE = { id: 'm08', kind: 'gate', title: 'Module 8 check', templates: [cardBalance, afterMinimum, recordCard, explainCard] };
 
 // Fluency drill on the core operation: a charge raises what is owed.
 const drill = [1, 2, 3].map((n) => num(`m08-drill-${n}`, 'interpreting', { a: { min: 2000, max: 60000, step: 1 }, b: { min: 300, max: 9000, step: 1 } }, (p) => ({
@@ -346,7 +357,7 @@ export const M08_PRACTICE = {
 
 export const M08_EXTRA = {
   id: 'm08-extra', kind: 'practice', module: 'm08', title: 'Module 8 extra practice',
-  templates: [cardBalance, interest, recordCard].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [cardBalance, interest, afterInterest, recordCard].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M08_REMEDIAL = {
@@ -354,5 +365,12 @@ export const M08_REMEDIAL = {
   templates: [available, minimum, recordCard].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why). recordCard comes first: later modules mix it in.
+export const M08_GATE = {
+  id: 'm08', kind: 'gate', title: 'Module 8 check',
+  templates: [cardBalance, afterMinimum, interest, available, minimum, afterInterest, drill[0], recordCard, cardMonth, explainCard],
+};
+
 // Questions Checkpoint B draws from this module.
-export const M08_CHECKPOINT = [cardBalance, afterMinimum, interest, recordCard, explainCard];
+export const M08_CHECKPOINT = [cardBalance, afterMinimum, recordCard, explainCard];

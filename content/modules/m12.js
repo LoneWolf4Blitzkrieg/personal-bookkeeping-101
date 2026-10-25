@@ -129,6 +129,35 @@ const monthEndFigures = {
   },
 };
 
+// A month where spending was more than income: wages stay below the smallest
+// possible expenses ($500.00 + $150.00 + $35.00).
+const takenFrom = num('m12-taken-from', 'interpreting', { wages: { min: 45000, max: 68000, step: 1 }, rent: { min: 50000, max: 60000, step: 500 }, groceries: { min: 15000, max: 30000, step: 1 }, phone: { min: 3500, max: 6000, step: 500 }, name: { pick: NAMES } }, (p) => {
+  const expenses = p.rent + p.groceries + p.phone;
+  return {
+    prompt: `${p.name} worked fewer hours this month. The income statement has its totals left blank. How much did the month take from ${p.name}'s net worth?`,
+    report: incomeStatement(p.name, [item('wages', p.wages)], [item('rent', p.rent), item('groceries', p.groceries), item('phone', p.phone)], { ask: ['total-income', 'total-expenses', 'net'] }),
+    answer: expenses - p.wages,
+    misconceptions: [{ cents: expenses + p.wages, explanation: 'Compare the two totals: expenses minus income is what the month took from net worth.' }],
+    explanation: `Expenses ${money(expenses)} were more than income ${money(p.wages)}: ${money(expenses)} − ${money(p.wages)} = ${money(expenses - p.wages)} taken from net worth.`,
+  };
+});
+
+const closeIncomeCredit = num('m12-close-income-credit', 'interpreting', { wages: { min: 90000, max: 130000, step: 1 }, interest: { min: 20, max: 400, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name} closes Wages (${money(p.wages)}) and Interest earned (${money(p.interest)}) in one entry. How much is credited to Net worth?`,
+  answer: p.wages + p.interest,
+  misconceptions: [{ cents: p.wages, explanation: 'One credit to Net worth covers both income pages.' }],
+  explanation: `${money(p.wages)} + ${money(p.interest)} = ${money(p.wages + p.interest)}.`,
+}));
+
+const nwPageAfterClose = num('m12-nw-page-after-close', 'interpreting', { opening: { min: 10000, max: 120000, step: 1 }, income: { min: 90000, max: 130000, step: 1 }, expenses: { min: 50000, max: 89000, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `Both closing entries have been posted to ${p.name}'s Net worth page. What does it show after the last line?`,
+  ledger: chartPage('net-worth', [['2026-06-01', 'Opening net worth', '', 0, p.opening], ['2026-06-30', 'Closing: income', 'J6', 0, p.income, true], ['2026-06-30', 'Closing: expenses', 'J6', p.expenses, 0, true]], { name: p.name, askFrom: 2 }),
+  highlightRow: 2,
+  answer: p.opening + p.income - p.expenses,
+  misconceptions: [{ cents: p.opening + p.income + p.expenses, explanation: 'Closing the expenses is a debit to Net worth: subtract.' }],
+  explanation: `${money(p.opening)} + ${money(p.income)} − ${money(p.expenses)} = ${money(p.opening + p.income - p.expenses)}.`,
+}));
+
 // --- Lesson -------------------------------------------------------------------
 
 // Sam's June (trial balance in Module 9).
@@ -264,7 +293,6 @@ export const M12_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M12_GATE = { id: 'm12', kind: 'gate', title: 'Module 12 check', templates: [added, nwStatement, recordClosing, explainMonthEnd] };
 
 // Fluency drill on the core operation: one debit to Net worth closes the expenses.
 const drill = [1, 2, 3].map((n) => num(`m12-drill-${n}`, 'interpreting', { a: { min: 1000, max: 60000, step: 1 }, b: { min: 500, max: 30000, step: 1 } }, (p) => ({
@@ -281,12 +309,19 @@ export const M12_PRACTICE = {
 
 export const M12_EXTRA = {
   id: 'm12-extra', kind: 'practice', module: 'm12', title: 'Module 12 extra practice',
-  templates: [added, nwAfterClose, recordClosing].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [added, nwAfterClose, takenFrom, closeIncomeCredit, nwPageAfterClose, recordClosing].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M12_REMEDIAL = {
   id: 'm12-remedial', kind: 'practice', module: 'm12', title: 'Module 12: common mistakes',
   templates: [nwStatement, monthEndFigures, recordClosing].map((t) => ({ ...t, id: `${t.id}-remedial` })),
+};
+
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why).
+export const M12_GATE = {
+  id: 'm12', kind: 'gate', title: 'Module 12 check',
+  templates: [added, nwStatement, nwAfterClose, takenFrom, closeIncomeCredit, nwPageAfterClose, drill[0], recordClosing, monthEndFigures, explainMonthEnd],
 };
 
 // Questions Checkpoint C draws from this module.

@@ -88,7 +88,7 @@ function feedbackHTML(result) {
 const VERDICTS = {
   gate: {
     pass: 'Passed. You have shown you understand this module.',
-    retry: 'Not yet. You need 8 of 10 points, with the "Record it yourself" question fully correct. Review the module and try a different version of this check.',
+    retry: 'Not yet. You need 80% of the points. The "Record it yourself" questions count double, so start with those: review the worked example, then try a different version of this check.',
   },
   checkpoint: {
     pass: 'Passed. Everything so far has stuck.',

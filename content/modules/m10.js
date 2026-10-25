@@ -138,6 +138,33 @@ const recBlanks = {
   },
 };
 
+const bookBalance = num('m10-book-balance', 'interpreting', { spending: { min: 10000, max: 60000, step: 1 }, saving: { min: 20000, max: 120000, step: 1 }, investing: { min: 5000, max: 40000, step: 1 }, cash: { min: 500, max: 6000, step: 1 }, name: { pick: NAMES } }, (p) => {
+  const answer = p.spending + p.saving + p.investing;
+  return {
+    prompt: `${p.name} keeps the Spending, Saving and Investing buckets at one bank. The pages show Spending ${money(p.spending)}, Saving ${money(p.saving)}, Investing ${money(p.investing)} and Cash ${money(p.cash)}. What is the book balance for that bank?`,
+    answer,
+    misconceptions: [{ cents: answer + p.cash, explanation: 'Cash is in the wallet, not at the bank, so it is left out.' }],
+    explanation: `${money(p.spending)} + ${money(p.saving)} + ${money(p.investing)} = ${money(answer)}.`,
+  };
+});
+
+const savingAfterInterest = num('m10-saving-after-interest', 'interpreting', { saving: { min: 20000, max: 150000, step: 1 }, interest: { min: 20, max: 400, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s statement shows ${money(p.interest)} of interest paid into savings. The Saving bucket shows ${money(p.saving)}. After the entry is posted, what does it show?`,
+  answer: p.saving + p.interest,
+  misconceptions: [{ cents: p.saving - p.interest, explanation: 'Interest paid to you raises the Saving bucket: it is debited, so add.' }],
+  explanation: `Debit the Saving bucket, credit Interest earned: ${money(p.saving)} + ${money(p.interest)} = ${money(p.saving + p.interest)}.`,
+}));
+
+// Working back from the books to the statement.
+// The check is an odd number of cents and the deposit whole dimes, so the two
+// never match (a learner who swaps them would otherwise be marked right).
+const statementFromBooks = num('m10-statement-from-books', 'interpreting', { book: { min: 40000, max: 160000, step: 1 }, dep: { min: 2000, max: 9000, step: 100 }, chk: { min: 1001, max: 7999, step: 2 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s pages at the bank add up to ${money(p.book)}, with no fees or interest to record. A ${money(p.dep)} deposit has not reached the bank yet, and a ${money(p.chk)} check has not been cashed. What should the bank statement's closing balance be?`,
+  answer: p.book - p.dep + p.chk,
+  misconceptions: [{ cents: p.book + p.dep - p.chk, explanation: 'The statement does not have the deposit yet (so it shows less) and still has the check money (so it shows more).' }],
+  explanation: `The adjusted bank balance must equal the books. Working back: ${money(p.book)} − ${money(p.dep)} + ${money(p.chk)} = ${money(p.book - p.dep + p.chk)}.`,
+}));
+
 // --- Lesson -------------------------------------------------------------------
 
 // Devon keeps the Spending and Saving buckets at this bank, so each payday
@@ -276,7 +303,6 @@ export const M10_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M10_GATE = { id: 'm10', kind: 'gate', title: 'Module 10 check', templates: [adjustedBank, adjustedBook, recordBank, explainBank] };
 
 const tbMixed = { ...M09_GATE.templates.find((t) => t.part === 'producing'), id: 'm09-tb-from-pages-mixed-m10' };
 
@@ -287,7 +313,7 @@ export const M10_PRACTICE = {
 
 export const M10_EXTRA = {
   id: 'm10-extra', kind: 'practice', module: 'm10', title: 'Module 10 extra practice',
-  templates: [adjustedBank, statementClosing, recordBank].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [adjustedBank, statementClosing, bookBalance, statementFromBooks, recordBank].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M10_REMEDIAL = {
@@ -295,5 +321,12 @@ export const M10_REMEDIAL = {
   templates: [adjustedBook, recBlanks, recordBank].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why). recordBank comes first: later modules mix it in.
+export const M10_GATE = {
+  id: 'm10', kind: 'gate', title: 'Module 10 check',
+  templates: [adjustedBank, adjustedBook, statementClosing, bookBalance, savingAfterInterest, statementFromBooks, drill[0], recordBank, recBlanks, explainBank],
+};
+
 // Questions Checkpoint C draws from this module.
-export const M10_CHECKPOINT = [adjustedBank, adjustedBook, recordBank];
+export const M10_CHECKPOINT = [adjustedBank, recordBank];

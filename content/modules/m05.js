@@ -152,6 +152,33 @@ const folioBalances = {
   },
 };
 
+const incomeTotal = num('m05-income-total', 'interpreting', {
+  wages: { min: 90000, max: 130000, step: 1 }, gifts: { min: 1000, max: 8000, step: 1 }, spending: { min: 10000, max: 60000, step: 1 }, groceries: { min: 2000, max: 20000, step: 1 }, card: { min: 1000, max: 30000, step: 1 }, name: { pick: NAMES },
+}, (p) => {
+  const answer = p.wages + p.gifts;
+  return {
+    prompt: `${p.name}'s pages show these balances: ${balancesList([['spending', p.spending], ['card', p.card], ['wages', p.wages], ['gifts', p.gifts], ['groceries', p.groceries]])}. Using the account numbers, what is the total of the income accounts?`,
+    answer,
+    misconceptions: [{ cents: answer + p.spending, explanation: 'Account 2 is an asset (1 to 19). Income accounts are numbered 40 to 49.' }],
+    explanation: `Income is numbered 40 to 49: accounts 40 and 41. ${money(p.wages)} + ${money(p.gifts)} = ${money(answer)}.`,
+  };
+});
+
+// Follow a folio to the other page and work out its balance there.
+const folioOtherPage = num('m05-folio-other-page', 'interpreting', { before: { min: 2000, max: 30000, step: 1 }, amount: { min: 500, max: 9000, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s Spending bucket page (account 2) has this line: Jun 14, Groceries, folio 52, credit ${money(p.amount)}. Just before the matching line, the page that folio points to had a debit balance of ${money(p.before)}. What is that page's balance after the matching line?`,
+  answer: p.before + p.amount,
+  misconceptions: [{ cents: p.before - p.amount, explanation: 'Folio 52 is Groceries, an expense (50 to 99). The matching line is a debit there, so the balance goes up.' }],
+  explanation: `Folio 52 is the Groceries page. The Spending credit is matched by a Groceries debit: ${money(p.before)} + ${money(p.amount)} = ${money(p.before + p.amount)}.`,
+}));
+
+const cashAfter = num('m05-cash-after', 'interpreting', { before: { min: 500, max: 9000, step: 1 }, amount: { min: 2000, max: 8000, step: 100 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s Cash page (account 7) shows ${money(p.before)}. A line on the Spending bucket page reads: To Cash, folio 7, credit ${money(p.amount)}. What does the Cash page show after the matching line?`,
+  answer: p.before + p.amount,
+  misconceptions: [{ cents: Math.abs(p.before - p.amount), explanation: 'Money leaving the Spending bucket arrives in Cash: the matching line on the Cash page is a debit, so add.' }],
+  explanation: `The Spending credit is matched by a debit on the Cash page: ${money(p.before)} + ${money(p.amount)} = ${money(p.before + p.amount)}.`,
+}));
+
 // --- Lesson -------------------------------------------------------------------
 
 export const M05_LESSON = {
@@ -278,7 +305,6 @@ export const M05_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M05_GATE = { id: 'm05', kind: 'gate', title: 'Module 5 check', templates: [groupTotal, followFolio, recordNumbers, explainChart] };
 
 // Fluency drill on the core operation: adding up one group of accounts.
 const drill = [1, 2, 3].map((n) => num(`m05-drill-${n}`, 'interpreting', { a: { min: 5000, max: 50000, step: 1 }, b: { min: 5000, max: 90000, step: 1 }, c: { min: 500, max: 9000, step: 1 } }, (p) => ({
@@ -297,7 +323,7 @@ export const M05_PRACTICE = {
 
 export const M05_EXTRA = {
   id: 'm05-extra', kind: 'practice', module: 'm05', title: 'Module 5 extra practice',
-  templates: [groupTotal, followFolio, recordNumbers].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [groupTotal, followFolio, incomeTotal, folioOtherPage, cashAfter, recordNumbers].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M05_REMEDIAL = {
@@ -305,5 +331,12 @@ export const M05_REMEDIAL = {
   templates: [netWorthChart, followFolio, recordNumbers].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why). recordNumbers comes first: later modules mix it in.
+export const M05_GATE = {
+  id: 'm05', kind: 'gate', title: 'Module 5 check',
+  templates: [groupTotal, followFolio, netWorthChart, incomeTotal, folioOtherPage, cashAfter, drill[0], recordNumbers, folioBalances, explainChart],
+};
+
 // Questions Checkpoint B draws from this module.
-export const M05_CHECKPOINT = [groupTotal, followFolio, recordNumbers];
+export const M05_CHECKPOINT = [groupTotal, recordNumbers];

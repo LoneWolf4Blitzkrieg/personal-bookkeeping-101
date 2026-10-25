@@ -1,4 +1,5 @@
-// The prerequisite check: money arithmetic the course assumes. Learners who
+// The prerequisite check (10 questions, like every quiz): money arithmetic
+// the course assumes. Learners who
 // score below 80% are pointed to the remedial unit (lesson.html?m=prereq).
 
 import { percentOf } from '../../js/money.js';
@@ -46,6 +47,15 @@ export const PREREQ_CHECK = {
     t('pre-total', { a: { min: 100, max: 3000, step: 1 }, b: { min: 100, max: 3000, step: 1 }, c: { min: 100, max: 3000, step: 1 } }, (p) => ({
       prompt: `Add up three receipts: ${money(p.a)}, ${money(p.b)} and ${money(p.c)}.`, answer: p.a + p.b + p.c,
       explanation: `${money(p.a)} + ${money(p.b)} + ${money(p.c)} = ${money(p.a + p.b + p.c)}.`,
+    })),
+    t('pre-five-percent', { a: { min: 2000, max: 60000, step: 10 } }, (p) => ({
+      prompt: `What is 5% of ${money(p.a)}?`, answer: percentOf(p.a, 0.05),
+      misconceptions: [{ cents: percentOf(p.a, 0.5), explanation: 'That is 50%. 5% is half of 10%.' }],
+      explanation: `10% is ${exactPercent(p.a, 0.1)}, and 5% is half of that: ${exactPercent(p.a, 0.05)}, which rounds to ${money(percentOf(p.a, 0.05))}.`,
+    })),
+    t('pre-hours', { hours: { min: 3, max: 9, step: 1 }, rate: { pick: [1250, 1515, 1600, 1875] } }, (p) => ({
+      prompt: `You work ${p.hours} hours at ${money(p.rate)} an hour. How much do you earn?`, answer: p.hours * p.rate,
+      explanation: `${p.hours} × ${money(p.rate)} = ${money(p.hours * p.rate)}.`,
     })),
   ],
 };

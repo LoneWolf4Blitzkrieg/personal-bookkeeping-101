@@ -186,6 +186,40 @@ const tbBlanks = {
   },
 };
 
+const swapDifference = num('m09-swap-difference', 'interpreting', { c: { min: 1200, max: 9800, step: 1 } }, (p) => {
+  let c = p.c;
+  for (let n = 0; n < 20 && !swapDiff(c); n++) c += 100;
+  return {
+    prompt: `A ${money(c)} amount was copied onto a page as ${money(swapped(c))}: two digits were swapped. By how much is the trial balance off?`,
+    answer: swapDiff(c),
+    explanation: `${money(Math.max(c, swapped(c)))} − ${money(Math.min(c, swapped(c)))} = ${money(swapDiff(c))}, which divides evenly by 9 (${money(swapDiff(c) / 9)}).`,
+  };
+});
+
+// Production: correct a trial balance that has a transposition in it.
+const tbCorrect = {
+  id: 'm09-tb-correct', module: 'm09', kind: 'amounts', part: 'producing', points: 4,
+  params: { ...MONTH, groceries: { min: 1200, max: 9800, step: 1 } },
+  build: (p) => {
+    let g = p.groceries;
+    for (let n = 0; n < 20 && !swapDiff(g); n++) g += 100;
+    const right = monthBalances({ ...p, groceries: g });
+    const shown = right.map((a) => (a.no === CHART.groceries.no ? { ...a, debit: swapped(g) } : a));
+    const totalRight = total(right, 'debit');
+    return {
+      prompt: `${p.name}'s trial balance does not balance. One amount was copied with two digits swapped. Find it, then write the corrected figures.`,
+      report: tb(p.name, shown, { errorShown: true }),
+      fields: [
+        { label: 'Difference between the two totals', answer: swapDiff(g) },
+        { label: 'The swapped amount, as it should be', answer: g },
+        { label: 'Corrected Debits total', answer: totalRight },
+        { label: 'Corrected Credits total', answer: total(right, 'credit') },
+      ],
+      explanation: `The totals are ${money(swapDiff(g))} apart, and ${money(swapDiff(g))} ÷ 9 = ${money(swapDiff(g) / 9)}: a transposition. Groceries shows ${money(swapped(g))} but should be ${money(g)}. Corrected, both columns total ${money(totalRight)}.`,
+    };
+  },
+};
+
 // --- Lesson -------------------------------------------------------------------
 
 // Sam's June: the same books are closed and reported in Module 12.
@@ -301,7 +335,6 @@ export const M09_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M09_GATE = { id: 'm09', kind: 'gate', title: 'Module 9 check', templates: [tbTotal, diagnose, tbFromPages, explainProof] };
 
 // Fluency drill on the core operation: halving a wrong-side difference.
 const drill = [1, 2, 3].map((n) => num(`m09-drill-${n}`, 'interpreting', { half: { min: 100, max: 9000, step: 1 } }, (p) => ({
@@ -318,7 +351,7 @@ export const M09_PRACTICE = {
 
 export const M09_EXTRA = {
   id: 'm09-extra', kind: 'practice', module: 'm09', title: 'Module 9 extra practice',
-  templates: [tbTotal, oneSided, tbFromPages].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [tbTotal, oneSided, swapDifference, tbFromPages, tbCorrect].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M09_REMEDIAL = {
@@ -326,5 +359,12 @@ export const M09_REMEDIAL = {
   templates: [diagnose, wrongSide, slide].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why). tbFromPages comes first: later modules mix it in.
+export const M09_GATE = {
+  id: 'm09', kind: 'gate', title: 'Module 9 check',
+  templates: [tbTotal, diagnose, wrongSide, oneSided, slide, swapDifference, drill[0], tbFromPages, tbCorrect, explainProof],
+};
+
 // Questions Checkpoint C draws from this module.
-export const M09_CHECKPOINT = [tbTotal, diagnose, tbFromPages];
+export const M09_CHECKPOINT = [diagnose, tbFromPages];

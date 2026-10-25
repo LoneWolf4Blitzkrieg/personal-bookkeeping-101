@@ -66,5 +66,10 @@ export const DEMO_GATE = {
   title: 'Practice gate (demonstration)',
   kind: 'gate',
   alwaysOpen: true,
-  templates: [savingShare, blowMoney, recordTransfer, explainDebit],
+  // The 10-question gate shape: copies under new ids get their own numbers.
+  templates: [
+    savingShare, blowMoney, ...[2, 3, 4].map((n) => ({ ...savingShare, id: `${savingShare.id}-${n}` })), ...[2, 3].map((n) => ({ ...blowMoney, id: `${blowMoney.id}-${n}` })),
+    recordTransfer, { ...recordTransfer, id: `${recordTransfer.id}-2` },
+    explainDebit,
+  ],
 };

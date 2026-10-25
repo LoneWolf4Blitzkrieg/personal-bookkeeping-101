@@ -53,7 +53,7 @@ export function lessonEndHTML(module) {
   const practice = escapeHTML(module.practiceId ?? `${module.id}-practice`);
   const links = (module.resources ?? []).map((id) => RESOURCES[id]).filter(Boolean)
     .map((r) => `<li><a href="${escapeHTML(r.url)}" rel="noopener">${escapeHTML(r.title)}</a> (${escapeHTML(r.publisher)})</li>`).join('');
-  const next = module.practiceId === null ? 'Take the check again when you are ready.' : 'Next, do the practice set, then take the module check. You need 8 of 10 points to move on.';
+  const next = module.practiceId === null ? 'Take the check again when you are ready.' : 'Next, do the practice set, then take the module check: 10 questions, and you need 80% of the points to move on.';
   return `<div class="lesson-end"><p><strong>You have finished the lesson.</strong> ${next}</p>
     <p class="lesson-end-links">${module.practiceId === null ? '' : `<a class="button" href="assess.html?id=${practice}">Do the practice set</a> `}<a class="button button-secondary" href="assess.html?id=${check}">${module.practiceId === null ? 'Take the check again' : 'Take the module check'}</a></p>
     ${links ? `<h3>Free help from official sites</h3><p>Stuck? First reread the worked example and rework it by hand. Then try these:</p><ul class="help-links">${links}</ul>` : ''}</div>`;

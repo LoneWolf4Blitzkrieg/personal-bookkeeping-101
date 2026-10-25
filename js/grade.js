@@ -116,17 +116,17 @@ export function gradeItem(item, response) {
 
 const sum = (results, key) => results.reduce((s, r) => s + r[key], 0);
 
-// Pass: at least 8 of 10 points, and the producing item fully correct.
+const passesEighty = (points, max) => max > 0 && points * 100 >= 80 * max;
+
+// Pass: 80% of the points, like every check (author's rule). Recording
+// questions carry more points, so missing both of them cannot pass.
 export function scoreGate(results) {
   const points = sum(results, 'points');
   const max = sum(results, 'max');
-  const producingResults = results.filter((r) => r.part === 'producing');
-  const producing = sum(producingResults, 'points');
-  const producingMax = sum(producingResults, 'max');
-  return { points, max, producing, passed: points >= 8 && producing === producingMax && producingMax > 0 };
+  const producing = sum(results.filter((r) => r.part === 'producing'), 'points');
+  return { points, max, producing, passed: passesEighty(points, max) };
 }
 
-const passesEighty = (points, max) => max > 0 && points * 100 >= 80 * max;
 const percentOfMax = (points, max) => (max > 0 ? Math.round((points * 1000) / max) / 10 : 0);
 const moduleOrder = (id) => {
   const i = MODULES.findIndex((m) => m.id === id);

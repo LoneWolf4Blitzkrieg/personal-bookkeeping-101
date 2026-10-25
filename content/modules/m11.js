@@ -145,20 +145,33 @@ const lineOver = num('m11-line-over', 'interpreting', { budget: { min: 4000, max
 });
 
 // Completion: a budget report with each line worked out; the learner writes
-// the Under and Over totals.
+// the four totals.
 const underOverTotals = {
-  id: 'm11-under-over-totals', module: 'm11', kind: 'amounts', part: 'producing', points: 2,
+  id: 'm11-under-over-totals', module: 'm11', kind: 'amounts', part: 'producing', points: 4,
   params: { gUnder: { min: 500, max: 4000, step: 1 }, eOver: { min: 200, max: 2500, step: 1 }, hUnder: { min: 300, max: 1500, step: 1 }, fares: { min: 150, max: 900, step: 25 }, name: { pick: NAMES } },
   build: (p) => {
     const lines = [bline('groceries', 30000, 30000 - p.gUnder), bline('eating-out', 6000, 6000 + p.eOver), bline('transport', 6400, 6400 + p.fares), bline('household', 4000, 4000 - p.hUnder)];
     return {
-      prompt: `Finish ${p.name}'s budget report: write the totals of the Under and Over columns.`,
+      prompt: `Finish ${p.name}'s budget report: write the total of each column.`,
       report: budget(p.name, lines, { ask: ['total'] }),
-      fields: [{ label: 'Total of the Under column', answer: p.gUnder + p.hUnder }, { label: 'Total of the Over column', answer: p.eOver + p.fares }],
-      explanation: `Under: ${money(p.gUnder)} + ${money(p.hUnder)} = ${money(p.gUnder + p.hUnder)}. Over: ${money(p.eOver)} + ${money(p.fares)} = ${money(p.eOver + p.fares)}.`,
+      fields: [
+        { label: 'Total of the Budget column', answer: sum(lines, 'budget') },
+        { label: 'Total of the Actual column', answer: sum(lines, 'actual') },
+        { label: 'Total of the Under column', answer: p.gUnder + p.hUnder },
+        { label: 'Total of the Over column', answer: p.eOver + p.fares },
+      ],
+      explanation: `Budget ${money(sum(lines, 'budget'))}; Actual ${money(sum(lines, 'actual'))}; Under ${money(p.gUnder)} + ${money(p.hUnder)} = ${money(p.gUnder + p.hUnder)}; Over ${money(p.eOver)} + ${money(p.fares)} = ${money(p.eOver + p.fares)}.`,
     };
   },
 };
+
+// Applying a stated waiting-period rule (the rule is given; only its use is graded).
+const waitRule = num('m11-wait-rule', 'interpreting', { blow: { min: 6000, max: 15000, step: 1 }, small: { min: 800, max: 4900, step: 1 }, big: { min: 5100, max: 12000, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s rule: anything not in the budget comes out of Blow money; under $50.00 it can be bought right away, and $50.00 or more waits a week. Blow money holds ${money(p.blow)}. This week ${p.name} buys a ${money(p.small)} item and decides to wait on a ${money(p.big)} item. What does Blow money hold at the end of the week?`,
+  answer: p.blow - p.small,
+  misconceptions: [{ cents: p.blow - p.small - p.big, explanation: 'The second item is $50.00 or more, so under the rule it waits a week: it is not bought yet.' }],
+  explanation: `Only the item under $50.00 is bought this week: ${money(p.blow)} − ${money(p.small)} = ${money(p.blow - p.small)}.`,
+}));
 
 // --- Lesson -------------------------------------------------------------------
 
@@ -275,7 +288,6 @@ export const M11_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M11_GATE = { id: 'm11', kind: 'gate', title: 'Module 11 check', templates: [netUnder, needsFirst, bvaFromPages, explainBudget] };
 
 // Fluency drill on the core operation: one budget line against its actual.
 const drill = [1, 2, 3].map((n) => num(`m11-drill-${n}`, 'interpreting', { budget: { min: 3000, max: 40000, step: 500 }, gap: { min: 100, max: 2900, step: 1 } }, (p) => ({
@@ -287,7 +299,7 @@ const bankMixed = { ...M10_GATE.templates.find((t) => t.part === 'producing'), i
 
 export const M11_PRACTICE = {
   id: 'm11-practice', kind: 'practice', module: 'm11', title: 'Module 11 practice set',
-  templates: [...M10_LESSON.recallTemplates, ...M09_LESSON.recallTemplates, ...M07_LESSON.recallTemplates, ...drill, netUnder, needsFirst, leftToPlan, needsTotal, lineOver, underOverTotals, bvaFromPages, bankMixed, { ...explainBudget, id: 'm11-explain-practice' }],
+  templates: [...M10_LESSON.recallTemplates, ...M09_LESSON.recallTemplates, ...M07_LESSON.recallTemplates, ...drill, netUnder, needsFirst, leftToPlan, needsTotal, lineOver, waitRule, underOverTotals, bvaFromPages, bankMixed, { ...explainBudget, id: 'm11-explain-practice' }],
 };
 
 export const M11_EXTRA = {
@@ -300,5 +312,12 @@ export const M11_REMEDIAL = {
   templates: [netUnder, needsTotal, bvaFromPages].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why). bvaFromPages comes first: later modules mix it in.
+export const M11_GATE = {
+  id: 'm11', kind: 'gate', title: 'Module 11 check',
+  templates: [netUnder, needsFirst, leftToPlan, needsTotal, lineOver, waitRule, drill[0], bvaFromPages, underOverTotals, explainBudget],
+};
+
 // Questions Checkpoint C draws from this module.
-export const M11_CHECKPOINT = [netUnder, needsFirst, bvaFromPages];
+export const M11_CHECKPOINT = [needsFirst, bvaFromPages];

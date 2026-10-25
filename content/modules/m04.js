@@ -113,6 +113,38 @@ const taxesTotal = num('m04-taxes-total', 'interpreting', { hours: HOURS }, (p) 
   };
 });
 
+const arizona = num('m04-arizona', 'interpreting', { hours: HOURS }, (p) => {
+  const pay = standardPaycheck(p.hours);
+  return {
+    prompt: `Gross pay is ${money(pay.gross)}. Arizona withholds 2.0% when no other rate was chosen on Form A-4. How much is withheld for Arizona income tax, rounded to the cent?`,
+    answer: pay.arizona,
+    misconceptions: [{ cents: percentOf(pay.gross, 0.2), explanation: 'That is 20%. 2.0% is 0.02 as a decimal.' }],
+    explanation: `0.02 × ${money(pay.gross)} = ${exactPercent(pay.gross, 0.02)}, which rounds to ${money(pay.arizona)}.`,
+    sources: ['azdor-a4-2026'],
+  };
+});
+
+// Production: finish a pay stub. Gross pay and federal income tax are given.
+const stubLines = {
+  id: 'm04-stub-lines', module: 'm04', kind: 'amounts', part: 'producing', points: 4,
+  params: { hours: HOURS },
+  build: (p) => {
+    const pay = standardPaycheck(p.hours);
+    return {
+      prompt: `Finish this pay stub. Gross pay is ${money(pay.gross)} and federal income tax is ${money(pay.federal)}. Work out the other three deductions (Social Security 6.2%, Medicare 1.45%, Arizona 2.0%) and the take-home pay. Round each deduction to the cent.`,
+      sourceDoc: payStub(p.hours, { detail: false }),
+      fields: [
+        { label: 'Social Security (6.2%)', answer: pay.socialSecurity },
+        { label: 'Medicare (1.45%)', answer: pay.medicare },
+        { label: 'Arizona income tax (2.0%)', answer: pay.arizona },
+        { label: 'Take-home pay', answer: pay.net },
+      ],
+      explanation: `Social Security ${money(pay.socialSecurity)}, Medicare ${money(pay.medicare)}, Arizona ${money(pay.arizona)}. Take-home: ${money(pay.gross)} − ${money(deductions(pay))} = ${money(pay.net)}.`,
+      sources: PAYCHECK_SOURCES,
+    };
+  },
+};
+
 // --- Lesson -------------------------------------------------------------------
 
 const std = standardPaycheck(80);
@@ -242,7 +274,6 @@ export const M04_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M04_GATE = { id: 'm04', kind: 'gate', title: 'Module 4 check', templates: [grossPay, medicare, recordPaycheck, explainPay] };
 
 // Fluency drill on the core operation.
 const drill = [1, 2, 3].map((n) => num(`m04-drill-${n}`, 'interpreting', { hours: HOURS }, (p) => ({
@@ -257,7 +288,7 @@ export const M04_PRACTICE = {
 
 export const M04_EXTRA = {
   id: 'm04-extra', kind: 'practice', module: 'm04', title: 'Module 4 extra practice',
-  templates: [grossPay, medicare, recordPaycheck].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [grossPay, medicare, arizona, recordPaycheck, stubLines].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M04_REMEDIAL = {
@@ -265,5 +296,12 @@ export const M04_REMEDIAL = {
   templates: [netFromStub, taxesTotal, recordPaycheck].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why).
+export const M04_GATE = {
+  id: 'm04', kind: 'gate', title: 'Module 4 check',
+  templates: [grossPay, medicare, socialSecurity, arizona, taxesTotal, netFromStub, drill[0], recordPaycheck, stubLines, explainPay],
+};
+
 // Questions Checkpoint A draws from this module.
-export const M04_CHECKPOINT = [grossPay, netFromStub, recordPaycheck];
+export const M04_CHECKPOINT = [grossPay, recordPaycheck];

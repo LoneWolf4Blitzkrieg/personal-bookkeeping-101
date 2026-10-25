@@ -98,6 +98,47 @@ const twoLines = num('m02-two-lines', 'interpreting', { start: { min: 20000, max
   answer: p.start - p.a - p.b, explanation: `${money(p.start)} − ${money(p.a)} − ${money(p.b)} = ${money(p.start - p.a - p.b)}.`,
 }));
 
+const pageEnd = num('m02-page-end', 'interpreting', { start: { min: 10000, max: 40000, step: 1 }, pay: { min: 40000, max: 70000, step: 1 }, a: { min: 500, max: 8000, step: 1 }, b: { min: 500, max: 6000, step: 1 }, name: { pick: NAMES } }, (p) => {
+  const end = p.start + p.pay - p.a - p.b;
+  return {
+    prompt: `What does the Balance column read on the last line of ${p.name}'s Spending page?`,
+    ledger: page('Spending bucket', [['2026-06-06', 'Brought forward', p.start, 0], ['2026-06-06', 'From paycheck', p.pay, 0], ['2026-06-08', 'Groceries', 0, p.a], ['2026-06-12', 'Gas', 0, p.b]], { name: p.name, askFrom: 1, broughtForward: true }),
+    highlightRow: 3,
+    answer: end,
+    misconceptions: [{ cents: p.start + p.pay + p.a + p.b, explanation: 'Money out is subtracted, not added.' }],
+    explanation: `${money(p.start)} + ${money(p.pay)} − ${money(p.a)} − ${money(p.b)} = ${money(end)}.`,
+  };
+});
+
+// Working a running balance backward: the line above from the line below.
+const findStart = num('m02-find-start', 'interpreting', { before: { min: 10000, max: 60000, step: 1 }, cost: { min: 500, max: 9000, step: 1 }, item: { pick: ['Groceries', 'Bus pass', 'Phone bill', 'Laundry'] } }, (p) => ({
+  prompt: `On a Spending page, the line "${p.item}" has money out of ${money(p.cost)}, and its balance reads ${money(p.before - p.cost)}. What did the balance read on the line above it?`,
+  answer: p.before,
+  misconceptions: [{ cents: p.before - 2 * p.cost, explanation: 'Money out made the balance smaller, so the line above was larger: add it back.' }],
+  explanation: `Going back up the page, add the money out back: ${money(p.before - p.cost)} + ${money(p.cost)} = ${money(p.before)}.`,
+}));
+
+// Production: carry a full sheet forward and keep the new sheet going.
+const newSheet = {
+  id: 'm02-new-sheet', module: 'm02', kind: 'amounts', part: 'producing', points: 4,
+  params: { start: { min: 20000, max: 90000, step: 1 }, a: { min: 500, max: 9000, step: 1 }, b: { min: 500, max: 6000, step: 1 }, take: { min: 80000, max: 130000, step: 1 }, bus: { min: 2000, max: 6400, step: 100 }, name: { pick: NAMES } },
+  build: (p) => {
+    const last = p.start - p.a - p.b;
+    const share = splitBuckets(p.take).spending;
+    return {
+      prompt: `${p.name}'s Spending page, Sheet 1, is full. Work out its last balance, then start Sheet 2: bring the balance forward, add ${money(share)} from payday, then take out ${money(p.bus)} for a bus pass.`,
+      ledger: page('Spending bucket', [['2026-06-20', 'Brought forward', p.start, 0], ['2026-06-24', 'Groceries', 0, p.a], ['2026-06-27', 'Phone bill', 0, p.b]], { name: p.name, askFrom: 1, broughtForward: true }),
+      fields: [
+        { label: 'Sheet 1: last balance', answer: last },
+        { label: 'Sheet 2: brought forward', answer: last },
+        { label: 'Sheet 2: balance after payday', answer: last + share },
+        { label: 'Sheet 2: balance after the bus pass', answer: last + share - p.bus },
+      ],
+      explanation: `Sheet 1 ends at ${money(last)}, and Sheet 2 starts with that same amount brought forward. Then + ${money(share)} = ${money(last + share)}, and − ${money(p.bus)} = ${money(last + share - p.bus)}.`,
+    };
+  },
+};
+
 // --- Lesson -------------------------------------------------------------------
 
 const spendingRows = [
@@ -222,7 +263,6 @@ export const M02_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M02_GATE = { id: 'm02', kind: 'gate', title: 'Module 2 check', templates: [afterSpending, broughtForwardThenIn, fourBalances, explainLedger] };
 
 // Fluency drill on the core operation.
 const drill = [1, 2, 3].map((n) => num(`m02-drill-${n}`, 'interpreting', { a: { min: 5000, max: 50000, step: 1 }, b: { min: 100, max: 4999, step: 1 } }, (p) => ({
@@ -237,7 +277,7 @@ export const M02_PRACTICE = {
 
 export const M02_EXTRA = {
   id: 'm02-extra', kind: 'practice', module: 'm02', title: 'Module 2 extra practice',
-  templates: [afterIncome, twoLines, fourBalances].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [afterIncome, twoLines, pageEnd, findStart, fourBalances, newSheet].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M02_REMEDIAL = {
@@ -245,5 +285,12 @@ export const M02_REMEDIAL = {
   templates: [afterSpending, broughtForwardThenIn, twoLines].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
+// The module check: 10 questions (7 read and predict, 2 record it yourself,
+// 1 explain why).
+export const M02_GATE = {
+  id: 'm02', kind: 'gate', title: 'Module 2 check',
+  templates: [afterSpending, broughtForwardThenIn, afterIncome, twoLines, pageEnd, findStart, drill[0], fourBalances, newSheet, explainLedger],
+};
+
 // Questions Checkpoint A draws from this module.
-export const M02_CHECKPOINT = [afterSpending, broughtForwardThenIn, fourBalances];
+export const M02_CHECKPOINT = [afterSpending, fourBalances];
