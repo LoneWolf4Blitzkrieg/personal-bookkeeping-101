@@ -31,7 +31,7 @@ export const MODULES = [
   { id: 'm09', title: 'Proving your books', phase: 'extension',
     ideas: ['trial-balance', 'common-errors', 'error-by-size'] },
   { id: 'm10', title: 'Matching the bank', phase: 'extension',
-    ideas: ['bank-reconciliation', 'outstanding-items', 'bank-fee-entries'] },
+    ideas: ['bank-reconciliation', 'outstanding-items', 'bank-fee-interest-entries'] },
   { id: 'm11', title: 'Budgeting with logic', phase: 'extension',
     ideas: ['budget-as-ledger', 'budget-vs-actual', 'spending-rules'] },
   { id: 'm12', title: 'Month-end', phase: 'extension',
@@ -49,7 +49,7 @@ export const MODULES = [
   { id: 'a2', title: 'Inflation and its causes', phase: 'addon',
     ideas: ['measuring-inflation', 'accepted-causes', 'corporate-pricing'] },
   { id: 'a3', title: 'IRAs and saving for later', phase: 'addon',
-    ideas: ['what-an-ira-is', 'traditional-vs-roth', 'long-term-growth'] },
+    ideas: ['what-an-ira-is', 'traditional-vs-roth', 'limits-and-growth'] },
 ];
 
 export const CHECKPOINTS = [

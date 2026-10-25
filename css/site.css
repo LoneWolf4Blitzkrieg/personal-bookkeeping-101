@@ -31,6 +31,8 @@ body {
 a { color: var(--accent); }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
 .skip-link { position: absolute; left: -999px; top: 0; background: var(--ink); color: #fff; padding: .5rem 1rem; z-index: 10; }
 .skip-link:focus { left: 1rem; }
 
@@ -64,15 +66,15 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
 .map-list a[aria-current="page"] { background: var(--accent-soft); font-weight: 600; }
 .map-checkpoint { font-style: italic; color: var(--ink-soft) !important; }
 
-.lesson-text { flex: 1; min-width: 0; padding: 1.25rem 1.75rem 2rem; max-width: 46rem; }
+.lesson-text { flex: 1 1 0; min-width: 20rem; padding: 1.25rem 1.75rem 2rem; max-width: 46rem; }
 .crumb { font-size: .82rem; color: var(--ink-soft); margin: 0; }
 .lesson-text h1 { font-size: 1.6rem; line-height: 1.25; margin: .3rem 0 1rem; }
 
 .ledger-panel {
-  width: var(--ledger-width); flex: none; background: #eef3ee;
+  flex: 1 1 0; min-width: 0; max-width: var(--ledger-width); background: #eef3ee; overflow-x: auto;
   border-left: 1px solid var(--rule); padding: 1rem;
 }
-.ledger-pin { position: sticky; top: 1rem; }
+.ledger-pin { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow: auto; }
 .ledger-caption { font-size: .78rem; color: var(--ink-soft); margin: 0 0 .5rem; }
 .ledger-placeholder {
   background: var(--ledger); border: 1px solid #9bb89a; border-radius: 3px;
@@ -92,6 +94,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; padding: 0; list-style: none; }
 .facts li { background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: .75rem .9rem; }
 .facts strong { display: block; font-size: 1.15rem; color: var(--accent); }
+.home .course-map-overview .map-phase { font-size: .78rem; }
 .home .course-map-overview { background: var(--panel); border-radius: 8px; padding: 1rem 1.25rem; }
 
 /* Footer */
@@ -112,5 +115,12 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
   }
   .ledger-pin { position: static; }
   .ledger-placeholder { min-height: 8rem; }
-  .lesson-text { padding: 1rem; }
+  .lesson-text { padding: 1rem; min-width: 0; scroll-margin-top: 46vh; }
+  html { scroll-padding-top: 46vh; }
+  .ledger-panel { max-width: none; }
+}
+
+/* Mid-width screens: a narrower map so the lesson text keeps room */
+@media (min-width: 760px) and (max-width: 1099px) {
+  :root { --map-width: 12rem; }
 }

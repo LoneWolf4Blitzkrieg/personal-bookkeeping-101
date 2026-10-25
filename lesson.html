@@ -10,14 +10,17 @@
   <a class="skip-link" href="#lesson">Skip to the lesson</a>
 
   <header class="topbar">
-    <button class="menu-button" type="button" aria-controls="course-map" aria-expanded="false">Course map</button>
+    <button class="menu-button" type="button" aria-controls="course-map-nav" aria-expanded="false">Course map</button>
     <a class="brand" href="index.html">Personal Bookkeeping <span>101</span></a>
     <span class="spacer"></span>
-    <button class="map-toggle" type="button" aria-controls="course-map" aria-pressed="false">Hide course map</button>
+    <button class="map-toggle" type="button" aria-controls="course-map-nav" aria-expanded="true">Hide course map</button>
   </header>
 
   <div class="lesson-layout" id="layout">
-    <nav class="course-map" id="course-map" aria-label="Course map"></nav>
+    <nav class="course-map" id="course-map-nav" aria-labelledby="course-map-heading">
+      <h2 class="visually-hidden" id="course-map-heading">Course map</h2>
+      <div id="course-map"></div>
+    </nav>
 
     <main class="lesson-text" id="lesson">
       <p class="crumb" id="crumb"></p>
@@ -41,11 +44,12 @@
 
   <script type="module">
     import { MODULES, PHASES } from './content/course.js';
-    import { renderCourseMap } from './js/app/nav.js';
+    import { renderCourseMap, moduleIdFromParam } from './js/app/nav.js';
 
-    const id = new URLSearchParams(location.search).get('m') || 'm01';
+    const param = new URLSearchParams(location.search).get('m');
+    const id = param === null ? 'm01' : moduleIdFromParam(param);
     const module = MODULES.find((m) => m.id === id);
-    renderCourseMap(document.getElementById('course-map'), {}, module ? module.id : null);
+    renderCourseMap(document.getElementById('course-map'), {}, module ? module.id : null, { headingLevel: 3 });
 
     const title = document.getElementById('module-title');
     if (module) {
@@ -67,7 +71,7 @@
     const toggle = document.querySelector('.map-toggle');
     toggle.addEventListener('click', () => {
       const hidden = layout.classList.toggle('map-hidden');
-      toggle.setAttribute('aria-pressed', String(hidden));
+      toggle.setAttribute('aria-expanded', String(!hidden));
       toggle.textContent = hidden ? 'Show course map' : 'Hide course map';
     });
   </script>

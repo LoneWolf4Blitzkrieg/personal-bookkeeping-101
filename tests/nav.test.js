@@ -38,3 +38,33 @@ test('module titles are HTML-escaped', () => {
   const html = courseMapHTML({}, 'm01', [{ id: 'x1', title: 'Cash & <cards>', phase: 'core', ideas: [] }]);
   assert.ok(html.includes('Cash &amp; &lt;cards&gt;'));
 });
+
+test('moduleIdFromParam accepts 9, 09, m09 and A1 forms', async () => {
+  const { moduleIdFromParam } = await import('../js/app/nav.js');
+  assert.equal(moduleIdFromParam('9'), 'm09');
+  assert.equal(moduleIdFromParam('09'), 'm09');
+  assert.equal(moduleIdFromParam('m09'), 'm09');
+  assert.equal(moduleIdFromParam('M16'), 'm16');
+  assert.equal(moduleIdFromParam('A1'), 'a1');
+  assert.equal(moduleIdFromParam(' a3 '), 'a3');
+  assert.equal(moduleIdFromParam('17'), null);
+  assert.equal(moduleIdFromParam('zz'), null);
+  assert.equal(moduleIdFromParam(null), null);
+});
+
+test('renderCourseMap fills the container and accepts a progress object', async () => {
+  const { renderCourseMap } = await import('../js/app/nav.js');
+  const container = { innerHTML: '' };
+  renderCourseMap(container, { modules: {} }, 'm02');
+  assert.match(container.innerHTML, /href="lesson.html\?m=m02"[^>]*aria-current="page"/);
+});
+
+test('phase heading level can be set, defaulting to h2', () => {
+  assert.match(courseMapHTML({}, 'm01'), /<h2 class="map-phase">/);
+  assert.match(courseMapHTML({}, 'm01', undefined, { headingLevel: 3 }), /<h3 class="map-phase">/);
+});
+
+test('module ids are escaped inside links', () => {
+  const html = courseMapHTML({}, null, [{ id: 'x"1', title: 'T', phase: 'core', ideas: [] }]);
+  assert.ok(html.includes('m=x&quot;1"'));
+});
