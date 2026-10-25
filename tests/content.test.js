@@ -84,8 +84,8 @@ test('the sample lesson passes the content rules', async () => {
   assert.deepEqual(checkModule(DEMO_LESSON), []);
 });
 
-test('Modules 1–14 each have a lesson, a gate, a practice set, extra and remedial practice, and recall questions', async () => {
-  for (const id of ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14']) {
+test('Modules 1–14 and the add-ons each have a lesson, a gate, a practice set, extra and remedial practice, and recall questions', async () => {
+  for (const id of ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14', 'a1', 'a2', 'a3']) {
     assert.ok(MODULE_CONTENT[id], `${id} lesson`);
     assert.ok(MODULE_CONTENT[id].recallTemplates?.length >= 1, `${id} recall`);
     for (const suffix of ['', '-practice', '-extra', '-remedial']) assert.ok(ASSESSMENTS[id + suffix], `${id}${suffix}`);
@@ -119,7 +119,7 @@ test('the two placement stages together cover every module they skip', () => {
 // Measured by points (the closest stand-in for time); one indivisible 4-point
 // task can take a set to a third.
 test('from Module 5, practice sets open with recall and draw 20% to 33% of their points from earlier modules', () => {
-  for (const id of ['m05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14']) {
+  for (const id of ['m05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14', 'a1', 'a2', 'a3']) {
     const set = ASSESSMENTS[`${id}-practice`].templates;
     const points = (list) => list.reduce((s, t) => s + t.points, 0);
     const share = points(set.filter((t) => t.module !== id)) / points(set);
@@ -153,7 +153,7 @@ test('a check\'s numeric answers are never below zero, over many parameter value
 
 test('every recording question in the gates from Module 5 keeps one size across the four versions, and scenario cycles cover every scenario', async () => {
   const { gateVersions } = await import('../js/items.js');
-  for (const id of ['m05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14']) {
+  for (const id of ['m05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14', 'a1', 'a2', 'a3']) {
     const gate = ASSESSMENTS[id];
     const versions = gateVersions(gate.templates, id);
     gate.templates.forEach((t, k) => {
@@ -217,11 +217,11 @@ test('Sam\'s June books agree from the trial balance (Module 9) to the statement
   assert.equal(value(nwStep.report, 'net'), page);
 });
 
-test('every question from Modules 1–14 stays sound over many parameter values', async () => {
+test('every question from Modules 1–14 and the add-ons stays sound over many parameter values', async () => {
   const { generateItem } = await import('../js/items.js');
   const { checkReport } = await import('../js/reports.js');
   const { runningBalances } = await import('../js/ledger.js');
-  const late = new Set(['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14']);
+  const late = new Set(['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14', 'a1', 'a2', 'a3']);
   const templates = [...new Map(Object.values(ASSESSMENTS).flatMap((a) => a.templates).filter((t) => late.has(t.module)).map((t) => [t.id, t])).values()];
   for (const t of templates) {
     for (let seed = 0; seed < 400; seed++) {
@@ -300,4 +300,17 @@ test('the printable sheets include a blank journal page and the sample month', a
   assert.ok((journal.html.match(/<tr>/g) ?? []).length >= 25, 'at least 25 blank lines');
   const sample = sheetFor('sample-month');
   for (const part of ['Net-worth statement', 'Budget and actual', 'The plan from Module 15', 'What happened in July 2026', 'Pay stub', 'Bank statement']) assert.ok(sample.html.includes(part), part);
+});
+
+test('Add-on A2 never grades the debated question, and shows evidence from each side', async () => {
+  const a2 = MODULE_CONTENT.a2;
+  const debated = a2.steps.filter((s) => (s.tags ?? []).includes('debated'));
+  assert.ok(debated.length >= 1, 'the debate is taught');
+  for (const s of debated) {
+    assert.equal(s.kind, 'explain', `${s.id}: a debated step is never a check`);
+    assert.ok(s.sources.includes('sffed-2024-12') && (s.sources.includes('kcfed-2023-markups') || s.sources.includes('ftc-grocery-2024')), `${s.id}: cites both sides`);
+  }
+  for (const [id, a] of Object.entries(ASSESSMENTS)) {
+    for (const t of a.templates) assert.ok(!(t.tags ?? []).includes('debated'), `${id}: ${t.id} is a graded item tagged debated`);
+  }
 });

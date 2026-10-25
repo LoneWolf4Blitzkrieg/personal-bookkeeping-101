@@ -5,7 +5,7 @@
 //
 // Shapes (amounts in cents):
 //   trial-balance:    { accounts: [{ no, name, debit? , credit? }], errorShown? }
-//   income-statement: { period, income: [{ no, name, amount }], expenses: [...] }
+//   income-statement: { period, income: [{ no, name, amount }], expenses: [...], netLabel? }
 //   net-worth:        { date, assets: [{ no, name, amount }], liabilities: [...] }
 //   budget:           { period, lines: [{ no, name, budget, actual }] }
 //   reconciliation:   { date, statement, deposits: [{ label, amount }], payments: [...],
@@ -50,7 +50,7 @@ const BUILDERS = {
       rows: [
         heading('Income'), ...listRows('income', r.income), total('total-income', 'Total income', [income]),
         heading('Expenses'), ...listRows('expense', r.expenses), total('total-expenses', 'Total expenses', [expenses]),
-        total('net', income >= expenses ? 'Added to net worth' : 'Taken from net worth', [Math.abs(income - expenses)]),
+        total('net', r.netLabel ?? (income >= expenses ? 'Added to net worth' : 'Taken from net worth'), [Math.abs(income - expenses)]),
       ],
     };
   },

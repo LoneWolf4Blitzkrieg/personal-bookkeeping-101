@@ -115,3 +115,13 @@ test('trialBalanceFrom lists each page\'s closing balance on its side, from the 
   assert.equal(tb.report, 'trial-balance');
   assert.equal(tb.name, 'Jordan (example)');
 });
+
+test('per100 gives dollars per $100.00, rounded by the thousandths of a dollar', async () => {
+  const { per100 } = await import('../content/helpers.js');
+  assert.equal(per100(15119, 82059), 1842); // $18.4245... -> $18.42
+  assert.equal(per100(16273, 51750), 3145); // $31.4454... -> $31.45 (5 in the thousandths)
+  assert.equal(per100(336940, 324800), 10374); // CPI Sep 2025 -> Sep 2026: $103.7377 -> $103.74
+  assert.equal(per100(1, 3), 3333); // $33.333... -> $33.33
+  assert.equal(per100(2, 3), 6667); // $66.666... -> $66.67
+  assert.throws(() => per100(1, 0));
+});

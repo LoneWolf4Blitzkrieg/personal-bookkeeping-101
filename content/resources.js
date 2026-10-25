@@ -62,6 +62,21 @@ export const RESOURCES = {
     publisher: 'Federal Deposit Insurance Corporation',
     url: 'https://www.fdic.gov/national-rates-and-rate-caps',
   },
+  'fed-explained': {
+    title: 'The Fed Explained: Who We Are',
+    publisher: 'Board of Governors of the Federal Reserve System',
+    url: 'https://www.federalreserve.gov/aboutthefed/structure-federal-reserve-system.htm',
+  },
+  'bls-cpi': {
+    title: 'Consumer Price Index (CPI) home page',
+    publisher: 'U.S. Bureau of Labor Statistics',
+    url: 'https://www.bls.gov/cpi/',
+  },
+  'irs-iras': {
+    title: 'Traditional and Roth IRAs',
+    publisher: 'Internal Revenue Service',
+    url: 'https://www.irs.gov/retirement-plans/traditional-and-roth-iras',
+  },
 };
 
 // True when a URL is https and on an official domain (or a subdomain of one).

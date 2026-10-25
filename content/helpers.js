@@ -113,6 +113,30 @@ export function payoff(balanceCents, aprBasisPoints, { payment = null } = {}) {
   return { months: rows.length, interest, rows };
 }
 
+// --- Add-on modules: per $100 and other books -----------------------------------
+
+// How many dollars of `whole` the part is per $100.00, in cents, rounded by
+// the thousandths of a dollar: per100(1511900, 8205900) -> 1842 ($18.42).
+// Inputs are whole numbers in any one unit (cents, millions, index points).
+export function per100(part, whole) {
+  if (!Number.isSafeInteger(part) || !Number.isSafeInteger(whole) || whole <= 0 || part < 0) throw new TypeError(`per100 needs whole numbers, got ${part} and ${whole}`);
+  const tenthsOfCents = (BigInt(part) * 100000n) / BigInt(whole);
+  return Number(tenthsOfCents / 10n + (tenthsOfCents % 10n >= 5n ? 1n : 0n));
+}
+
+// A ledger page in books other than the learner's own (the Fed's, a bank's,
+// the government's), with the same row shape as chartPage. Its account
+// number is a short label such as "F1".
+export function bookPage({ name, account, accountNo, type, sheetNo = 1 }, rows, { askFrom = null, askKeys = ['balance', 'side'] } = {}) {
+  return {
+    sheetNo, accountNo, name, account, type,
+    rows: rows.map(([date, items, folio, debit, credit, ticked = false], i) => ({
+      date, items, folio, debit, credit, posted: [ticked && debit > 0, ticked && credit > 0],
+      ...(askFrom !== null && i >= askFrom ? { ask: [...askKeys] } : {}),
+    })),
+  };
+}
+
 // --- The chart of accounts (Module 5 on) --------------------------------------
 // Numbers are grouped by kind: 1–19 assets, 20–29 liabilities, 30 net worth,
 // 40–49 income, 50–99 expenses.
@@ -128,6 +152,8 @@ export const CHART = {
   // Named sub-pages of the Saving bucket (Modules 13 and 14).
   emergency: { no: 8, name: 'Emergency fund', type: 'asset' },
   sinking: { no: 9, name: 'Sinking fund', type: 'asset' },
+  // Add-on A3: an IRA, filled from the Investing bucket.
+  ira: { no: 10, name: 'IRA', type: 'asset' },
   'owed-friend': { no: 20, name: 'Owed to a friend', type: 'liability' },
   card: { no: 21, name: 'Credit card', type: 'liability' },
   'net-worth': { no: 30, name: 'Net worth', type: 'networth' },
