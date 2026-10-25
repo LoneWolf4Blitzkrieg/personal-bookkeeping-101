@@ -80,7 +80,7 @@ const afterUse = num('m13-after-use', 'interpreting', {
     ledger: fundPage(p.name, p.opening, p.a, p.b, [['2026-07-28', 'Bike repair (urgent)', 'J9', 0, p.repair, true]], { askFrom: 3 }),
     highlightRow: 3,
     answer: before - p.repair,
-    misconceptions: [{ cents: before + p.repair, explanation: 'Paying from the fund is a credit to its page: the balance goes down.' }],
+    misconceptions: [{ cents: before + p.repair, explanation: 'Paying from the fund is a credit to its page, so the balance goes down.' }],
     explanation: `${money(before)} − ${money(p.repair)} = ${money(before - p.repair)}.`,
   };
 });
@@ -99,7 +99,7 @@ const perPaycheck = num('m13-per-paycheck', 'interpreting', { per: { min: 3000, 
 
 // Refilling after the fund was used.
 const refillAfter = num('m13-refill-after', 'interpreting', { left: { min: 20000, max: 120000, step: 1 }, refill: { min: 2500, max: 12000, step: 500 }, months: { pick: [2, 3, 4, 5] }, name: { pick: NAMES } }, (p) => ({
-  prompt: `After using it for an emergency, ${p.name}'s Emergency fund holds ${money(p.left)}. Following the rule "refill it first", ${p.name} moves ${money(p.refill)} into it from the Saving bucket each month. What will the page show after ${p.months} months?`,
+  prompt: `${p.name} used the Emergency fund in an emergency, and it now holds ${money(p.left)}. Following the rule "refill it first," ${p.name} moves ${money(p.refill)} into it from the Saving bucket each month. What will the page show after ${p.months} months?`,
   answer: p.left + p.refill * p.months,
   misconceptions: [{ cents: p.left + p.refill, explanation: `That is one month's refill. Add ${money(p.refill)} for each of the ${p.months} months.` }],
   explanation: `${money(p.left)} + ${p.months} × ${money(p.refill)} = ${money(p.left + p.refill * p.months)}.`,
@@ -115,7 +115,7 @@ const RECORD_EVENTS = {
   repair: (p) => ({
     prompt: `${p.name}'s bike, needed to get to work, breaks down. The urgent repair costs ${money(p.amount)}, paid from the Emergency fund. Record the entry.`,
     answer: [{ account: 'transport', debit: p.amount, credit: 0 }, { account: 'emergency', debit: 0, credit: p.amount }],
-    explanation: 'The repair is a transportation expense: debit it. The money came from the Emergency fund: credit it.',
+    explanation: 'The repair is a transportation expense, so debit it. The money came from the Emergency fund, so credit it.',
   }),
   'income-gap': (p) => ({
     prompt: `${p.name}'s hours were cut this month, so the paychecks fell short of the rent. ${p.name} moves ${money(p.amount)} from the Emergency fund to the Spending bucket. Record the entry.`,
@@ -125,7 +125,7 @@ const RECORD_EVENTS = {
   phone: (p) => ({
     prompt: `${p.name}'s phone, needed for work shifts, stops working. A replacement costs ${money(p.amount)}, paid from the Emergency fund. Record the entry.`,
     answer: [{ account: 'phone', debit: p.amount, credit: 0 }, { account: 'emergency', debit: 0, credit: p.amount }],
-    explanation: 'The replacement is a phone expense: debit it. Credit the Emergency fund, which paid for it.',
+    explanation: 'The replacement is a phone expense, so debit it. Credit the Emergency fund, which paid for it.',
   }),
 };
 const recordFund = {
@@ -159,7 +159,7 @@ const explainFund = explainTemplate({
   id: 'm13-explain', module: 'm13',
   variants: [
     { prompt: 'In one or two sentences: why is an emergency fund sized from essential expenses, not from all your spending?',
-      modelAnswer: 'In an emergency, such as losing your pay, you can stop the wants for a while. The fund only has to keep paying what you cannot stop: a place to live, food, getting to work.',
+      modelAnswer: 'In an emergency, such as losing your pay, you can stop the wants for a while. The fund only has to keep paying for what you cannot stop: a place to live, food and a way to get to work.',
       rubric: ['Says wants can stop for a while in an emergency', 'Says the fund must cover what cannot stop (the essentials)'] },
     { prompt: 'In one or two sentences: why is three months of essential expenses called a minimum?',
       modelAnswer: 'Three months gives time to find new work or recover from a big bill. A longer emergency needs more, so more is safer.',
@@ -222,7 +222,7 @@ export const M13_LESSON = {
       id: 'sizing', kind: 'explain', title: 'How big a fund?', uses: ['fund-sizing', 'essential-expenses'],
       text: [
         'This course uses a rule of thumb: an emergency fund should hold at least three months of essential expenses. Three months is the minimum; more is safer, because an emergency can last longer than you expect.',
-        'There is no official figure. The Consumer Financial Protection Bureau says the right amount depends on your situation, and that even a small amount gives some security, so start with a first goal and build from there. In a 2025 Federal Reserve survey, 55% of adults said they had three months of emergency savings.',
+        'There is no official figure. The Consumer Financial Protection Bureau says the right amount depends on your situation. It also says that even a small amount gives some security, so start with a first goal and build from there. In a 2025 Federal Reserve survey, 55% of adults said they had three months of emergency savings.',
         'Luis: 3 × $859.00 = $2,577.00. That is his minimum.',
       ],
       prompt: 'Why is the fund sized from essential expenses rather than from everything you spend?',
@@ -240,7 +240,7 @@ export const M13_LESSON = {
       id: 'fund-page', kind: 'explain', title: 'The Emergency fund page', uses: ['fund-sizing', 'transfers', 'account-numbers'],
       text: [
         'Keep the fund on its own page: Emergency fund, account 8, an asset. It is a named part of your Saving bucket, so money reaches it by a transfer: debit Emergency fund, credit Saving bucket.',
-        'Luis moves $75.00 into it after each paycheck. On its own page, the fund is never mixed up with money saved for other things.',
+        'Luis moves $75.00 into it after each paycheck. On its own page, the fund never gets mixed up with money saved for other things.',
       ],
       prompt: 'Why does moving money into the Emergency fund leave Luis\'s net worth unchanged?',
       promptAnswer: 'It is a transfer between his own pages: the Emergency fund goes up and the Saving bucket goes down by the same amount. Nothing is spent.',
@@ -261,9 +261,9 @@ export const M13_LESSON = {
       text: [
         'Write your rules down before you need them. This course suggests three:',
         '1. Use it only for an emergency: something unplanned that cannot wait, such as lost pay, a medical bill or an urgent repair.',
-        '2. Not for planned costs or wants: a yearly bill you know is coming gets its own savings (Module 14), and a sale or a concert is never an emergency.',
-        '3. Refill it first. After using it, the Saving bucket\'s share goes back into the fund until it reaches its target again.',
-        'Paying from the fund is like any purchase: debit the expense, credit the Emergency fund. Refilling is a transfer.',
+        '2. Not for planned costs or wants: a yearly bill you know is coming gets its own savings (Module 14). A sale or a concert is never an emergency.',
+        '3. Refill it first. After you use it, money from the Saving bucket goes back into the fund until it reaches its target again.',
+        'Paying from the fund works like any purchase: debit the expense, credit the Emergency fund. Refilling is a transfer.',
       ],
       prompt: 'Why refill the fund before saving for anything else?',
       promptAnswer: 'Until it is refilled, the next emergency finds less money waiting. Refilling first puts the safety back.',
@@ -279,7 +279,7 @@ export const M13_LESSON = {
       ledger: luisFund([...LUIS_AFTER, ['2026-08-21', 'To Spending bucket (hours cut)', 'J11', 0, 23000, true]], { askFrom: 5 }),
       highlightRow: 5,
       answer: LUIS_FUND - 23000,
-      misconceptions: [{ cents: LUIS_FUND + 23000, explanation: 'Money leaving the fund is a credit to its page: the balance goes down.' }],
+      misconceptions: [{ cents: LUIS_FUND + 23000, explanation: 'Money leaving the fund is a credit to its page, so the balance goes down.' }],
       explanation: '$1,050.00 − $230.00 = $820.00.',
     },
     {

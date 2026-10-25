@@ -39,7 +39,7 @@ function cdPage(name, opening, years, opts = {}) {
 // --- Question templates -----------------------------------------------------
 
 const priceRise = num('m14-price-after', 'interpreting', { price: { min: 2000, max: 90000, step: 1 }, name: { pick: NAMES } }, (p) => ({
-  prompt: `Prices rose 3.7% over the past year (the Consumer Price Index, to September 2026). Something ${p.name} bought for ${money(p.price)} a year ago rose by that much. What does it cost now?`,
+  prompt: `Prices rose 3.7% over the past year (the Consumer Price Index, to September 2026). Something ${p.name} bought a year ago for ${money(p.price)} rose by that much. What does it cost now?`,
   source: INFLATION_SOURCE,
   answer: priceAfter(p.price),
   misconceptions: [{ cents: percentOf(p.price, INFLATION), explanation: 'That is the increase alone. Add it to the old price.' }],
@@ -49,10 +49,10 @@ const priceRise = num('m14-price-after', 'interpreting', { price: { min: 2000, m
 const cashShort = num('m14-cash-short', 'interpreting', { cash: { min: 10000, max: 200000, step: 1 }, name: { pick: NAMES } }, (p) => {
   const rise = percentOf(p.cash, INFLATION);
   return {
-    prompt: `${p.name} kept ${money(p.cash)} in cash in a safe for a year. A year ago it would have bought a month's groceries and bills; since then those prices rose 3.7%. How much short of buying the same things is the cash now?`,
+    prompt: `${p.name} kept ${money(p.cash)} in cash in a safe for a year. A year ago it would have bought a month of groceries and bills. Since then, those prices rose 3.7%. How far short of buying the same things is the cash now?`,
     source: INFLATION_SOURCE,
     answer: rise,
-    misconceptions: [{ cents: p.cash + rise, explanation: 'That is the new price. The cash is short by the difference between the new price and the cash.' }],
+    misconceptions: [{ cents: p.cash + rise, explanation: 'That is the new price. The shortfall is the new price minus the cash.' }],
     explanation: `The same things now cost ${money(p.cash)} + 3.7% = ${money(p.cash + rise)}. The cash is still ${money(p.cash)}, so it is ${money(rise)} short.`,
   };
 });
@@ -64,7 +64,7 @@ const savingShort = num('m14-saving-short', 'interpreting', { saved: { min: 2000
     prompt: `${p.name} kept ${money(p.saved)} for a year in a savings account paying the 2026 average, 0.38% a year. Prices rose 3.7% over the same year. After the interest is added, how much short of last year's buying power is ${p.name}?`,
     sources: [INFLATION_SOURCE, DEPOSIT_SOURCE],
     answer: rise - interest,
-    misconceptions: [{ cents: rise, explanation: 'The account paid interest. Subtract it: the savings fell behind by less than cash would.' }],
+    misconceptions: [{ cents: rise, explanation: 'The account paid interest. Subtract it, because the savings fell behind by less than cash would.' }],
     explanation: `Interest: 0.38% of ${money(p.saved)} = ${money(interest)}, so the account holds ${money(p.saved + interest)}. Prices: ${money(p.saved)} + 3.7% = ${money(p.saved + rise)}. Short: ${money(p.saved + rise)} − ${money(p.saved + interest)} = ${money(rise - interest)}.`,
   };
 });
@@ -130,17 +130,17 @@ const RECORD_EVENTS = {
   'pay-bill': (p) => ({
     prompt: `The yearly renter's insurance bill of ${money(p.amount)} arrives, and ${p.name} pays it from the Sinking fund. Record the entry.`,
     answer: [{ account: 'insurance', debit: p.amount, credit: 0 }, { account: 'sinking', debit: 0, credit: p.amount }],
-    explanation: 'The bill is an insurance expense: debit it. The money set aside for it pays it: credit the Sinking fund.',
+    explanation: 'The bill is an insurance expense, so debit it. The money set aside for it pays the bill, so credit the Sinking fund.',
   }),
   'cd-interest': (p) => ({
     prompt: `${p.name}'s 12-month CD, held in the Saving bucket, pays ${money(p.amount)} of interest when it renews. Record the entry.`,
     answer: [{ account: 'saving', debit: p.amount, credit: 0 }, { account: 'interest-earned', debit: 0, credit: p.amount }],
-    explanation: 'The Saving bucket grows: debit it. Interest is income: credit Interest earned.',
+    explanation: 'The Saving bucket grows, so debit it. Interest is income, so credit Interest earned.',
   }),
   'bus-pass': (p) => ({
     prompt: `${p.name} saved for a yearly bus pass in the Sinking fund. The pass costs ${money(p.amount)}, paid from it. Record the entry.`,
     answer: [{ account: 'transport', debit: p.amount, credit: 0 }, { account: 'sinking', debit: 0, credit: p.amount }],
-    explanation: 'The pass is a transportation expense: debit it. Credit the Sinking fund, which saved for it.',
+    explanation: 'The pass is a transportation expense, so debit it. Credit the Sinking fund, which saved for it.',
   }),
 };
 const recordPlan = {
@@ -179,7 +179,7 @@ const explainPlanning = explainTemplate({
       modelAnswer: 'A sinking fund saves for a cost you know is coming, such as a yearly bill. An emergency fund is for unplanned costs you cannot put off.',
       rubric: ['Says a sinking fund is for a known, planned cost', 'Says an emergency fund is for unplanned costs'] },
     { prompt: 'In one or two sentences: why save a little each month for a yearly bill instead of paying it when it comes?',
-      modelAnswer: 'Small monthly amounts fit the budget. When the bill arrives the money is already there, so it does not empty the Spending bucket or the emergency fund.',
+      modelAnswer: 'Small monthly amounts fit the budget. When the bill arrives, the money is already there, so it does not empty the Spending bucket or the emergency fund.',
       rubric: ['Says small monthly amounts fit the budget', 'Says the money is ready when the bill comes (no raid on other money)'] },
   ],
 });
@@ -207,9 +207,9 @@ export const M14_LESSON = {
     {
       id: 'buying-power', kind: 'explain', title: 'Buying power', uses: ['buying-power', 'percentages'],
       text: [
-        'Buying power is what your money can buy. When prices rise, which is called inflation, each dollar buys a little less. In the 12 months to September 2026, prices rose 3.7% (the Consumer Price Index).',
+        'Buying power is what your money can buy. When prices rise, each dollar buys a little less. Rising prices are called inflation. In the 12 months to September 2026, prices rose 3.7% (the Consumer Price Index).',
         'Groceries that cost $250.00 a year ago now cost $250.00 + 3.7% = $259.25. Cash kept in a safe is still $250.00, so it is $9.25 short of buying them.',
-        'In a savings account paying the October 2026 average, 0.38% a year, the $250.00 grows to $250.95. It is still short, by $8.30: money earning less than inflation loses buying power, just more slowly than cash. To keep up, the rate has to be at least the rate of inflation.',
+        'In a savings account paying the October 2026 average, 0.38% a year, the $250.00 grows to $250.95. It is still short, by $8.30. Money that earns less than inflation loses buying power, just more slowly than cash. To keep up, the rate has to be at least the rate of inflation.',
       ],
       prompt: 'Why did the savings account fall behind less than the cash?',
       promptAnswer: 'It earned interest, which made up part of the price rise. The cash earned nothing.',
@@ -235,8 +235,8 @@ export const M14_LESSON = {
       id: 'compound', kind: 'explain', title: 'Interest on interest', uses: ['compound-interest', 'bank-fee-interest-entries', 'percentages'],
       text: [
         'A 12-month CD (certificate of deposit) pays interest at the end of the year. In October 2026 the average rate was 1.76% a year.',
-        'Eli puts $1,000.00 in a CD. After a year it pays $17.60, recorded like any interest: debit the Saving bucket, credit Interest earned. Eli renews it, interest and all.',
-        'Year 2 earns 1.76% of $1,017.60, which is $17.91: 31 cents more than year 1, because last year\'s interest now earns interest too. This is compound interest. Over many years the extra grows; Add-on A3 follows it over decades.',
+        'Eli puts $1,000.00 in a CD. After a year it pays $17.60. Record it like any interest: debit the Saving bucket, credit Interest earned. Eli renews it, interest and all.',
+        'Year 2 earns 1.76% of $1,017.60, which is $17.91. That is 31 cents more than year 1, because last year\'s interest now earns interest too. This is compound interest. Over many years the extra grows. Add-on A3 follows it over decades.',
       ],
       prompt: 'Why does year 2 earn more than year 1 at the same rate?',
       promptAnswer: 'Year 1\'s interest was added to the balance, so year 2 earns interest on a larger amount.',
@@ -257,9 +257,9 @@ export const M14_LESSON = {
     {
       id: 'sinking', kind: 'explain', title: 'Sinking funds', uses: ['sinking-funds', 'transfers', 'journal-entry', 'fund-rules'],
       text: [
-        'Some costs are not emergencies: you know they are coming. A yearly renter\'s insurance bill, a bus pass, a phone you will need to replace.',
-        'A sinking fund saves for them a little each month: divide the cost by the months until it is due. Keep it on its own page, Sinking fund, account 9, another named part of the Saving bucket. Each month: debit Sinking fund, credit Saving bucket.',
-        'Eli\'s renter\'s insurance is $180.00 a year, due in 12 months: $180.00 ÷ 12 = $15.00 a month. When the bill comes, it is paid from the Sinking fund, so the emergency fund stays whole.',
+        'Some costs are not emergencies, because you know they are coming. Examples are a yearly renter\'s insurance bill, a bus pass or a phone you will need to replace.',
+        'A sinking fund saves for them a little each month. Divide the cost by the months until it is due. Keep it on its own page: Sinking fund, account 9, another named part of the Saving bucket. Each month, debit Sinking fund and credit Saving bucket.',
+        'Eli\'s renter\'s insurance is $180.00 a year, due in 12 months. $180.00 ÷ 12 = $15.00 a month. When the bill comes, Eli pays it from the Sinking fund, so the emergency fund stays whole.',
       ],
       prompt: 'Why does a planned bill belong in a sinking fund and not the emergency fund?',
       promptAnswer: 'It is known in advance, so it can be saved for. Paying it from the emergency fund would leave less for a real emergency.',
