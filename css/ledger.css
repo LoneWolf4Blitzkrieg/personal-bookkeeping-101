@@ -72,12 +72,13 @@
 .ledger .tick:focus-visible { outline: 2px solid #b45309; }
 
 /* Journal pages: five columns, credited accounts indented */
+.ledger.journal { min-width: 24rem; } /* five columns need less room than the full sheet */
 .ledger.journal .col-date { width: 12%; }
 .ledger.journal .col-items { width: 46%; }
 .ledger.journal .col-folio { width: 8%; text-align: center; }
 .ledger.journal .col-debit, .ledger.journal .col-credit { width: 17%; border-left: 3px double var(--rule-strong); }
 .ledger.journal .journal-credit { padding-left: 1.6em; }
-.ledger.journal .journal-explanation { font-style: italic; padding-left: .8em; }
+.ledger.journal .journal-explanation { font-style: italic; padding-left: .8em; white-space: normal; height: auto; }
 
 /* Modules 1–2: amounts written beside the sheet */
 .money-notes { margin: .4rem 0 0; padding-left: 1.1rem; font-family: var(--money-font); font-size: .78rem; }
