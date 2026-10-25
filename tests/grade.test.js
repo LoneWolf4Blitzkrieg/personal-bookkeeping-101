@@ -61,12 +61,17 @@ test('an entry with debits and credits reversed scores 0 (author\'s rule): the a
   assert.match(r.feedback, /reversed|both sides/i);
 });
 
-test('wrong accounts on both sides score 0 even when the amounts balance', () => {
-  const lines = answerLines().map((l) => ({ ...l, account: 'spending' === l.account ? 'checking' : 'spending' }));
-  lines.forEach((l) => { l.account = 'spending'; });
-  lines[1].account = 'nowhere';
-  const r = gradeItem(entry, lines);
-  assert.equal(r.points, 0);
+test('only a true reversal gets the reversal message; other entries wrong on both sides score 0 with a neutral one', () => {
+  const three = { kind: 'entry', points: 4, accounts: [], answer: [{ account: 'groceries', debit: 3000, credit: 0 }, { account: 'household', debit: 1000, credit: 0 }, { account: 'spending', debit: 0, credit: 4000 }], explanation: '' };
+  const reversed = gradeItem(three, [{ account: 'groceries', debit: 0, credit: 3000 }, { account: 'household', debit: 0, credit: 1000 }, { account: 'spending', debit: 4000, credit: 0 }]);
+  assert.equal(reversed.points, 0);
+  assert.match(reversed.feedback, /reversed/);
+  const misnamed = gradeItem(three, [{ account: 'groceries', debit: 3000, credit: 0 }, { account: 'fun', debit: 1000, credit: 0 }, { account: 'checking', debit: 0, credit: 4000 }]);
+  assert.equal(misnamed.points, 0);
+  assert.doesNotMatch(misnamed.feedback, /reversed/);
+  assert.match(misnamed.feedback, /wrong on both sides/);
+  const oneSide = gradeItem(three, [{ account: 'groceries', debit: 3000, credit: 0 }, { account: 'fun', debit: 1000, credit: 0 }, { account: 'spending', debit: 0, credit: 4000 }]);
+  assert.equal(oneSide.points, 3, 'one side wrong keeps partial credit');
 });
 
 test('the right amount on the wrong account loses only the account line', () => {
@@ -134,6 +139,12 @@ const gate = ({ interp = 14, prod = [4, 4], explain = 2 } = {}) => [
 test('scoreGate: 80% of the points passes, with no other condition', () => {
   assert.deepEqual(scoreGate(gate({ interp: 14, prod: [4, 0], explain: 2 })), { points: 20, max: 24, producing: 4, passed: true });
   assert.equal(scoreGate(gate({ interp: 13, prod: [4, 0], explain: 2 })).passed, false, '19 of 24 is below 80%');
+});
+
+test('scoreGate: partial credit on both recording questions can still pass (author\'s ruling); 0 on both cannot', () => {
+  assert.equal(scoreGate(gate({ prod: [3, 3] })).passed, true, '22 of 24');
+  assert.equal(scoreGate(gate({ prod: [2, 2] })).passed, true, '20 of 24');
+  assert.equal(scoreGate(gate({ prod: [2, 2], explain: 0 })).passed, false, '18 of 24');
 });
 
 test('scoreGate: missing both recording questions cannot pass', () => {

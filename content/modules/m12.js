@@ -158,6 +158,22 @@ const nwPageAfterClose = num('m12-nw-page-after-close', 'interpreting', { openin
   explanation: `${money(p.opening)} + ${money(p.income)} − ${money(p.expenses)} = ${money(p.opening + p.income - p.expenses)}.`,
 }));
 
+// Reading the expense lines off a trial balance (the income statement's figures).
+const expensesFromTb = num('m12-expenses-from-tb', 'interpreting', { spending: { min: 30000, max: 70000, step: 1 }, opening: { min: 10000, max: 30000, step: 1 }, rent: { min: 40000, max: 50000, step: 500 }, groceries: { min: 8000, max: 25000, step: 1 }, phone: { min: 3500, max: 6000, step: 500 }, name: { pick: NAMES } }, (p) => {
+  const expenses = p.rent + p.groceries + p.phone;
+  const wages = p.spending - p.opening + expenses;
+  return {
+    prompt: `From ${p.name}'s trial balance before closing, what is the total of the expenses that go on the income statement?`,
+    report: { report: 'trial-balance', name: p.name, date: '2026-06-30', accounts: [
+      { no: 2, name: 'Spending bucket', debit: p.spending }, { no: 30, name: 'Net worth', credit: p.opening }, { no: 40, name: 'Wages', credit: wages },
+      { no: 51, name: 'Rent', debit: p.rent }, { no: 52, name: 'Groceries', debit: p.groceries }, { no: 55, name: 'Phone', debit: p.phone },
+    ] },
+    answer: expenses,
+    misconceptions: [{ cents: expenses + p.spending, explanation: 'Account 2 is an asset. Expenses are numbered 50 to 99.' }],
+    explanation: `Expenses (50 to 99): ${money(p.rent)} + ${money(p.groceries)} + ${money(p.phone)} = ${money(expenses)}.`,
+  };
+});
+
 // --- Lesson -------------------------------------------------------------------
 
 // Sam's June (trial balance in Module 9).
@@ -309,7 +325,7 @@ export const M12_PRACTICE = {
 
 export const M12_EXTRA = {
   id: 'm12-extra', kind: 'practice', module: 'm12', title: 'Module 12 extra practice',
-  templates: [added, nwAfterClose, takenFrom, closeIncomeCredit, nwPageAfterClose, recordClosing].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [added, nwAfterClose, takenFrom, closeIncomeCredit, nwPageAfterClose, expensesFromTb, recordClosing].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M12_REMEDIAL = {
@@ -321,8 +337,8 @@ export const M12_REMEDIAL = {
 // 1 explain why).
 export const M12_GATE = {
   id: 'm12', kind: 'gate', title: 'Module 12 check',
-  templates: [added, nwStatement, nwAfterClose, takenFrom, closeIncomeCredit, nwPageAfterClose, drill[0], recordClosing, monthEndFigures, explainMonthEnd],
+  templates: [added, nwStatement, nwAfterClose, takenFrom, closeIncomeCredit, expensesFromTb, drill[0], recordClosing, monthEndFigures, explainMonthEnd],
 };
 
 // Questions Checkpoint C draws from this module.
-export const M12_CHECKPOINT = [added, nwStatement, recordClosing, explainMonthEnd];
+export const M12_CHECKPOINT = [added, recordClosing, explainMonthEnd];

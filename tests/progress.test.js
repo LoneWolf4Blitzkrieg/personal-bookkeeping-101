@@ -140,6 +140,14 @@ test('a practice set counts down only the recall it actually carried', async () 
   assert.deepEqual(p.recall, { m03: 2, m05: 3 });
 });
 
+test('the Module 9 placement test opens only after Checkpoint A or the Module 5 placement test is passed', () => {
+  const fresh = emptyProgress(T0);
+  assert.equal(isUnlocked('placement-ca', fresh).unlocked, true);
+  assert.equal(isUnlocked('placement-cb', fresh).unlocked, false);
+  assert.equal(isUnlocked('placement-cb', recordPlacement(fresh, 'ca', { percent: 90, passed: true, missedModules: [] }, T0, 1)).unlocked, true);
+  assert.equal(isUnlocked('placement-cb', recordCheckpoint(fresh, 'ca', { percent: 90, passed: true, missedModules: [] }, T0, 1)).unlocked, true);
+});
+
 test('steps can be stored by id', () => {
   const p = markStep(markStep(emptyProgress(T0), 'm01', 'warm-up'), 'm01', 'warm-up');
   assert.deepEqual(p.modules.m01.steps, ['warm-up']);
@@ -195,7 +203,7 @@ test('bad progress files are rejected with a reason', () => {
 test('placement tests are separate per checkpoint, keep attempts and clear their own session', () => {
   let p = saveSession(emptyProgress(T0), { assessmentId: 'placement-ca', kind: 'placement', checkpointId: 'ca', version: 1 }, []);
   assert.equal(isUnlocked('placement-ca', p).unlocked, true);
-  assert.equal(isUnlocked('placement-cb', p).unlocked, true);
+  assert.equal(isUnlocked('placement-cb', p).unlocked, false, 'stage two waits for stage one');
   p = recordPlacement(p, 'ca', { percent: 50, passed: false, missedModules: ['m02'] }, T0, 1);
   assert.equal(openSession(p, 'placement-ca'), null);
   assert.equal(p.placement.ca.attempts.length, 1);

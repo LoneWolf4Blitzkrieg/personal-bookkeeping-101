@@ -31,7 +31,8 @@ const spendingLeft = num('m01-spending-left', 'interpreting', { take: TAKE_HOME 
   return {
     prompt: `From a take-home pay of ${money(p.take)}, the other four buckets get ${money(b.saving)}, ${money(b.investing)}, ${money(b.charity)} and ${money(b.blow)}. How much is left for Spending?`,
     answer: b.spending,
-    misconceptions: [{ cents: percentOf(p.take, 0.6), explanation: 'Working out 60% on its own can be a cent off. Spending gets exactly what is left, so the buckets add up.' }],
+    // Shown only when 60% on its own really is a cent off.
+    misconceptions: percentOf(p.take, 0.6) === b.spending ? [] : [{ cents: percentOf(p.take, 0.6), explanation: 'Working out 60% on its own can be a cent off. Spending gets exactly what is left, so the buckets add up.' }],
     explanation: `${money(p.take)} − ${money(others)} = ${money(b.spending)}.`,
   };
 });
@@ -55,11 +56,11 @@ const splitFour = {
   build: (p) => {
     const b = splitBuckets(p.take);
     return {
-      prompt: `${p.name}'s take-home pay is ${money(p.take)}. Blow money (10%) is ${money(b.blow)}. Write the other four buckets. Spending gets what is left, so all five buckets add up to the paycheck.`,
+      prompt: `${p.name}'s take-home pay is ${money(p.take)}. Charity (5%) is ${money(b.charity)}. Write the other four buckets. Spending gets what is left, so all five buckets add up to the paycheck.`,
       fields: [
         { label: 'Saving (15%)', answer: b.saving },
         { label: 'Investing (10%)', answer: b.investing },
-        { label: 'Charity (5%)', answer: b.charity },
+        { label: 'Blow money (10%)', answer: b.blow },
         { label: 'Spending (what is left)', answer: b.spending },
       ],
       explanation: `Saving ${money(b.saving)}, Investing ${money(b.investing)}, Charity ${money(b.charity)}, Blow money ${money(b.blow)}. Spending is ${money(p.take)} minus those four: ${money(b.spending)}.`,
@@ -108,20 +109,44 @@ const explainJobs = explainTemplate({
   ],
 });
 
-// Production: each bucket page's new balance after payday (one page per bucket).
-const bucketPages = {
-  id: 'm01-bucket-pages', module: 'm01', kind: 'amounts', part: 'producing', points: 4,
-  params: { take: TAKE_HOME, sv: { min: 5000, max: 90000, step: 1 }, inv: { min: 2000, max: 60000, step: 1 }, ch: { min: 500, max: 9000, step: 1 }, bl: { min: 0, max: 6000, step: 1 }, name: { pick: NAMES } },
+// Production: the split again, this time starting from the Saving share.
+const splitFromSaving = {
+  id: 'm01-split-from-saving', module: 'm01', kind: 'amounts', part: 'producing', points: 4,
+  params: { take: TAKE_HOME, name: { pick: NAMES } },
   build: (p) => {
     const b = splitBuckets(p.take);
-    const pages = [['Saving', p.sv, b.saving], ['Investing', p.inv, b.investing], ['Charity', p.ch, b.charity], ['Blow money', p.bl, b.blow]];
     return {
-      prompt: `Before payday, ${p.name}'s bucket pages show Saving ${money(p.sv)}, Investing ${money(p.inv)}, Charity ${money(p.ch)} and Blow money ${money(p.bl)}. Then ${money(p.take)} of take-home pay is split into the buckets. Write each page's new balance.`,
-      fields: pages.map(([label, before, share]) => ({ label: `${label} page after payday`, answer: before + share })),
-      explanation: pages.map(([label, before, share]) => `${label}: ${money(before)} + ${money(share)} = ${money(before + share)}`).join('; ') + '.',
+      prompt: `${p.name}'s take-home pay is ${money(p.take)}, and the Saving bucket (15%) got ${money(b.saving)}. Write the other four buckets. Spending gets what is left.`,
+      fields: [
+        { label: 'Investing (10%)', answer: b.investing },
+        { label: 'Charity (5%)', answer: b.charity },
+        { label: 'Blow money (10%)', answer: b.blow },
+        { label: 'Spending (what is left)', answer: b.spending },
+      ],
+      explanation: `Investing ${money(b.investing)}, Charity ${money(b.charity)}, Blow money ${money(b.blow)}. Spending: ${money(p.take)} − ${money(b.saving + b.investing + b.charity + b.blow)} = ${money(b.spending)}.`,
     };
   },
 };
+
+// Money measures what things are worth.
+const priceMeasure = num('m01-price-measure', 'interpreting', { price: { min: 125, max: 1999, step: 1 }, n: { pick: [2, 3, 4, 5, 6] }, item: { pick: ['notebooks', 'bus tickets', 'pairs of socks', 'phone chargers'] } }, (p) => ({
+  prompt: `Money measures what things are worth: a price tag says one of these ${p.item} is worth ${money(p.price)}. What are ${p.n} of them worth?`,
+  answer: p.price * p.n,
+  misconceptions: [{ cents: p.price + p.n, explanation: 'Multiply the price by how many: each one is worth the same amount.' }],
+  explanation: `${p.n} × ${money(p.price)} = ${money(p.price * p.n)}.`,
+}));
+
+// One page per bucket: reading the five pages after payday.
+const otherBuckets = num('m01-other-buckets', 'interpreting', { take: TAKE_HOME, name: { pick: NAMES } }, (p) => {
+  const b = splitBuckets(p.take);
+  const others = b.saving + b.investing + b.charity + b.blow;
+  return {
+    prompt: `After payday, ${p.name}'s five bucket pages each show one line: Spending ${money(b.spending)}, Saving ${money(b.saving)}, Investing ${money(b.investing)}, Charity ${money(b.charity)} and Blow money ${money(b.blow)}. How much is set aside on the four pages other than Spending?`,
+    answer: others,
+    misconceptions: [{ cents: p.take, explanation: 'That is all five pages. Leave out the Spending page.' }],
+    explanation: `${money(b.saving)} + ${money(b.investing)} + ${money(b.charity)} + ${money(b.blow)} = ${money(others)}.`,
+  };
+});
 
 // --- Lesson -------------------------------------------------------------------
 
@@ -246,7 +271,7 @@ export const M01_PRACTICE = {
 
 export const M01_EXTRA = {
   id: 'm01-extra', kind: 'practice', module: 'm01', title: 'Module 1 extra practice',
-  templates: [savingShare, charityShare, blowShare, splitFour, bucketPages].map((t) => asPractice({ ...t, id: `${t.id}-extra` })),
+  templates: [savingShare, charityShare, blowShare, priceMeasure, otherBuckets, splitFour, splitFromSaving].map((t) => asPractice({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M01_REMEDIAL = {
@@ -259,7 +284,7 @@ export const M01_REMEDIAL = {
 const asGate = (t) => ({ ...t, part: 'interpreting', points: 2 });
 export const M01_GATE = {
   id: 'm01', kind: 'gate', title: 'Module 1 check',
-  templates: [savingShare, charityShare, spendingLeft, asGate(blowShare), asGate(investingShare), asGate(totalCheck), drill[0], splitFour, bucketPages, explainSplit],
+  templates: [savingShare, charityShare, spendingLeft, asGate(blowShare), priceMeasure, otherBuckets, drill[0], splitFour, splitFromSaving, explainSplit],
 };
 
 // Questions Checkpoint A draws from this module.

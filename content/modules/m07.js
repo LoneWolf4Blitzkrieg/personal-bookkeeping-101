@@ -199,6 +199,15 @@ const donation = num('m07-donation', 'interpreting', { charity: { min: 3000, max
   explanation: `Debit Donations, credit the Charity bucket: ${money(p.charity)} − ${money(p.gift)} = ${money(p.charity - p.gift)}.`,
 }));
 
+// Reading a source document: a receipt paid in cash, and the Cash page after it.
+const receiptCash = num('m07-receipt-cash', 'interpreting', { cash: { min: 3000, max: 9000, step: 100 }, a: { min: 300, max: 1200, step: 1 }, b: { min: 150, max: 800, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s Cash page shows ${money(p.cash)}. ${p.name} pays for this receipt with cash. What does the Cash page show after it is recorded?`,
+  sourceDoc: receipt('Taco Stand (fictional)', [['Burrito', p.a], ['Drink', p.b]], 'Cash'),
+  answer: p.cash - p.a - p.b,
+  misconceptions: [{ cents: p.cash - p.a, explanation: 'Use the receipt total, not one item.' }],
+  explanation: `The receipt total is ${money(p.a + p.b)}. Cash is credited: ${money(p.cash)} − ${money(p.a + p.b)} = ${money(p.cash - p.a - p.b)}.`,
+}));
+
 // --- Lesson -------------------------------------------------------------------
 
 export const M07_LESSON = {
@@ -345,7 +354,7 @@ export const M07_PRACTICE = {
 
 export const M07_EXTRA = {
   id: 'm07-extra', kind: 'practice', module: 'm07', title: 'Module 7 extra practice',
-  templates: [receiptSplit, cashPage, worthAfterWeek, donation, recordFromDoc].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [receiptSplit, cashPage, receiptCash, worthAfterWeek, donation, recordFromDoc].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M07_REMEDIAL = {
@@ -357,8 +366,8 @@ export const M07_REMEDIAL = {
 // 1 explain why). recordFromDoc comes first: later modules mix it in.
 export const M07_GATE = {
   id: 'm07', kind: 'gate', title: 'Module 7 check',
-  templates: [receiptSplit, spent, bucketDrop, cashPage, worthAfterWeek, donation, drill[0], recordFromDoc, weekBalances, explainSpending],
+  templates: [receiptSplit, spent, receiptCash, cashPage, worthAfterWeek, donation, drill[0], recordFromDoc, weekBalances, explainSpending],
 };
 
 // Questions Checkpoint B draws from this module.
-export const M07_CHECKPOINT = [receiptSplit, recordFromDoc];
+export const M07_CHECKPOINT = [spent, recordFromDoc];

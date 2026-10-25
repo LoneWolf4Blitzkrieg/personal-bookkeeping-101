@@ -61,7 +61,10 @@ const open = { unlocked: true };
 const locked = (reason, next) => ({ unlocked: false, reason, ...(next ? { next } : {}) });
 
 export function isUnlocked(id, progress, now = Date.now()) {
-  if (id === 'prereq' || id === 'placement' || id === 'm01' || /^placement-c[abc]$/.test(id)) return open;
+  if (id === 'prereq' || id === 'placement' || id === 'm01' || id === 'placement-ca') return open;
+  // The Module 9 placement test is a second stage: it covers Modules 5–8 and
+  // opens once Modules 1–4 are counted as passed.
+  if (id === 'placement-cb') return checkpointPassed(progress, 'ca') ? open : locked('Pass the Module 5 placement test (or Checkpoint A) first.', 'placement-ca');
 
   const cp = CHECKPOINTS.find((c) => c.id === id);
   if (cp) return modulePassed(progress, cp.after) || checkpointPassed(progress, id) ? open : locked(`Pass the check at the end of ${moduleTitle(cp.after)} first.`, cp.after);

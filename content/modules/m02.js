@@ -111,7 +111,7 @@ const pageEnd = num('m02-page-end', 'interpreting', { start: { min: 10000, max: 
 });
 
 // Working a running balance backward: the line above from the line below.
-const findStart = num('m02-find-start', 'interpreting', { before: { min: 10000, max: 60000, step: 1 }, cost: { min: 500, max: 9000, step: 1 }, item: { pick: ['Groceries', 'Bus pass', 'Phone bill', 'Laundry'] } }, (p) => ({
+const findStart = num('m02-find-start', 'interpreting', { before: { min: 18000, max: 60000, step: 1 }, cost: { min: 500, max: 9000, step: 1 }, item: { pick: ['Groceries', 'Bus pass', 'Phone bill', 'Laundry'] } }, (p) => ({
   prompt: `On a Spending page, the line "${p.item}" has money out of ${money(p.cost)}, and its balance reads ${money(p.before - p.cost)}. What did the balance read on the line above it?`,
   answer: p.before,
   misconceptions: [{ cents: p.before - 2 * p.cost, explanation: 'That subtracts the money out a second time. Money out made the balance smaller, so the line above was larger: add it back.' }],
@@ -135,6 +135,22 @@ const newSheet = {
         { label: 'Sheet 2: balance after the bus pass', answer: last + share - p.bus },
       ],
       explanation: `Sheet 1 ends at ${money(last)}, and Sheet 2 starts with that same amount brought forward. Adding ${money(share)} gives ${money(last + share)}. Taking out ${money(p.bus)} leaves ${money(last + share - p.bus)}.`,
+    };
+  },
+};
+
+// Each bucket page's new balance after payday: a running balance on five
+// pages (moved here from Module 1, which has not taught running balances).
+const bucketPages = {
+  id: 'm02-bucket-pages', module: 'm02', kind: 'amounts', part: 'producing', points: 4,
+  params: { take: { min: 80000, max: 130000, step: 1 }, sv: { min: 5000, max: 90000, step: 1 }, inv: { min: 2000, max: 60000, step: 1 }, ch: { min: 500, max: 9000, step: 1 }, bl: { min: 0, max: 6000, step: 1 }, name: { pick: NAMES } },
+  build: (p) => {
+    const b = splitBuckets(p.take);
+    const pages = [['Saving', p.sv, b.saving], ['Investing', p.inv, b.investing], ['Charity', p.ch, b.charity], ['Blow money', p.bl, b.blow]];
+    return {
+      prompt: `Before payday, ${p.name}'s bucket pages show Saving ${money(p.sv)}, Investing ${money(p.inv)}, Charity ${money(p.ch)} and Blow money ${money(p.bl)}. Then ${money(p.take)} of take-home pay is split into the buckets. Write each page's new balance.`,
+      fields: pages.map(([label, before, share]) => ({ label: `${label} page after payday`, answer: before + share })),
+      explanation: pages.map(([label, before, share]) => `${label}: ${money(before)} + ${money(share)} = ${money(before + share)}`).join('; ') + '.',
     };
   },
 };
@@ -277,7 +293,7 @@ export const M02_PRACTICE = {
 
 export const M02_EXTRA = {
   id: 'm02-extra', kind: 'practice', module: 'm02', title: 'Module 2 extra practice',
-  templates: [afterIncome, twoLines, pageEnd, findStart, fourBalances, newSheet].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [afterIncome, twoLines, pageEnd, findStart, fourBalances, newSheet, bucketPages].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M02_REMEDIAL = {
@@ -293,4 +309,4 @@ export const M02_GATE = {
 };
 
 // Questions Checkpoint A draws from this module.
-export const M02_CHECKPOINT = [afterSpending, fourBalances];
+export const M02_CHECKPOINT = [afterSpending, broughtForwardThenIn, fourBalances];

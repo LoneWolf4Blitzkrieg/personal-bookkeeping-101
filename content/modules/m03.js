@@ -294,4 +294,4 @@ export const M03_GATE = {
 };
 
 // Questions Checkpoint A draws from this module.
-export const M03_CHECKPOINT = [netWorth, ruleBalance, recordTransfer, explainRules];
+export const M03_CHECKPOINT = [netWorth, recordTransfer, explainRules];

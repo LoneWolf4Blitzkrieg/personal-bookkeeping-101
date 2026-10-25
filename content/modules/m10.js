@@ -156,7 +156,7 @@ const savingAfterInterest = num('m10-saving-after-interest', 'interpreting', { s
 }));
 
 // Working back from the books to the statement.
-// The check is an odd number of cents and the deposit whole dimes, so the two
+// The check is an odd number of cents and the deposit whole dollars, so the two
 // never match (a learner who swaps them would otherwise be marked right).
 const statementFromBooks = num('m10-statement-from-books', 'interpreting', { book: { min: 40000, max: 160000, step: 1 }, dep: { min: 2000, max: 9000, step: 100 }, chk: { min: 1001, max: 7999, step: 2 }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name}'s pages at the bank add up to ${money(p.book)}, with no fees or interest to record. A ${money(p.dep)} deposit has not reached the bank yet, and a ${money(p.chk)} check has not been cashed. What should the bank statement's closing balance be?`,

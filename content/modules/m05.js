@@ -165,7 +165,7 @@ const incomeTotal = num('m05-income-total', 'interpreting', {
 });
 
 // Follow a folio to the other page and work out its balance there.
-const folioOtherPage = num('m05-folio-other-page', 'interpreting', { before: { min: 2000, max: 30000, step: 1 }, amount: { min: 500, max: 9000, step: 1 }, name: { pick: NAMES } }, (p) => ({
+const folioOtherPage = num('m05-folio-other-page', 'interpreting', { before: { min: 9000, max: 30000, step: 1 }, amount: { min: 500, max: 9000, step: 1 }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name}'s Spending bucket page (account 2) has this line: Jun 14, Groceries, folio 52, credit ${money(p.amount)}. Just before the matching line, the page that folio points to showed a debit balance of ${money(p.before)}. What is that page's balance after the matching line?`,
   answer: p.before + p.amount,
   misconceptions: [{ cents: p.before - p.amount, explanation: 'That subtracts. Folio 52 is Groceries, an expense (50 to 99). The matching line there is a debit, so the balance goes up.' }],
@@ -339,4 +339,4 @@ export const M05_GATE = {
 };
 
 // Questions Checkpoint B draws from this module.
-export const M05_CHECKPOINT = [groupTotal, recordNumbers];
+export const M05_CHECKPOINT = [groupTotal, followFolio, recordNumbers];

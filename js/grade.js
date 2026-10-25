@@ -70,12 +70,13 @@ function gradeEntry(item, lines) {
   // Wrong accounts on both sides (most often debits and credits reversed)
   // earn nothing, so reversing the entries cannot add up to a pass.
   const bothSidesWrong = !rubric[0].met && !rubric[1].met;
+  const reversed = sameSet(accountsOn(want, 'debit'), accountsOn(got, 'credit')) && sameSet(accountsOn(want, 'credit'), accountsOn(got, 'debit'));
   const points = bothSidesWrong ? 0 : rubric.filter((r) => r.met).length * (item.points / rubric.length);
   const correct = rubric.every((r) => r.met);
   const missed = rubric.filter((r) => !r.met).map((r) => r.criterion.toLowerCase());
-  const check = bothSidesWrong
-    ? 'The accounts are wrong on both sides. Check whether the debits and credits are reversed. An entry like this earns no points.'
-    : `Check: ${missed.join('; ')}.`;
+  const check = !bothSidesWrong ? `Check: ${missed.join('; ')}.`
+    : reversed ? 'The debits and credits are reversed: each account is on the wrong side. An entry like this earns no points.'
+      : 'The accounts are wrong on both sides, so this entry earns no points. Check which pages go up and which go down.';
   return {
     points,
     max: item.points,

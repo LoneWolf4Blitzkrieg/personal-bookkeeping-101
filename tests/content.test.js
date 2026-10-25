@@ -107,12 +107,12 @@ test('Checkpoint B covers every module from 5 to 8 and has two versions', async 
   assert.equal(assessmentVersions(cb.templates, 'cb', { count: 2 }).length, 2);
 });
 
-test('the placement tests cover every module they skip', () => {
+test('the two placement stages together cover every module they skip', () => {
   const a = ASSESSMENTS['placement-ca'];
   const b = ASSESSMENTS['placement-cb'];
   assert.deepEqual([a.kind, a.checkpointId, b.kind, b.checkpointId], ['placement', 'ca', 'placement', 'cb']);
   assert.deepEqual([...new Set(a.templates.map((t) => t.module))], ['m01', 'm02', 'm03', 'm04']);
-  assert.deepEqual([...new Set(b.templates.map((t) => t.module))], ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08']);
+  assert.deepEqual([...new Set(b.templates.map((t) => t.module))], ['m05', 'm06', 'm07', 'm08'], 'stage two covers Modules 5–8 (stage one covers 1–4)');
 });
 
 // Proposal: recall plus mixed production make up 20–30% of a practice set.
@@ -217,11 +217,11 @@ test('Sam\'s June books agree from the trial balance (Module 9) to the statement
   assert.equal(value(nwStep.report, 'net'), page);
 });
 
-test('every question from Modules 9–12 stays sound over many parameter values', async () => {
+test('every question from Modules 1–12 stays sound over many parameter values', async () => {
   const { generateItem } = await import('../js/items.js');
   const { checkReport } = await import('../js/reports.js');
   const { runningBalances } = await import('../js/ledger.js');
-  const late = new Set(['m09', 'm10', 'm11', 'm12']);
+  const late = new Set(['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12']);
   const templates = [...new Map(Object.values(ASSESSMENTS).flatMap((a) => a.templates).filter((t) => late.has(t.module)).map((t) => [t.id, t])).values()];
   for (const t of templates) {
     for (let seed = 0; seed < 400; seed++) {
@@ -235,5 +235,35 @@ test('every question from Modules 9–12 stays sound over many parameter values'
         assert.ok(runningBalances(page).every((b, i) => b.side === (page.type === 'asset' || page.type === 'expense' ? 'Dr' : 'Cr') || b.balance === 0 || !(page.rows[i].debit || page.rows[i].credit)), `${where}: ${page.account} crosses to the wrong side`);
       }
     }
+  }
+});
+
+test('a module check holds at most one fluency drill', () => {
+  for (const [id, a] of Object.entries(ASSESSMENTS)) {
+    if (a.kind !== 'gate') continue;
+    assert.ok(a.templates.filter((t) => /-drill-/.test(t.id)).length <= 1, `${id} has more than one drill`);
+  }
+});
+
+test('within a sitting, no question shows the answer to a later question', async () => {
+  const { assessmentVersions } = await import('../js/items.js');
+  const { ledgerPanelHTML } = await import('../js/lessonView.js');
+  const { formatCents } = await import('../js/money.js');
+  const answersOf = (item) => [item.answer, ...(item.fields ?? []).map((f) => f.answer), ...(Array.isArray(item.answer) ? item.answer.flatMap((l) => [l.debit, l.credit]) : [])]
+    .filter((c) => Number.isSafeInteger(c) && c >= 1000);
+  const shownBy = (item) => [item.prompt, item.explanation ?? '', item.modelAnswer ?? '', ledgerPanelHTML(item, { revealed: true })].join(' ');
+  for (const [id, a] of Object.entries(ASSESSMENTS)) {
+    if (!['gate', 'checkpoint', 'placement'].includes(a.kind) || id === 'demo') continue;
+    const versions = assessmentVersions(a.templates, a.id, { count: a.kind === 'gate' ? 4 : 2, shape: a.kind === 'gate' ? 'gate' : null });
+    versions.forEach((items, v) => items.forEach((later, j) => {
+      // An amount the later question prints itself (an entry's amounts, for
+      // example) gives nothing away when an earlier question shows it too.
+      for (const cents of answersOf(later).filter((c) => !shownBy({ ...later, explanation: '' }).includes(`$${formatCents(c)}`))) {
+        const text = `$${formatCents(cents)}`;
+        items.slice(0, j).forEach((earlier, i) => {
+          assert.ok(!shownBy(earlier).includes(text), `${id} version ${v + 1}: question ${i + 1} shows ${text}, an answer to question ${j + 1}`);
+        });
+      }
+    }));
   }
 });

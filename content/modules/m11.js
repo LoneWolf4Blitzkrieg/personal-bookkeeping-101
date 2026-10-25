@@ -148,9 +148,14 @@ const lineOver = num('m11-line-over', 'interpreting', { budget: { min: 4000, max
 // the four totals.
 const underOverTotals = {
   id: 'm11-under-over-totals', module: 'm11', kind: 'amounts', part: 'producing', points: 4,
-  params: { gUnder: { min: 500, max: 4000, step: 1 }, eOver: { min: 200, max: 2500, step: 1 }, hUnder: { min: 300, max: 1500, step: 1 }, fares: { min: 150, max: 900, step: 25 }, name: { pick: NAMES } },
+  // Its own budget amounts, so its totals differ from the plan shown in the
+  // other budget question of the check.
+  params: {
+    gb: { min: 22000, max: 36000, step: 500 }, eb: { min: 4000, max: 9000, step: 500 }, tb: { min: 5000, max: 8000, step: 100 }, hb: { min: 2500, max: 6000, step: 500 },
+    gUnder: { min: 500, max: 4000, step: 1 }, eOver: { min: 200, max: 2500, step: 1 }, hUnder: { min: 300, max: 1500, step: 1 }, fares: { min: 150, max: 900, step: 25 }, name: { pick: NAMES },
+  },
   build: (p) => {
-    const lines = [bline('groceries', 30000, 30000 - p.gUnder), bline('eating-out', 6000, 6000 + p.eOver), bline('transport', 6400, 6400 + p.fares), bline('household', 4000, 4000 - p.hUnder)];
+    const lines = [bline('groceries', p.gb, p.gb - p.gUnder), bline('eating-out', p.eb, p.eb + p.eOver), bline('transport', p.tb, p.tb + p.fares), bline('household', p.hb, p.hb - p.hUnder)];
     return {
       prompt: `Finish ${p.name}'s budget report: write the total of each column.`,
       report: budget(p.name, lines, { ask: ['total'] }),
@@ -166,8 +171,8 @@ const underOverTotals = {
 };
 
 // Applying a stated waiting-period rule (the rule is given; only its use is graded).
-const waitRule = num('m11-wait-rule', 'interpreting', { blow: { min: 6000, max: 15000, step: 1 }, small: { min: 800, max: 4900, step: 1 }, big: { min: 5100, max: 12000, step: 1 }, name: { pick: NAMES } }, (p) => ({
-  prompt: `${p.name}'s rule: anything not in the budget comes out of Blow money. Under $50.00, it can be bought right away. $50.00 or more waits a week. Blow money holds ${money(p.blow)}. This week ${p.name} buys a ${money(p.small)} item and decides to wait on a ${money(p.big)} item. What does Blow money hold at the end of the week?`,
+const waitRule = num('m11-wait-rule', 'interpreting', { blow: { min: 17000, max: 25000, step: 1 }, small: { min: 800, max: 4900, step: 1 }, big: { min: 5100, max: 12000, step: 1 }, name: { pick: NAMES } }, (p) => ({
+  prompt: `${p.name}'s rule: anything not in the budget comes out of Blow money. Under $50.00, it can be bought right away. $50.00 or more waits a week. Blow money holds ${money(p.blow)}. This week ${p.name} buys a ${money(p.small)} item and also wants a ${money(p.big)} item. What does Blow money hold at the end of the week?`,
   answer: p.blow - p.small,
   misconceptions: [{ cents: p.blow - p.small - p.big, explanation: 'The second item is $50.00 or more, so under the rule it waits a week. It is not bought yet.' }],
   explanation: `Only the item under $50.00 is bought this week: ${money(p.blow)} − ${money(p.small)} = ${money(p.blow - p.small)}.`,
@@ -320,4 +325,4 @@ export const M11_GATE = {
 };
 
 // Questions Checkpoint C draws from this module.
-export const M11_CHECKPOINT = [needsFirst, bvaFromPages];
+export const M11_CHECKPOINT = [netUnder, needsFirst, bvaFromPages];

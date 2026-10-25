@@ -373,4 +373,4 @@ export const M08_GATE = {
 };
 
 // Questions Checkpoint B draws from this module.
-export const M08_CHECKPOINT = [cardBalance, afterMinimum, recordCard, explainCard];
+export const M08_CHECKPOINT = [cardBalance, recordCard, explainCard];

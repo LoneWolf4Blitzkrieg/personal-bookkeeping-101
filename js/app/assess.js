@@ -88,7 +88,7 @@ function feedbackHTML(result) {
 const VERDICTS = {
   gate: {
     pass: 'Passed. You have shown you understand this module.',
-    retry: 'Not yet. You need 80% of the points. The "Record it yourself" questions count double, so start with those: review the worked example, then try a different version of this check.',
+    retry: 'Not yet. You need 80% of the points (20 of 24). The "Record it yourself" questions are worth the most, so look at those first.',
   },
   checkpoint: {
     pass: 'Passed. Everything so far has stuck.',
@@ -102,25 +102,26 @@ const VERDICTS = {
   practice: { pass: 'Practice set done. When you are ready, take the module check.', retry: 'Practice set done. Look over the explanations for the questions you missed, then take the module check when you are ready.' },
 };
 
-// Placement results name the module the learner may start at. A failed
-// Module 9 test whose misses are all in Modules 5–8 points to the Module 5
-// test instead of back to the beginning.
+// Placement results name the module the learner may start at. The Module 9
+// test is taken after Modules 1–4 are counted as passed, so a learner who
+// does not pass it starts at Module 5.
 const PLACEMENT_START = { ca: 'm05', cb: 'm09' };
-function placementWords(checkpointId, missedModules = []) {
+const PLACEMENT_RETRY = {
+  ca: 'Not yet. You need 80%. Start at Module 1 and work through the modules listed below; nothing is lost by starting at the beginning. You can try the placement test again later.',
+  cb: 'Not yet. You need 80%. Modules 1 to 4 still count as passed, so <a href="lesson.html?m=m05">start at Module 5</a> and work through the modules listed below. You can try this placement test again later.',
+};
+function placementWords(checkpointId) {
   const start = PLACEMENT_START[checkpointId];
-  const onlyLater = checkpointId === 'cb' && missedModules.length > 0 && missedModules.every((m) => m >= 'm05');
   return {
     pass: `Passed. You can start at <a href="lesson.html?m=${start}">Module ${Number(start.slice(1))}</a>. The earlier modules stay open if you want to review them.`,
-    retry: onlyLater
-      ? 'Not yet. You need 80%. Every question you missed was from Modules 5 to 8, so take the <a href="assess.html?id=placement-ca">Module 5 placement test</a>: if you pass it, start at Module 5. Otherwise, start at Module 1.'
-      : 'Not yet. You need 80%. Start at Module 1 and work through the modules listed below; nothing is lost by starting at the beginning. You can try the placement test again later.',
+    retry: PLACEMENT_RETRY[checkpointId],
   };
 }
 
 function resultsHTML(session) {
   const s = summary(session);
   const kind = session.meta?.kind ?? 'gate';
-  const words = kind === 'placement' ? placementWords(session.meta.checkpointId, s.missedModules) : VERDICTS[kind] ?? VERDICTS.gate;
+  const words = kind === 'placement' ? placementWords(session.meta.checkpointId) : VERDICTS[kind] ?? VERDICTS.gate;
   const score = s.max !== undefined ? `${s.points} of ${s.max}` : `${s.percent}%`;
   const missed = s.missedModules?.length ? `<p>Review these first: ${s.missedModules.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
   const rows = session.results.map((r, i) => {

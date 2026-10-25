@@ -145,6 +145,18 @@ const stubLines = {
   },
 };
 
+// Reading a pay stub: the one line left blank is worked out from the others.
+const federalLine = num('m04-federal-line', 'interpreting', { hours: HOURS }, (p) => {
+  const pay = standardPaycheck(p.hours);
+  return {
+    prompt: `A pay stub shows gross pay ${money(pay.gross)}, Social Security ${money(pay.socialSecurity)}, Medicare ${money(pay.medicare)}, Arizona income tax ${money(pay.arizona)} and take-home pay ${money(pay.net)}. The federal income tax line is smudged. How much was it?`,
+    answer: pay.federal,
+    misconceptions: [{ cents: pay.gross - pay.net, explanation: 'That is all four deductions together. Take away the three you can read.' }],
+    explanation: `All deductions: ${money(pay.gross)} − ${money(pay.net)} = ${money(deductions(pay))}. Federal: ${money(deductions(pay))} − ${money(pay.socialSecurity)} − ${money(pay.medicare)} − ${money(pay.arizona)} = ${money(pay.federal)}.`,
+    sources: PAYCHECK_SOURCES,
+  };
+});
+
 // --- Lesson -------------------------------------------------------------------
 
 const std = standardPaycheck(80);
@@ -288,7 +300,7 @@ export const M04_PRACTICE = {
 
 export const M04_EXTRA = {
   id: 'm04-extra', kind: 'practice', module: 'm04', title: 'Module 4 extra practice',
-  templates: [grossPay, medicare, arizona, recordPaycheck, stubLines].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [grossPay, medicare, arizona, federalLine, recordPaycheck, stubLines].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M04_REMEDIAL = {
@@ -298,10 +310,19 @@ export const M04_REMEDIAL = {
 
 // The module check: 10 questions (7 read and predict, 2 record it yourself,
 // 1 explain why).
+// Every figure on a pay stub follows from the hours, so in the check each
+// question gets its own hours in each version: no question can show
+// another's answers.
+const withHours = (t, hours) => ({ ...t, params: { ...t.params, hours: { byVersion: hours } } });
 export const M04_GATE = {
   id: 'm04', kind: 'gate', title: 'Module 4 check',
-  templates: [grossPay, medicare, socialSecurity, arizona, taxesTotal, netFromStub, drill[0], recordPaycheck, stubLines, explainPay],
+  templates: [
+    withHours(grossPay, [41, 52, 63, 74]), withHours(medicare, [42, 53, 64, 75]), withHours(socialSecurity, [43, 54, 65, 76]), withHours(arizona, [44, 55, 66, 77]),
+    withHours(taxesTotal, [45, 56, 67, 78]), withHours(netFromStub, [46, 57, 68, 79]), withHours(federalLine, [47, 58, 69, 80]),
+    withHours(recordPaycheck, [48, 60, 71, 50]), withHours(stubLines, [72, 61, 40, 51]), explainPay,
+  ],
 };
 
 // Questions Checkpoint A draws from this module.
-export const M04_CHECKPOINT = [grossPay, recordPaycheck];
+// The same hours lists as the module check, so the two never share a paycheck.
+export const M04_CHECKPOINT = [withHours(netFromStub, [46, 57, 68, 79]), withHours(recordPaycheck, [48, 60, 71, 50])];

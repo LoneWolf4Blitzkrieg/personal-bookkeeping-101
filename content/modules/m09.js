@@ -92,12 +92,13 @@ const tbFromPages = {
 // that explains it. Each version has a different kind of error, and no other
 // suspect passes any test.
 // The amount with the last two digits of its dollars swapped ($47.15 →
-// $74.15), or null when there are no two different digits to swap.
+// $74.15), or null when there are no two different digits to swap, or when
+// the swap would start with a 0 ($70.12 → $07.12 reads as a dropped digit).
 function swapped(c) {
   const d = Math.floor(c / 100);
   const tens = Math.floor(d / 10) % 10;
   const ones = d % 10;
-  if (d < 10 || tens === ones) return null;
+  if (d < 10 || tens === ones || (ones === 0 && d < 100)) return null;
   return c + (ones - tens) * 900;
 }
 const swapDiff = (c) => (swapped(c) === null ? null : Math.abs(swapped(c) - c));
@@ -196,7 +197,9 @@ const swapDifference = num('m09-swap-difference', 'interpreting', { c: { min: 12
   };
 });
 
-// Production: correct a trial balance that has a transposition in it.
+// Production: correct a trial balance that has a transposition in it. The
+// totals are left blank, so the learner adds both columns before finding
+// the error.
 const tbCorrect = {
   id: 'm09-tb-correct', module: 'm09', kind: 'amounts', part: 'producing', points: 4,
   params: { ...MONTH, groceries: { min: 1200, max: 9800, step: 1 } },
@@ -205,20 +208,34 @@ const tbCorrect = {
     for (let n = 0; n < 20 && !swapDiff(g); n++) g += 100;
     const right = monthBalances({ ...p, groceries: g });
     const shown = right.map((a) => (a.no === CHART.groceries.no ? { ...a, debit: swapped(g) } : a));
-    const totalRight = total(right, 'debit');
+    const shownDebits = total(shown, 'debit');
+    const credits = total(shown, 'credit');
     return {
-      prompt: `${p.name}'s trial balance does not balance. One amount was copied with two digits swapped. Find it, then write the corrected figures.`,
-      report: tb(p.name, shown, { errorShown: true }),
+      prompt: `${p.name}'s trial balance does not balance, and its totals are left blank. One amount was copied with two digits swapped. Add up both columns, then find the amount that was copied wrong.`,
+      report: tb(p.name, shown, { errorShown: true, ask: ['total'] }),
       fields: [
+        { label: 'Debits total, as copied', answer: shownDebits },
+        { label: 'Credits total', answer: credits },
         { label: 'Difference between the two totals', answer: swapDiff(g) },
         { label: 'The swapped amount, as it should be', answer: g },
-        { label: 'Corrected Debits total', answer: totalRight },
-        { label: 'Corrected Credits total', answer: total(right, 'credit') },
       ],
-      explanation: `The totals are ${money(swapDiff(g))} apart, and ${money(swapDiff(g))} ÷ 9 = ${money(swapDiff(g) / 9)}: a transposition. Groceries shows ${money(swapped(g))} but should be ${money(g)}. Corrected, both columns total ${money(totalRight)}.`,
+      explanation: `Debits ${money(shownDebits)}, credits ${money(credits)}: ${money(swapDiff(g))} apart, and ${money(swapDiff(g))} ÷ 9 = ${money(swapDiff(g) / 9)}, a transposition. Groceries shows ${money(swapped(g))} but should be ${money(g)}.`,
     };
   },
 };
+
+// Correcting a total once the error is found.
+const correctedTotal = num('m09-corrected-total', 'interpreting', { total: { min: 80000, max: 250000, step: 1 }, c: { min: 1200, max: 9800, step: 1 }, name: { pick: NAMES } }, (p) => {
+  let c = p.c;
+  for (let n = 0; n < 20 && !swapDiff(c); n++) c += 100;
+  const shownTotal = p.total - c + swapped(c);
+  return {
+    prompt: `${p.name}'s Debits column totals ${money(shownTotal)}, but one amount on it was copied as ${money(swapped(c))} instead of ${money(c)}. What should the Debits total be?`,
+    answer: p.total,
+    misconceptions: [{ cents: shownTotal + Math.abs(swapped(c) - c) * (swapped(c) > c ? 1 : -1), explanation: 'Take the wrong amount out and put the right one in; the total moves the other way.' }],
+    explanation: `${money(shownTotal)} − ${money(swapped(c))} + ${money(c)} = ${money(p.total)}.`,
+  };
+});
 
 // --- Lesson -------------------------------------------------------------------
 
@@ -351,7 +368,7 @@ export const M09_PRACTICE = {
 
 export const M09_EXTRA = {
   id: 'm09-extra', kind: 'practice', module: 'm09', title: 'Module 9 extra practice',
-  templates: [tbTotal, oneSided, swapDifference, tbFromPages, tbCorrect].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [tbTotal, oneSided, swapDifference, correctedTotal, tbFromPages, tbCorrect].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M09_REMEDIAL = {
@@ -363,7 +380,7 @@ export const M09_REMEDIAL = {
 // 1 explain why). tbFromPages comes first: later modules mix it in.
 export const M09_GATE = {
   id: 'm09', kind: 'gate', title: 'Module 9 check',
-  templates: [tbTotal, diagnose, wrongSide, oneSided, slide, swapDifference, drill[0], tbFromPages, tbCorrect, explainProof],
+  templates: [tbTotal, diagnose, wrongSide, oneSided, slide, swapDifference, correctedTotal, tbFromPages, tbCorrect, explainProof],
 };
 
 // Questions Checkpoint C draws from this module.
