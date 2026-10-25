@@ -1,0 +1,1415 @@
+Proposal: A Standard for Self-Contained 40-Hour Courses
+=======================================================
+Length, structure, and teaching method: the systematic phonics model
+Prepared by Raul Bautista - October 8, 2026
+Revised October 24, 2026 (draft 3, phonics-led edition)
+
+SUMMARY
+=======
+
+This proposal sets a standard for self-contained short courses: courses that
+take a beginner from no knowledge of a subject to independent, durable use of
+its core skills, without a live instructor. The standard length is 40 hours of
+designed study, made up of 16 modules of 2.5 hours each, taken over about eight
+weeks. Retakes of mastery gates add time beyond that; a typical learner should
+expect 44 to 48 hours in all.
+
+Each module pairs one hour of instruction with 90 minutes of structured
+practice, so 40 percent of the course is instruction and 60 percent is
+practice. Shorter courses can introduce a subject, but they rarely leave the
+learner able to use it a month later.
+
+The governing method is systematic phonics. Phonics teaches the underlying
+code of reading explicitly, one correspondence at a time, in a fixed
+sequence, and practices it until decoding is automatic. Every course built to
+this standard teaches its subject the same way: the parts first, then how
+they combine, in a fixed order, with practice material that uses only what
+has been taught, until the learner can work out unfamiliar material from the
+rules rather than guess at it. The supporting practices (worked examples,
+retrieval practice, spaced review, and mastery gates) come from cognitive and
+educational psychology and are chosen because they serve that method.
+
+The standard rejects the three-cueing model, which teaches learners to guess
+from context and patch over what they cannot decode. The guessing model looks
+different in every subject, but its signature is the same: the learner
+copies answers, leans on a tool, or changes an imitated example until the
+result looks right, without being able to say why it is right. Studying a
+worked example step by step is not guessing; it is the subject's equivalent
+of being shown a letter and its sound.
+
+The phonics model has a particular strength with learners who start behind.
+The reading evidence shows it helping children at risk of reading difficulty
+and older children with reading disabilities, and the author observed the
+same pattern in classrooms over twelve years of schooling (see the section on
+learners who start behind).
+
+Seven commitments follow from this:
+
+1. Teach the code explicitly and synthetically: the basic units first, then
+   the rules for combining them, in a fixed sequence, with no more than two or
+   three genuinely new ideas per module.
+2. Use decodable material only: every example and exercise uses nothing the
+   learner has not been taught.
+3. Practice to automaticity: pair every hour of instruction with 90 minutes of
+   structured practice, including short daily accuracy-then-speed drills, at a
+   pace of about two modules a week.
+4. Teach decoding before production: learners work through examples and
+   predict their outcomes before producing their own work.
+5. Gate progress on demonstrated mastery, checked against explicit rubrics and,
+   wherever possible, an external check, so no learner advances on a
+   foundation that is not there.
+6. Allow no guessing strategies: no cues that let a learner reach the answer
+   without decoding it.
+7. Design for persistence: early wins, visible progress, a way back after a
+   missed week, and a clear route to help.
+
+The standard applies to any subject with a learnable code, meaning a set of
+rules by which its symbols or parts produce their effects. Programming,
+foreign languages, mathematics, music theory, bookkeeping, and electronics all
+qualify, some with the subject variants described below. The appendix applies
+the standard to a beginner Python course as a worked example.
+
+THE PROBLEM WITH COMPRESSED COURSES
+===================================
+
+Most short self-teaching courses are sized by what fits into a weekend or a
+handful of evenings, not by what a beginner needs to retain a skill. The
+result is predictable. Learners finish able to recognize every idea they were
+shown, but unable to produce working results without the lesson in front of
+them.
+
+Recognition and fluency are different achievements. Recognition means a
+learner can follow an explanation and agree that it makes sense. Fluency means
+the learner can use the skill unaided, at speed, on a problem they have not
+seen before, and can still do so a month later.
+
+Three features of compressed courses produce recognition without fluency:
+
+- Too many new ideas per session. Most adults can actively hold only about
+  four new, unchunked elements in working memory at once (Cowan, 2001). This
+  is a limit on short-term capacity, not a measured learning rate, but a
+  lesson that introduces eight or ten new elements leaves most of them
+  unprocessed. The limit of two or three new ideas per module used below is a
+  design inference from it, not a finding.
+- Little or no practice. The learner studies examples but never moves from
+  understanding one to producing one, which is where skill is actually built.
+- Massed scheduling. Packing the material into a few long sittings feels
+  efficient. It produces markedly worse long-term retention than the same
+  hours spread out (Cepeda et al., 2006).
+
+A fourth problem is hidden by the first three. When a course moves faster than
+learners can decode its material, learners do not stop; they compensate. They
+guess from context, imitate surface patterns, and lean on whatever tools will
+fill the gap.
+
+This compensation looks like progress until the material outgrows it. The
+history of reading instruction offers a well-documented case of that failure.
+
+THE PRECEDENT FROM READING INSTRUCTION
+======================================
+
+The clearest evidence on decoding versus guessing comes from a long argument
+over how children should learn to read. Two families of method have competed
+for most of a century.
+
+Systematic phonics teaches the correspondence between letters and sounds
+explicitly, in a fixed sequence. Children then blend those sounds to read
+words they have never seen. Its strictest form, systematic synthetic phonics,
+teaches individual letter sounds first and blending immediately after. The
+research consensus behind phonics instruction is now commonly called the
+science of reading.
+
+Whole language, and its 1990s successor balanced literacy, treat reading as a
+natural process absorbed through exposure to meaningful text. Kenneth Goodman,
+the movement's leading theorist, titled his 1967 paper "Reading: A
+Psycholinguistic Guessing Game." Balanced literacy added some phonics but kept
+the central strategy of whole language, the three-cueing model.
+
+Under three-cueing, a child who meets an unfamiliar word works it out from
+three sources:
+
+- Meaning: what would make sense here, often prompted by the picture.
+- Structure: what would sound grammatically right.
+- Visual information: usually just the first letter.
+
+Sounding out the word comes last, if at all. The strategy succeeds on early
+books with heavy pictures and predictable sentences. It fails around the third
+or fourth grade, when texts outgrow their pictures and the guessing habit has
+displaced decoding.
+
+The evidence favors systematic phonics. The U.S. National Reading Panel (2000)
+found that systematic phonics produced significantly better reading outcomes
+than unsystematic phonics or none. Its meta-analysis of 38 experiments found a
+moderate overall effect (d = 0.41) that persisted after instruction ended,
+larger when phonics began in kindergarten or first grade (Ehri et al., 2001).
+Phonics helped low- and middle-income readers, younger children at risk of
+reading difficulty, and older children with reading disabilities; it did not
+help one group of low-achieving readers that included students with cognitive
+limitations. Synthetic phonics and other systematic programs produced a
+similar advantage, and phonics outperformed every comparison method tested,
+whole language included. England's Rose Review (2006) reached the same
+conclusion and recommended replacing the "searchlights" model, a close
+relative of three-cueing, with the Simple View of Reading. Synthetic phonics
+then became national policy there.
+
+More recently, Mississippi's 2013 Literacy-Based Promotion Act moved the
+state's schools toward phonics-based instruction. Its fourth-grade NAEP
+reading scores rose about 10 points between 2013 and 2019, the largest gain of
+any state. The gain cannot be attributed to phonics alone: the same package
+included teacher coaching and a third-grade reading gate that held back weaker
+readers, which itself raises fourth-grade averages. The gain is consistent
+with the phonics evidence but is not independent proof of it.
+
+Two accounts explain why decoding works. The first is the Simple View of
+Reading (Gough and Tunmer, 1986), which holds that reading comprehension is
+the product of two separate skills:
+
+    Reading comprehension = Decoding x Language comprehension
+
+Because the relation is multiplicative, strength in one factor cannot make up
+for weakness in the other. If decoding is near zero, so is comprehension,
+however large the child's spoken vocabulary.
+
+The second is orthographic mapping (Ehri, 2014). Each time a child decodes a
+word accurately, its spelling, pronunciation, and meaning are bound together
+in memory, until the word is recognized instantly. Guessing never triggers
+this binding, because the child never fully processes the letters.
+
+This standard adopts the phonics model as its governing method. The evidence
+above comes from children learning to read, and its transfer to adults
+learning other subjects has not been tested directly; the limitations and
+evaluation sections say how the standard will test it. The adoption also
+rests on the author's direct experience, described in the section on
+learners who start behind.
+
+THE PHONICS MODEL FOR ANY SUBJECT
+=================================
+
+Every subject this proposal covers has a code: a set of rules by which its
+symbols or parts produce their effects. A learner who has decoded that code
+can reason about material they have never seen; a learner who has only
+learned to imitate surface patterns is confined to material that resembles
+what they have already seen. Most subjects also need conceptual understanding
+beyond rule-following, such as why a ledger must balance or what a function
+is for, and the method treats that understanding as part of the code.
+
+Each element of a phonics program has a direct counterpart in a course built
+to this standard:
+
+- Letters and sounds
+    - In reading: Each letter or letter group and the sound it stands for
+    - In any subject: The basic units and notation of the subject and what
+      each one does (a value and its type, a word ending and the tense it
+      marks, a debit and a credit)
+- Blending
+    - In reading: Combining sounds, left to right, to read a whole word
+    - In any subject: Combining units by known rules to work out a larger
+      result (tracing a program line by line, parsing a sentence word by word,
+      posting a transaction to the ledger)
+- Fixed scope and sequence
+    - In reading: Correspondences taught in a set order, simplest and most
+      common first
+    - In any subject: Ideas taught in dependency order, each module using
+      only earlier ones
+- Decodable texts
+    - In reading: Practice books containing only correspondences already
+      taught
+    - In any subject: Examples and exercises containing only ideas already
+      taught
+- Fluency practice
+    - In reading: Repeated reading of decodable text until it is accurate and
+      quick
+    - In any subject: Short, frequent drills on core operations until they are
+      accurate and then quick
+- No cueing
+    - In reading: No guessing from pictures, context, or the first letter
+    - In any subject: No reaching answers by imitation, answer keys, or tools
+      that do the work
+
+Courses built to the standard follow four principles:
+
+1. Teach the code of the subject explicitly, parts before wholes.
+2. Teach it in a fixed sequence, where each step depends only on earlier ones.
+3. Practice it until decoding becomes automatic.
+4. Withhold the guessing crutches that let learners bypass decoding until they
+   can decode and check what those crutches produce.
+
+The two methods differ in the same ways whatever the subject:
+
+- Core activity
+    - Decoding model (adopted): Working out each step from known rules,
+      including by studying worked examples step by step
+    - Guessing model (rejected): Changing copied examples until the result
+      looks right
+- Unfamiliar material
+    - Decoding model (adopted): Worked out from the rules
+    - Guessing model (rejected): Matched to similar material seen before
+- Source of answers
+    - Decoding model (adopted): Produced by the learner from understood parts
+    - Guessing model (rejected): Copied from examples, answer keys, or tools
+- Response to errors
+    - Decoding model (adopted): The error is diagnosed and its cause located
+    - Guessing model (rejected): Changes are tried until the error disappears
+- Where it breaks down
+    - Decoding model (adopted): Less often; it scales as material gets harder
+    - Guessing model (rejected): Once the material exceeds what can be
+      pattern-matched
+
+The guessing model takes recognizable forms in different subjects:
+
+- In programming, copying code and changing it until it runs, or accepting
+  whatever autocomplete or an AI tool suggests without being able to explain
+  it.
+- In a foreign language, machine-translating whole sentences, or recognizing
+  familiar phrases without being able to parse an unfamiliar sentence.
+- In mathematics, matching a problem to the worked example it most resembles
+  and copying its steps without knowing why each step is valid.
+- In bookkeeping, memorizing where entries usually go rather than knowing why
+  every entry must balance.
+
+In every subject, the equivalent of decoding is the learner's working model of
+how the system behaves: how a program changes state as it runs, how a sentence
+marks tense and agreement, how a ledger stays in balance. Programming
+education calls this the notional machine (du Boulay, 1986; Sorva, 2013), and
+the idea applies to every subject this proposal covers.
+
+A course built on the decoding model makes that working model explicit from
+the first lesson. Every new rule is introduced together with its effect, and
+the learner practices predicting that effect before seeing it, just as a child
+sounds out a word before being told what it says.
+
+THE 40-HOUR STANDARD
+====================
+
+A self-contained beginner course should total 40 hours of designed study: 16
+hours of instruction and 24 hours of structured practice, taken over about
+eight weeks. Six to ten weeks is acceptable; the limits on pace set out below
+matter more than the exact span.
+
+The 40 hours are the course's length, not every learner's. With the target
+first-attempt gate pass rate of 70 to 85 percent (see the evaluation plan),
+retakes add roughly 4 to 8 hours across the course, and setup time adds a
+little more. Course descriptions should state this plainly.
+
+The benchmark is the university introductory course. Under the U.S. federal
+definition of a credit hour (34 CFR 600.2), a three-credit course assumes
+about 45 hours of instruction and 90 hours of outside work, roughly 135 hours
+in all. A 40-hour course does not replace it and should not claim to; it aims
+at the first level of independent use.
+
+- Orientation
+    - Total hours: 8-15
+    - Instruction-to-practice split: Mostly instruction
+    - Duration: 1-3 weeks
+    - What the learner can do at the end: Recognize core ideas and follow
+      examples; skills fade without further work
+- Standard (this proposal)
+    - Total hours: 40, plus retakes
+    - Instruction-to-practice split: 40:60
+    - Duration: About 8 weeks
+    - What the learner can do at the end: Use the core skills unaided on new
+      problems, and retain them months later (to be confirmed by the delayed
+      retention check)
+- Comprehensive
+    - Total hours: 100-150
+    - Instruction-to-practice split: About 33:67
+    - Duration: 12-16 weeks
+    - What the learner can do at the end: Work at the level of a university
+      introductory course
+
+Orientation courses have a legitimate use as a preview before a learner
+commits to more. They should be labeled as such, and not presented as
+producing competence.
+
+What counts as an idea
+----------------------
+
+The sizing procedure below depends on counting ideas, so the unit must be
+defined. An idea is one rule together with its observable effect: something
+the learner can be asked to predict, apply, and explain. Closely related
+forms of a single rule count as one idea (`if`, `elif`, and `else` are one
+idea about choosing a branch). Every construct, symbol, or built-in that
+appears in an example or task must either be counted as an idea in some
+module or be explicitly listed as glossed material (see below). Course
+authors should keep a "constructs used" list per module and check every
+example and the final project against it.
+
+Fitting a subject into 40 hours
+-------------------------------
+
+Because the length is fixed, the variable is scope. Of the 16 modules, 14
+teach new material and 2 are reserved for a final project. With no more than
+two or three genuinely new ideas per teaching module, a course can introduce
+roughly 28 to 42 new ideas in total.
+
+The procedure is:
+
+1. List every idea the learner must be able to use unaided by the end.
+2. Cut the list until it holds no more than about 42 ideas, keeping the ones
+   that later ideas depend on.
+3. Group the ideas into 14 teaching modules in dependency order, so that no
+   module relies on an idea not yet taught. An idea that needs more than one
+   hour of instruction takes two modules.
+4. Reserve modules 15 and 16 for a final project that draws on everything
+   before it.
+
+The hours then follow directly:
+
+    16 modules x (1 hour of instruction + 1.5 hours of practice) = 40 hours
+
+A subject whose essential ideas will not fit within about 42 should be split
+into two courses rather than compressed into one. Compression is exactly the
+failure this proposal is meant to prevent.
+
+Subject variants
+----------------
+
+The 16-module shape fits subjects whose difficulty lies mainly in a modest
+number of rules. Some subjects also demand volume: hundreds of vocabulary
+items, interval and chord recognition by ear, or many repetitions of routine
+transactions. Such subjects may use the following variants without breaking
+the standard:
+
+- A volume track. Items learned by repetition rather than by rule, such as
+  vocabulary or aural drills, run as a separate spaced-repetition track inside
+  the 90-minute practice set. They are not counted in the idea budget, but the
+  track's size and daily load must be stated in the course plan.
+- Glossed material, kept to a minimum. In a foreign language, a short fixed
+  list of essential phrases ("nice to meet you") may be taught as wholes
+  before their grammar is decoded, the equivalent of the few irregular sight
+  words a phonics program teaches early. They are marked as glossed, never
+  used to stand in for decoding, and their parts are later taught as ideas.
+- A different practice split. Where volume or receptive skill dominates, the
+  instruction-to-practice split may shift toward practice (for example 30:70
+  for a language), keeping the 40-hour total.
+- Separate skill components. Where a subject has receptive and productive
+  skills (listening and reading versus speaking and writing), gates assess
+  each separately.
+- A portfolio project. The final project may be a small set of pieces, such as
+  three dialogues and a written text, instead of a single artifact.
+
+Schedule and spacing
+--------------------
+
+Two modules a week is the standard pace, which completes the 16 modules in
+eight weeks. Three a week, which finishes in about six weeks, is the maximum
+for a beginner. Learners should complete no more than one new module per day,
+and should aim for no more than four days between sessions.
+
+These limits matter more than the total. Laboratory studies of spacing (Cepeda
+et al., 2006; Cepeda et al., 2008) consistently find better retention when the
+same study time is spread out than when it is massed, and there is no reason
+to expect a 40-hour course compressed into two weeks to escape that pattern,
+though the studies used shorter materials than a full course.
+
+Adults with jobs and caring responsibilities will sometimes miss the four-day
+limit. A missed week is not a reason to restart. The re-entry procedure is:
+
+1. Redo the retrieval warm-up and exit check of the last completed module.
+2. Reread the error log.
+3. If most exit-check answers are correct, continue with the next module; if
+   not, repeat that module's practice set before moving on.
+
+On days when a full sitting is impossible, a minimum session of 30 to 40
+minutes (one practice-set segment, or the next instruction segment) keeps the
+spacing intact.
+
+MODULE DESIGN STANDARD
+======================
+
+Every module follows the same 60-minute instructional structure, so the
+learner's attention goes to the material rather than to working out what comes
+next. The hour moves from recall, to guided instruction, to increasingly
+independent work.
+
+- Retrieval warm-up
+    - Minutes: 5
+    - What happens: Recall questions on earlier modules, answered from memory
+      before anything new is shown (in module 1, questions on the course
+      setup and orientation material)
+- Explicit instruction
+    - Minutes: 15
+    - What happens: The new idea and its rules, then a worked example divided
+      into labeled steps. The learner predicts the result of each step before
+      it is revealed, and answers one self-explanation prompt
+- Interpretation and prediction
+    - Minutes: 10
+    - What happens: The learner works through short examples, including at
+      least one aimed at a known misconception, and predicts each outcome
+      before checking it
+- Guided practice
+    - Minutes: 15
+    - What happens: Faded examples, completion tasks, and modifications of
+      working examples
+- Independent task
+    - Minutes: 10
+    - What happens: One short problem solved from a blank page
+- Exit check
+    - Minutes: 5
+    - What happens: Three to five ungraded questions confirming the module's
+      core idea; the formal gate comes at the end of the practice set
+
+The order is deliberate. Recall comes first because retrieving old material
+strengthens it and prepares the ground for new material. Independent work
+comes last, once the learner has seen, interpreted, and partly built the idea
+with support.
+
+The five-step teaching cycle described below maps onto these segments:
+predict and check fall in the explicit-instruction and interpretation
+segments, investigate in the interpretation segment, modify in guided
+practice, and make in the independent task.
+
+Cognitive load limits
+---------------------
+
+Each module introduces no more than two or three genuinely new ideas. Early
+examples stay short enough to take in at a glance: a few lines of code, a
+single sentence, one small diagram or ledger.
+
+New notation and new concepts are introduced separately wherever possible, so
+that a learner does not meet an unfamiliar symbol and an unfamiliar idea in
+the same step. Cognitive load rises with the number of interacting elements
+that must be held in working memory at once (Sweller, 2010), and a task that
+consumes that capacity leaves little for learning (Sweller, 1988); keeping
+notation and concepts apart is this standard's application of that
+principle.
+
+A continuous hour of new material exceeds what most beginners can process
+well. The segment structure exists to break the hour into short stretches,
+each ending with the learner doing something rather than only reading.
+Self-paced learners should take a short break after the explicit-instruction
+segment. The segment timings are guidance, not time limits.
+
+INSTRUCTIONAL REQUIREMENTS
+==========================
+
+The following requirements apply to every module of every course. Each one
+puts the decoding model into practice in a specific way, and each rests on
+published evidence or follows directly from the model.
+
+Explicit, synthetic sequence. Every idea is taught explicitly before it is
+used, parts before wholes: the basic units and what each does first, then
+the rules for combining them, as phonics teaches letter sounds before
+blending. The sequence is fixed in advance and the same for every learner.
+
+Decodable material only. No example or exercise contains anything not yet
+taught, apart from material listed as glossed. Material a beginner cannot yet
+decode, such as boilerplate code, idioms, or shortcut formulas, stays out of
+examples until it has been covered, just as a phonics program keeps
+undecodable words out of its practice books. A meta-analysis of experimental
+comparisons found that explicit instruction outperforms unassisted discovery,
+and that guided forms of discovery, supported by feedback, worked examples,
+or prompts to explain,
+outperform other forms of instruction (Alfieri et al., 2011). Kirschner,
+Sweller and Clark (2006) argue that guidance matters most for novices. Their
+critics accept that unguided discovery is weak, but point out that
+problem-based and inquiry learning are heavily scaffolded rather than
+unguided, and can be effective, including for school-age and lower-achieving
+students (Hmelo-Silver, Duncan and Chinn, 2007). The standard is consistent
+with both positions: whatever activity a module uses, the learner is never
+left to discover a rule unaided.
+
+Fluency drills. Decoding must become automatic, not merely possible, so that
+attention is free for larger problems. Phonics programs build this with
+repeated reading of decodable text, and the National Reading Panel (2000)
+found that guided repeated reading improves reading fluency. Each practice
+set therefore opens its interpretation work with a short drill on the core
+operations taught so far (evaluating expressions, conjugating verbs, posting
+entries), done first for accuracy and, once accurate, for speed.
+
+Interpretation before production. Learners work through examples, stating what
+each step does and why, before they produce their own work. The clearest
+evidence comes from programming. Many first-year students cannot reliably
+predict what short programs do (Lister et al., 2004), and scores on tracing
+and code-explaining tasks together account for a substantial share of
+code-writing scores (Lopez et al., 2008). These findings are correlational,
+and a later replication suggests the link is looser than a strict hierarchy
+would imply; they show that interpretation and production go together, not
+that teaching one first causes the other.
+
+Each subject has its own interpretation exercises: trace tables for code,
+parsing and glossing for a foreign language, step-by-step justification for a
+mathematical derivation, posting and balancing for a ledger.
+
+Prediction before feedback. Learners commit to a prediction before checking
+any answer, running any program, or revealing any solution. Checking without a
+prediction is the equivalent of guessing from the picture. A wrong prediction,
+by contrast, exposes the exact misunderstanding that needs correcting.
+
+Worked examples that fade. Novices learn more from studying complete solutions
+than from solving problems unaided, which is known as the worked-example
+effect (Sweller and Cooper, 1985). Support is then withdrawn in stages: a
+complete example, then one with gaps, then a blank page.
+
+Fading matters because of the expertise reversal effect. Guidance that helps
+beginners slows down learners who no longer need it (Kalyuga et al., 2003).
+
+A fixed teaching cycle. Each new idea is taught in five steps: predict the
+outcome of an example, check it, investigate how it works, modify it, and make
+something new with it. The cycle is adapted from PRIMM (Predict, Run,
+Investigate, Modify, Make), which was developed for programming. Early
+evidence is encouraging but limited: in a mixed-methods study in secondary
+schools, classes taught with PRIMM scored higher than a control group on a
+post-test (Sentance, Waite and Kallia, 2019).
+
+Labeled subgoals. Worked examples are divided into named steps, such as
+"identify what is given," "choose the rule," "apply it," and "check the
+result." Subgoal labels improve transfer to unfamiliar problems because
+learners absorb the structure of a solution rather than its surface. The
+effect has been shown with statistics problems (Catrambone, 1998) and in
+programming (Margulieux, Guzdial and Catrambone, 2012).
+
+Varied practice for transfer. The course promises that learners can solve
+problems they have not seen, but far transfer, to contexts that differ from
+the one in which something was learned, is uncommon and depends heavily on
+conditions (Barnett and Ceci, 2002). Each idea is therefore practiced on
+problems that differ in surface features (different topics, quantities, or
+wording) while sharing the same underlying rule, and at least once per phase
+the learner compares two worked examples of such problems and states what
+they have in common. Comparing examples in this way helps learners extract the
+shared structure (Gick and Holyoak, 1983).
+
+Direct treatment of known misconceptions. Every subject has well-documented
+beginner misconceptions. The course designer compiles them before writing any
+module, and each module includes exercises aimed at the ones its content
+invites, placed in the interpretation segment and the answer-key explanations.
+Typical examples include:
+
+- in programming, reading `=` as a statement of equality, which makes
+  `x = x + 1` seem nonsensical;
+- in physics, believing that heavier objects fall faster;
+- in bookkeeping, assuming that a debit always means a decrease; and
+- in a foreign language, assuming that word order works as it does in the
+  learner's native language.
+
+Errors as information. Error messages, wrong answers, and failed checks are
+treated as information to be read, not noise. Before trying again, the learner
+states what went wrong and why. In programming this means reading the error
+message, which is taught from the first modules; in other subjects it means
+finding the step where the work first departed from the rules.
+
+No guessing crutches. The phonics model forbids cueing: a child is not taught
+to guess a word from the picture, and a learner here is not given ways to
+reach an answer without decoding it. In modules 1 to 8, learners make every
+attempt themselves before consulting any tool or answer key. Tools that
+produce the answer for the learner (AI assistants that write the solution, code
+autocomplete, whole-sentence machine translation, answer keys) stay out of
+reach until an attempt is complete. Reference tools that practitioners use and
+that do not supply the answer (a dictionary, a calculator for bookkeeping, a
+keyboard or tuner for music theory) are allowed from the start. Each course
+publishes its own allowed and excluded lists.
+
+Research on AI tools for novices is still developing and its findings are
+mixed, so this rule rests on the decoding principle itself: a tool that
+produces the answer lets the learner bypass the decoding the course exists to
+build. From module 9, tools that practitioners routinely use may be used in
+practice sets, because by then learners can check what the tools produce.
+Gates, checkpoints, and the final project are always completed without
+answer-producing tools, since they are where unaided skill is demonstrated.
+
+No one enforces this rule in a self-contained course. Learners agree to it at
+the start as a personal contract, and any exception is noted in the error log
+with the reason, so the effect of exceptions is visible when they review their
+results.
+
+PRACTICE, SPACING, AND RETENTION
+================================
+
+Practice is where fluency is built, so it receives the larger share of course
+time: 90 minutes per module, 24 hours in all. Practice sets are structured
+rather than open-ended, and they rely on four techniques with evidence behind
+them.
+
+Retrieval practice. Recalling material from memory strengthens it more than
+rereading it does (Roediger and Karpicke, 2006). Every module opens with
+recall questions and closes with an exit check, and every practice set
+includes questions on earlier modules answered without notes.
+
+Spacing. Review is scheduled at widening intervals rather than concentrated at
+the end. Distributed practice consistently produces better long-term retention
+than massed practice (Cepeda et al., 2006), and the best gap between reviews
+grows with how long the material must be retained (Cepeda et al., 2008). A
+workable starting schedule revisits each module's material after about one
+day, one week, and three weeks. Each course includes a review map showing,
+for every module, which later modules' recall questions draw on it.
+
+Interleaving. Once learners know several ideas, practice sets mix problem
+types, so the learner must decide which idea each problem needs. When every
+problem in a set uses the idea just taught, the learner never practices that
+decision (Rohrer and Taylor, 2007). Interleaving begins at module 5, once
+learners have four modules of material to mix. Its evidence is promising but
+less extensive than for retrieval and spacing.
+
+Cumulative review. Recall questions and mixed production tasks together draw
+20 to 30 percent of every practice set from earlier modules: the 10 minutes of
+recall plus at least a third of the independent production tasks. In a review
+of ten common learning techniques, Dunlosky et al. (2013) rated only two as
+highly useful: practice testing and distributed practice. Cumulative review
+combines both.
+
+A standard 90-minute practice set runs as follows:
+
+1. Recall questions on two or three earlier modules (10 minutes). In modules 1
+   and 2, which have fewer earlier modules to draw on, the time goes to extra
+   recall on the current module.
+2. A fluency drill on core operations (5 minutes), then interpretation and
+   prediction exercises (15 minutes).
+3. Arrangement and completion tasks, in which the learner orders scrambled
+   steps or completes a partial example (20 minutes). In programming these are
+   called Parsons problems (Parsons and Haden, 2006).
+4. Independent production from a blank page, mixing current and earlier ideas
+   in varied contexts (25 minutes).
+5. The module's mastery gate, followed by an entry in the error log
+   (15 minutes).
+
+In modules 4, 8, and 12, a 45-minute cumulative checkpoint replaces steps 3
+and 4. The practice set may be split across two sittings, and spreading it
+over a day or two strengthens the spacing effect. In subjects with a volume
+track, 10 to 15 minutes of spaced-repetition review is taken from steps 2 and
+3.
+
+ASSESSMENT AND MASTERY GATES
+============================
+
+No learner advances to a new module until they have shown mastery of the
+previous one. This is the self-teaching equivalent of a third-grade reading
+gate: it catches a weak foundation before later material is built on top of
+it.
+
+Mastery learning, in which progress depends on meeting a set standard rather
+than on time spent, was proposed by Bloom (1968). A meta-analysis of 108
+controlled evaluations found that mastery learning programs improved
+examination performance by about half a standard deviation on average (Kulik,
+Kulik and Bangert-Drowns, 1990). The same analysis found larger effects on
+locally developed tests than on standardized ones, a modest increase in time
+spent on instruction, and, in self-paced college programs, lower completion
+rates. A narrower review of group-based mastery programs in schools found
+essentially no effect on standardized tests and moderate effects on
+experimenter-made tests, and argued that the largest claimed gains came from
+short studies that gave mastery classes extra time (Slavin, 1987). Mastery
+gates are therefore used here alongside the persistence measures described
+later, and the specific pass mark and gate format below are design choices,
+not findings.
+
+What a gate contains
+--------------------
+
+Each gate, together with the error-log entry that follows it, takes about 15
+minutes and forms the last step of the module's practice set. It is scored out
+of 10 points:
+
+- Interpreting (4 points): work through two short examples and predict each
+  outcome exactly; 2 points each, all or nothing.
+- Producing (4 points): solve one short problem from a blank page using the
+  module's ideas, scored against a four-item rubric.
+- Explaining (2 points): state in one or two sentences why a given step works,
+  scored against a model answer listing the required elements (for example,
+  "names the rule" and "states its effect here").
+
+Self-marking
+------------
+
+In a self-contained course the learner marks their own gates, and novices are
+often poor judges of their own work. This is the main threat to the validity
+of the gates, and every gate is built to reduce it:
+
+- Every item has an explicit rubric of observable criteria and a model answer,
+  so marking is a comparison rather than a judgment.
+- Wherever the subject allows, the production item has an external check: the
+  program runs and gives the stated output, the ledger balances, the circuit
+  calculation matches a stated value, a recording is compared with native
+  audio.
+- Learners who have access to a study partner, tutor, or course community may
+  have their answers to the explaining item reviewed by someone else.
+- The evaluation plan compares gate scores with checkpoint and delayed
+  retention scores, which shows whether self-marking is too lenient.
+
+Passing and retaking
+--------------------
+
+The pass mark is 8 of 10 points, and the production item must score 4 of 4. A
+learner who falls short follows a fixed sequence:
+
+1. After a first failure, repeat the practice set with fresh problems, then
+   retake the gate in a different version.
+2. After a second failure, return to the module's worked example, rework it by
+   hand, and write an error-log entry diagnosing what went wrong before the
+   third attempt.
+3. After a third failure, complete the module's short remediation set, which
+   targets its most common misconceptions, and seek outside help using the
+   rules in the section on learners without an instructor. Then retake the
+   gate.
+
+Every gate therefore needs at least four versions, one for each attempt in the
+sequence. Versions count as equivalent when they test the same ideas, probe
+the same misconceptions, and require the same number of steps. Authors should
+build gates from item templates whose surface details (names, numbers, topics)
+can be varied, and should check equivalence during the first trial run.
+
+Retakes add time beyond the 40-hour standard, and this is intentional. The
+standard fixes the length of the course, not of any one learner's path through
+it; a learner who needs more practice should get it rather than be moved on.
+
+Cumulative checkpoints
+----------------------
+
+Checkpoints follow modules 4, 8, and 12, taken after that module's own gate.
+Each takes about 45 minutes and covers all material to that point, catching
+material that passed its own gate but did not stick. The pass mark is 80
+percent, each checkpoint has at least two versions, and every item is tagged
+with the module it tests.
+
+A learner who fails a checkpoint uses the item tags to find the earliest
+module whose material they missed, and repeats that module's practice set and
+gate, not merely the most recent one. That is where the gap began. Later
+modules are repeated only if their items were also missed.
+
+THE STANDARD COURSE TEMPLATE
+============================
+
+Every course built to this standard follows the same 16-module, eight-week
+template, with the subject variants described above where needed. The subject
+changes; the shape does not.
+
+- Weeks 1-2: Foundations
+    - Modules: 1 to 4
+    - Purpose: The basic units and notation of the subject, and the working
+      model of how they behave
+    - Assessment at the end: Checkpoint A (after module 4)
+- Weeks 3-4: Core operations
+    - Modules: 5 to 8
+    - Purpose: The main rules for combining the basic units, and the first
+      interleaved practice
+    - Assessment at the end: Checkpoint B (after module 8)
+- Weeks 5-6: Extension
+    - Modules: 9 to 12
+    - Purpose: Larger structures built from the core, and breaking bigger
+      problems into parts
+    - Assessment at the end: Checkpoint C (after module 12)
+- Weeks 7-8: Integration
+    - Modules: 13 to 16
+    - Purpose: The last new ideas in modules 13 and 14, then the final project
+      in modules 15 and 16
+    - Assessment at the end: Final project complete
+
+Three rules run across the phases. The no-guessing-crutches rule applies
+strictly through module 8, interleaved practice runs from module 5 to the
+end, and decodable material and fluency drills run throughout.
+
+Each phase also ends with a small real-use task: something the learner can do
+with the subject outside the course, such as a short script that does a useful
+job, introducing oneself in the foreign language, or recording a week of one's
+own household spending as balanced entries. These tasks are short, ungraded,
+and meant to make progress visible.
+
+The final project
+-----------------
+
+The final project is a single substantial piece of work, or a small portfolio
+in subjects that use that variant, completed from a blank page and drawing on
+ideas from every phase. The learner chooses its topic within a specification
+the course provides. Module 15 is spent planning it and dividing it into
+parts; module 16 is spent producing, checking, and correcting it. Learners
+should expect module 16 to run over its 2.5 hours, and may spread it over
+several sittings.
+
+Its form depends on the subject: a program of 60 to 100 lines, a short
+conversation and written piece in a foreign language, a full set of accounts
+for a small business, a working circuit with its calculations. What every
+version shares is that the learner produces the result unaided and can explain
+every part of it.
+
+The project is assessed with a published rubric covering correctness,
+structure, and explanation, plus a staged checklist (plan, first working
+part, complete version, checked version). The explanation requirement is met
+by a short written commentary in which the learner explains each part of the
+work in their own words, checked against the rubric.
+
+Outcomes
+--------
+
+By the end of a course built to this standard, a learner should be able to:
+
+- interpret any example built from the course's core ideas and predict its
+  outcome;
+- produce correct work unaided, from a blank page, on problems they have not
+  seen before;
+- diagnose an error and locate its cause before changing anything; and
+- break a larger problem into parts that use the course's ideas.
+
+LEARNERS WHO START BEHIND
+=========================
+
+The strongest case for the phonics model is what it does for learners who
+start behind. In the reading evidence, systematic phonics helped younger
+children at risk of reading difficulty and older children with reading
+disabilities, as well as low- and middle-income readers (Ehri et al., 2001).
+It did not help every struggling group: one group of low-achieving readers
+that included students with cognitive limitations did not benefit, so the
+method is not a guarantee.
+
+The author's own observation points the same way. As a student in the
+Arizona public school system from kindergarten through twelfth grade, between
+2006 and 2017, the author saw that teachers whose formal and informal
+teaching leaned toward the older, systematic, explicit style (teaching the
+parts of a subject directly, in order, with plenty of practice) had greater
+overall success with their students than teachers who leaned toward newer,
+less structured approaches. The difference was most visible among students
+whose comprehension was below their grade level. Many other factors affect
+outcomes, and this is a first-hand observation rather than a controlled
+comparison, but it agrees with the published evidence and is a large part of
+why this standard adopts the phonics model.
+
+A course built to the standard responds to a struggling learner the way a
+phonics program does: with more explicit instruction and more decodable
+practice, never with a shortcut. In particular:
+
+- Prerequisite check. Each course lists what it assumes (for example, basic
+  arithmetic for bookkeeping, or comfortable reading in the course's
+  language) and provides a short self-check with a remedial unit for anyone
+  who needs it before module 1.
+- Extra decodable practice. Every module has a supplementary practice set,
+  built only from ideas already taught, for learners who want more before
+  the gate.
+- Smaller steps on request. A learner may split any module across two or
+  three sittings and take the instruction segment twice.
+- More frequent review. A learner who fails a gate adds the module's recall
+  questions to each of the next three practice sets.
+- No retreat to guessing. When a learner struggles, the course never offers
+  hints that let them reach an answer without decoding it. The help is always
+  a return to the rule and a worked example that applies it.
+
+The evaluation plan reports results separately for learners who did and did
+not need the prerequisite remedial unit, so the standard can check whether
+the method serves learners who start behind as well as the reading evidence
+and the author's observation suggest.
+
+ADAPTATIONS FOR LEARNERS WITHOUT AN INSTRUCTOR
+==============================================
+
+A self-contained course has no teacher to notice confusion or keep the learner
+going, so the course itself must do that work. The adaptations below take over
+the functions an instructor would normally serve.
+
+Feedback and diagnosis
+----------------------
+
+- Answer keys behind a deliberate step. Answers sit at the end of each
+  practice set, not beside the questions, so the learner commits to a
+  prediction before checking it.
+- Explanations, not just answers. Every answer key entry explains why the
+  answer is correct. For common wrong answers, it names the misconception that
+  produced them. Feedback about the task and how to improve it helps more
+  than grades or praise (Hattie and Timperley, 2007), and explanatory
+  feedback generally helps more than a bare right-or-wrong mark, especially
+  for novices, provided it is kept concise (Shute, 2008).
+- Rubrics and checklists for open work. Blank-page tasks and explanations
+  cannot be checked against a single answer, so each comes with a rubric of
+  observable criteria and, where possible, an external check.
+- A personal error log. Learners record each error, its cause, and the
+  correction. Reviewing the log before each gate turns individual mistakes
+  into targeted practice.
+- Self-explanation prompts. Worked examples pause to ask the learner to
+  explain a step in their own words before reading on. Learners who explain
+  examples to themselves learn more from them, and prompting them to do so
+  improves understanding (Chi et al., 1989; Chi et al., 1994).
+
+Placement
+---------
+
+Adult beginners differ widely in what they already know. Each course offers an
+optional placement test built from its first checkpoints. A learner who passes
+Checkpoint A may start at module 5, and one who passes Checkpoint B may start
+at module 9, avoiding the expertise reversal effect described above.
+
+Persistence and pace
+--------------------
+
+Completion rates in open online courses are low and have not improved: in
+2017-18 only about 3 percent of all participants in Harvard and MIT courses on
+edX finished, though about half of those who paid for a certificate did (Reich
+and Ruipérez-Valiente, 2019). Self-paced mastery programs have also been found
+to reduce completion rates in college classes (Kulik, Kulik and
+Bangert-Drowns, 1990). Motivation and persistence are stronger when learners'
+needs for competence, autonomy (supported, for example, by meaningful choice),
+and relatedness are met, though the evidence is weaker for relatedness than
+for the other two (Ryan and Deci, 2000). The course builds these in:
+
+- An early win. Module 1 ends with the learner producing something real,
+  however small, from a blank page.
+- Visible progress. A one-page progress map shows every module, gate, and
+  checkpoint, and the learner marks each one off.
+- Choice. The learner chooses the final project's topic and the contexts of
+  the phase-end real-use tasks.
+- Company. Learners are encouraged, though not required, to take the course
+  with a study partner or a course community and to meet weekly to compare
+  error logs.
+- A fixed schedule. Learners choose specific session days at the start and
+  treat them as appointments. Without an outside schedule, self-paced study
+  tends to drift into the massed, irregular pattern the spacing research warns
+  against.
+- A realistic time check. If a module takes more than 4 hours, the learner
+  checks whether they are skipping the worked examples or overdoing practice,
+  and notes it in the log. Time overruns are normal, not a sign of failure. A
+  sample 12-week calendar is provided alongside the 8-week one.
+- A re-entry procedure after missed sessions, as described under schedule and
+  spacing.
+
+Getting stuck
+-------------
+
+A learner stuck for more than 20 minutes first rereads the relevant worked
+example, then reworks it by hand, and only then seeks outside help. Each
+course names where that help can be found: a course forum or community, a
+study partner, or a tutor. Outside help is used to understand the problem,
+never to obtain a finished answer; a useful request describes what the
+learner tried and where they think the error lies.
+
+These measures cannot fully replace a good teacher. They do, however, cover
+the things a teacher contributes most often: catching a misunderstanding
+early, keeping the learner at a steady pace, and keeping them going.
+
+MATERIALS AND PRESENTATION STANDARDS
+====================================
+
+Course materials should direct the learner's attention to the content and to
+nothing else. The standards below follow Mayer's principles of multimedia
+learning (Mayer, 2020).
+
+- Explanation beside the example. Commentary sits directly next to the step it
+  explains, not in a separate block further down. Making learners look back
+  and forth between an example and a distant explanation adds effort without
+  adding understanding. Mayer's spatial contiguity principle addresses this;
+  cognitive load researchers call the cost the split-attention effect.
+- No decoration. Images, icons, and illustrations appear only when they
+  explain something. Decorative material competes for attention, which Mayer's
+  coherence principle warns against.
+- Complete examples. Each worked example appears in full in one place, with
+  its outcome directly beside or below it, and is never split across two
+  pages. Where a subject uses code, it appears in a monospace font with line
+  numbers.
+- Meaningful labels. Names and labels describe what they stand for wherever
+  the subject's own conventions allow.
+- Signaling. Each module states its core idea in one sentence at the top and
+  returns to it in the exit check.
+
+Printed materials
+-----------------
+
+The standard print edition uses a compact layout to save paper and ink:
+
+- body text in 10-point Times, headings in about 12.5-point bold Times, and
+  any code in a monospace font at about 9 points;
+- narrow spacing between sections and no forced page breaks, so sections flow
+  continuously, except that a worked example is always kept together on one
+  page (moved whole to the next page if needed);
+- margins of about 0.85 inches at the sides and 0.6 inches at the top and
+  bottom; and
+- tables drawn with thin rules, with no solid header bars or shaded rows.
+
+A large-print edition with body text of at least 14 points, wider line
+spacing, and a sans-serif font is offered alongside it.
+
+On screen, the same materials should discourage copying: learners write or
+type out every example themselves rather than pasting it, in keeping with the
+no-guessing-crutches rule.
+
+Accessibility
+-------------
+
+- Every diagram, trace table, ledger, and piece of notation has a text
+  alternative that a screen reader can present, or an equivalent described
+  form.
+- Audio material has transcripts, and video has captions.
+- Text and background meet standard contrast guidelines on screen.
+- Gates are untimed, and segment timings are guides only; learners who need
+  more time take it.
+- Writing out examples may be done by hand, by typing, by dictation, or by
+  reading them aloud step by step, whichever the learner can do.
+- Instructions use plain language, with subject terms defined when first
+  used, to help learners working in a second language.
+
+LIMITATIONS AND RISKS
+=====================
+
+The figures in this proposal are informed judgments, not measured constants.
+No study establishes the exact number of hours that produces beginner fluency
+in any subject, so the 40-hour standard should be revised against real learner
+results.
+
+The standard adopts the phonics model as its governing method, but the
+decisive phonics trials were run on children learning to read, not on adults
+learning a new subject, and the author's classroom observation, though
+consistent with them, is not a controlled study. Whether the model carries
+over to adult self-study in other subjects is what the evaluation plan must
+show. Much of the other supporting research comes from individual fields, such
+as programming, statistics, or algebra, and its transfer to other subjects is
+assumed rather than demonstrated.
+
+Several cited findings are also narrower than their reputations suggest. The
+reading evidence is strongest for systematic phonics in general; whether
+synthetic phonics outperforms other systematic approaches is still debated.
+Mastery learning effects are moderate and smaller on standardized tests, and
+the approach costs some extra time. Interleaving and arrangement tasks have
+promising but less widely replicated support, so they are used here as
+practice formats rather than relied on as proven effects.
+
+The decoding model fits best where a subject has a clear code of rules. A
+practical test is whether the core of the subject can be stated as a
+manageable set of rules that predict outcomes. Programming, bookkeeping, and
+the grammar of a language pass it; music theory passes for notation and
+harmony but not for ear training. The model fits less well for skills that
+are mainly physical, such as playing an instrument or a sport, and for
+open-ended creative work. Courses in those areas can still use explicit
+instruction, spaced practice, and mastery gates, but should apply the 40-hour
+figure and the decoding framing with more caution.
+
+Self-marked gates are the weakest link in the design. Rubrics, external
+checks, and comparison with retention scores reduce the risk but do not
+remove it.
+
+Building a course to this standard is a substantial job. Four versions of
+every gate, two of every checkpoint, retake practice sets, remediation sets,
+rubrics, and fully explained answer keys can come to several hundred keyed
+items per course. Item templates reduce the work, and authors should plan for
+it from the start.
+
+Learners vary widely in speed. Some will need twice the practice time allotted
+here; the mastery gates are designed to absorb that, and such learners may
+take twelve weeks rather than eight.
+
+The no-guessing-crutches rule may meet resistance, since AI assistants and
+similar tools are standard in many fields. The rule is temporary and has one
+purpose: learners should adopt the tools only once they can decode what the
+tools produce.
+
+Finally, a longer course risks more dropouts than a short one. The persistence
+measures above are meant to counter this, and completion rates should be
+tracked from the first group of learners in every course.
+
+EVALUATION PLAN
+===============
+
+Each new course should be treated as a draft until it has been tested on real
+learners. Five measures should show whether it works.
+
+- First-attempt gate pass rate
+    - When it is measured: Every module
+    - Target: 70 to 85 percent; lower suggests the module is overloaded,
+      higher that it is too easy
+- Time spent per module
+    - When it is measured: Every module
+    - Target: Median time within 25 percent of the 2.5-hour allotment. This
+      measures the course, not the learner; individual learners may take much
+      longer
+- Delayed retention check
+    - When it is measured: Four weeks after completion
+    - Target: 70 percent or more on a cumulative test of interpretation and
+      production
+- Self-marking accuracy
+    - When it is measured: At each checkpoint and the retention check
+    - Target: Learners who passed a module's gate should mostly answer that
+      module's checkpoint items correctly; a large gap suggests lenient
+      self-marking
+- Completion rate
+    - When it is measured: End of course
+    - Target: Recorded for every group and compared over time
+
+Every measure is reported separately for learners who needed the
+prerequisite remedial unit and those who did not.
+
+The first group for each course should be small, about five to ten learners,
+and its results treated qualitatively: with so few learners, one person moves
+a pass rate by 10 to 20 points, so the percentage targets cannot yet be
+judged. Each learner's error log and timings should be reviewed once that
+learner finishes, and modules with low pass rates or long completion times
+revised first, usually by splitting them or adding worked examples. The
+percentage targets apply from groups of about 15 learners or more, or from
+several small groups combined.
+
+Before the template is declared general, it should be trialed on at least one
+volume-heavy subject, such as a foreign language, as well as a rule-heavy one,
+such as programming.
+
+If most learners in a subject need substantially more than 40 hours, the
+course's scope should be cut rather than its length extended. Of the five
+measures, the delayed retention check matters most, because it tests the
+outcome this proposal exists to secure: skill that is still there a month
+later.
+
+RECOMMENDATION
+==============
+
+Self-contained beginner courses should be built to a single standard: 40 hours
+in 16 modules, each pairing one hour of instruction with 90 minutes of
+practice, taken over about eight weeks. They should teach by the systematic
+phonics model: the underlying code of the subject taught explicitly, parts
+before wholes, in a fixed sequence, with decodable material only, and
+practiced until it is automatic. They should exclude the guessing strategies
+that three-cueing represents, and should answer a struggling learner with
+more explicit instruction and more practice, never a shortcut.
+
+Progress should be gated on mastery checked by explicit rubrics and external
+checks where possible, and the course should be designed to keep self-taught
+learners going, not only to teach them.
+
+The same template, sizing procedure, and gating rules apply to any subject
+with a learnable code, with the subject variants set out above. The appendix
+shows them applied to one subject.
+
+APPENDIX: WORKED EXAMPLE, A BEGINNER PYTHON COURSE
+==================================================
+
+This appendix applies the standard to an introduction to Python for complete
+beginners. Its 14 teaching modules introduce 35 new ideas, within the limit of
+about 42, and no module introduces more than three. Ideas are counted as
+defined above; every construct the examples and final project use is listed
+under some module.
+
+Before module 1, a short setup guide (not counted in the 40 hours, about 30
+minutes) covers installing Python and opening the interactive prompt and an
+editor.
+
+- Module 1: Values and types
+    - New ideas: running code at the interactive prompt and from a file;
+      numbers and strings; how Python evaluates an expression
+    - Common errors targeted: treating `"5"` and `5` as the same thing
+- Module 2: Variables and assignment
+    - New ideas: names bound to values; reassignment; reading an error message
+      (traceback)
+    - Common errors targeted: reading `=` as equality; ignoring the last line
+      of a traceback
+- Module 3: Expressions and operators
+    - New ideas: arithmetic and precedence; integer division and remainder;
+      joining strings
+    - Common errors targeted: confusing integer division with true division
+- Module 4: Input and output
+    - New ideas: `print()`; `input()`; type conversion
+    - Common errors targeted: forgetting that `input()` returns a string
+- Module 5: Conditionals
+    - New ideas: comparisons and Boolean operators; choosing a branch with
+      `if`, `elif`, and `else`; indentation as structure
+    - Common errors targeted: confusing `=` with `==`; treating indentation as
+      cosmetic
+- Module 6: Loops I
+    - New ideas: `while` loops; counters and stopping conditions
+    - Common errors targeted: infinite loops; a loop variable that never
+      changes
+- Module 7: Loops II
+    - New ideas: `for` loops with `range`; accumulating a result
+    - Common errors targeted: off-by-one errors with `range`
+- Module 8: Lists I
+    - New ideas: creating and indexing lists; `len` and `append`
+    - Common errors targeted: forgetting that indexes start at 0
+- Module 9: Lists II
+    - New ideas: iterating over and slicing lists and strings; changing lists
+      in place, contrasted with strings, which cannot be changed
+    - Common errors targeted: two names referring to one list; changing a list
+      while looping over it
+- Module 10: Functions I
+    - New ideas: defining functions; parameters and return values
+    - Common errors targeted: confusing `print` with `return`
+- Module 11: Functions II
+    - New ideas: scope; breaking a problem into functions
+    - Common errors targeted: confusing local and global variables
+- Module 12: Dictionaries
+    - New ideas: keys and values; lookup and update, checking for a key with
+      `in`; iterating with `.items()` and unpacking pairs
+    - Common errors targeted: looking up a key that does not exist
+- Module 13: String handling
+    - New ideas: string methods, including `split` and `strip`; formatting
+      output with f-strings; methods that return a new string
+    - Common errors targeted: expecting string methods to change the original
+- Module 14: Files
+    - New ideas: reading text files with `with open(...)`; writing text files
+    - Common errors targeted: forgetting the newline at the end of each line
+- Module 15: Final project I
+    - New ideas: none; the module is spent planning the program and dividing
+      it into functions
+    - Common errors targeted: writing everything at once before testing any of
+      it
+- Module 16: Final project II
+    - New ideas: none; the module is spent building, testing, and debugging
+      the program
+    - Common errors targeted: changing code at random instead of reading the
+      error message
+
+Phase-end real-use tasks: a tip calculator (module 4), a number-guessing game
+(module 8), a word counter for a pasted paragraph (module 12).
+
+The final project is a program of 60 to 100 lines that reads data from a text
+file, organizes it with lists and dictionaries, and reports results through
+well-named functions. The learner chooses the data; a simple expense tracker
+or gradebook fits. Its rubric checks that the program gives correct output on
+a provided test file, that it is divided into functions, and that a short
+commentary explains each function.
+
+Tools: through module 8, AI assistants and code autocomplete stay switched
+off; the official Python documentation is allowed throughout. From module 9,
+practice sets may use autocomplete, and an AI assistant may be asked to
+explain code the learner has already written, but not to write solutions.
+Gates, checkpoints, and the final project are completed without either.
+
+REFERENCES
+==========
+
+All references were checked against publisher, library, or database records
+in October 2026. Those added in the October 24 revision were checked against
+their Crossref DOI records on October 24, 2026, and the claims attributed to
+them were checked against the full text of each paper, except Barnett and
+Ceci (2002), Reich and Ruipérez-Valiente (2019), and Sweller (2010), which
+were checked against their abstracts and published summaries only. Ehri et
+al. (2001), added in draft 3, was checked against its Crossref record and
+abstract on October 24, 2026.
+
+Alfieri, L., Brooks, P. J., Aldrich, N. J., & Tenenbaum, H. R. (2011). Does
+    discovery-based instruction enhance learning? Journal of Educational
+    Psychology, 103(1), 1-18.
+
+Barnett, S. M., & Ceci, S. J. (2002). When and where do we apply what we
+    learn? A taxonomy for far transfer. Psychological Bulletin, 128(4),
+    612-637.
+
+Bloom, B. S. (1968). Learning for mastery. Evaluation Comment, 1(2).
+
+Catrambone, R. (1998). The subgoal learning model: Creating better examples so
+    that students can solve novel problems. Journal of Experimental
+    Psychology: General, 127(4), 355-376.
+
+Cepeda, N. J., Pashler, H., Vul, E., Wixted, J. T., & Rohrer, D. (2006).
+    Distributed practice in verbal recall tasks: A review and quantitative
+    synthesis. Psychological Bulletin, 132(3), 354-380.
+
+Cepeda, N. J., Vul, E., Rohrer, D., Wixted, J. T., & Pashler, H. (2008).
+    Spacing effects in learning: A temporal ridgeline of optimal retention.
+    Psychological Science, 19(11), 1095-1102.
+
+Chi, M. T. H., Bassok, M., Lewis, M. W., Reimann, P., & Glaser, R. (1989).
+    Self-explanations: How students study and use examples in learning to
+    solve problems. Cognitive Science, 13(2), 145-182.
+
+Chi, M. T. H., de Leeuw, N., Chiu, M.-H., & LaVancher, C. (1994). Eliciting
+    self-explanations improves understanding. Cognitive Science, 18(3),
+    439-477.
+
+Code of Federal Regulations, Title 34, section 600.2 (definition of credit
+    hour).
+
+Cowan, N. (2001). The magical number 4 in short-term memory: A reconsideration
+    of mental storage capacity. Behavioral and Brain Sciences, 24(1), 87-114.
+
+du Boulay, B. (1986). Some difficulties of learning to program. Journal of
+    Educational Computing Research, 2(1), 57-73.
+
+Dunlosky, J., Rawson, K. A., Marsh, E. J., Nathan, M. J., & Willingham, D. T.
+    (2013). Improving students' learning with effective learning techniques:
+    Promising directions from cognitive and educational psychology.
+    Psychological Science in the Public Interest, 14(1), 4-58.
+
+Ehri, L. C., Nunes, S. R., Stahl, S. A., & Willows, D. M. (2001). Systematic
+    phonics instruction helps students learn to read: Evidence from the
+    National Reading Panel's meta-analysis. Review of Educational Research,
+    71(3), 393-447.
+
+Ehri, L. C. (2014). Orthographic mapping in the acquisition of sight word
+    reading, spelling memory, and vocabulary learning. Scientific Studies of
+    Reading, 18(1), 5-21.
+
+Gick, M. L., & Holyoak, K. J. (1983). Schema induction and analogical
+    transfer. Cognitive Psychology, 15(1), 1-38.
+
+Goodman, K. S. (1967). Reading: A psycholinguistic guessing game. Journal of
+    the Reading Specialist, 6(4), 126-135.
+
+Gough, P. B., & Tunmer, W. E. (1986). Decoding, reading, and reading
+    disability. Remedial and Special Education, 7(1), 6-10.
+
+Hattie, J., & Timperley, H. (2007). The power of feedback. Review of
+    Educational Research, 77(1), 81-112.
+
+Hmelo-Silver, C. E., Duncan, R. G., & Chinn, C. A. (2007). Scaffolding and
+    achievement in problem-based and inquiry learning: A response to
+    Kirschner, Sweller, and Clark (2006). Educational Psychologist, 42(2),
+    99-107.
+
+Kalyuga, S., Ayres, P., Chandler, P., & Sweller, J. (2003). The expertise
+    reversal effect. Educational Psychologist, 38(1), 23-31.
+
+Kirschner, P. A., Sweller, J., & Clark, R. E. (2006). Why minimal guidance
+    during instruction does not work: An analysis of the failure of
+    constructivist, discovery, problem-based, experiential, and inquiry-based
+    teaching. Educational Psychologist, 41(2), 75-86.
+
+Kulik, C.-L. C., Kulik, J. A., & Bangert-Drowns, R. L. (1990). Effectiveness
+    of mastery learning programs: A meta-analysis. Review of Educational
+    Research, 60(2), 265-299.
+
+Lister, R., Adams, E. S., Fitzgerald, S., Fone, W., Hamer, J., Lindholm, M.,
+    McCartney, R., Moström, J. E., Sanders, K., Seppälä, O., Simon, B., &
+    Thomas, L. (2004). A multi-national study of reading and tracing skills in
+    novice programmers. ACM SIGCSE Bulletin, 36(4), 119-150.
+
+Lopez, M., Whalley, J., Robbins, P., & Lister, R. (2008). Relationships
+    between reading, tracing and writing skills in introductory programming.
+    Proceedings of the Fourth International Workshop on Computing Education
+    Research (ICER '08), 101-111.
+
+Margulieux, L. E., Guzdial, M., & Catrambone, R. (2012). Subgoal-labeled
+    instructional material improves performance and transfer in learning to
+    develop mobile applications. Proceedings of the Ninth Annual International
+    Conference on International Computing Education Research (ICER '12),
+    71-78.
+
+Mayer, R. E. (2020). Multimedia Learning (3rd ed.). Cambridge University
+    Press.
+
+Mississippi Legislature. (2013). Literacy-Based Promotion Act.
+
+National Reading Panel. (2000). Report of the National Reading Panel: Teaching
+    Children to Read. National Institute of Child Health and Human
+    Development.
+
+Parsons, D., & Haden, P. (2006). Parson's programming puzzles: A fun and
+    effective learning tool for first programming courses. Proceedings of the
+    Eighth Australasian Computing Education Conference (ACE 2006), CRPIT 52,
+    157-163.
+
+Reich, J., & Ruipérez-Valiente, J. A. (2019). The MOOC pivot. Science,
+    363(6423), 130-131.
+
+Roediger, H. L., & Karpicke, J. D. (2006). Test-enhanced learning: Taking
+    memory tests improves long-term retention. Psychological Science, 17(3),
+    249-255.
+
+Rohrer, D., & Taylor, K. (2007). The shuffling of mathematics problems
+    improves learning. Instructional Science, 35(6), 481-498.
+
+Rose, J. (2006). Independent Review of the Teaching of Early Reading: Final
+    Report. Department for Education and Skills.
+
+Ryan, R. M., & Deci, E. L. (2000). Self-determination theory and the
+    facilitation of intrinsic motivation, social development, and well-being.
+    American Psychologist, 55(1), 68-78.
+
+Sentance, S., Waite, J., & Kallia, M. (2019). Teaching computer programming
+    with PRIMM: A sociocultural perspective. Computer Science Education,
+    29(2-3), 136-176.
+
+Shute, V. J. (2008). Focus on formative feedback. Review of Educational
+    Research, 78(1), 153-189.
+
+Slavin, R. E. (1987). Mastery learning reconsidered. Review of Educational
+    Research, 57(2), 175-213.
+
+Sorva, J. (2013). Notional machines and introductory programming education.
+    ACM Transactions on Computing Education, 13(2), Article 8, 1-31.
+
+Sweller, J. (1988). Cognitive load during problem solving: Effects on
+    learning. Cognitive Science, 12(2), 257-285.
+
+Sweller, J. (2010). Element interactivity and intrinsic, extraneous, and
+    germane cognitive load. Educational Psychology Review, 22(2), 123-138.
+
+Sweller, J., & Cooper, G. A. (1985). The use of worked examples as a
+    substitute for problem solving in learning algebra. Cognition and
+    Instruction, 2(1), 59-89.

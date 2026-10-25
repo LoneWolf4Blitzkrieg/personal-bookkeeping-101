@@ -1,0 +1,12 @@
+{
+  "name": "personal-bookkeeping-101",
+  "version": "0.1.0",
+  "description": "A free, self-paced course in personal bookkeeping on double-entry ledger paper.",
+  "type": "module",
+  "private": true,
+  "license": "CC-BY-NC-SA-4.0",
+  "author": "Raul Bautista",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
