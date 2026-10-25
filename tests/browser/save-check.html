@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Save check · Personal Bookkeeping 101</title>
+</head>
+<body>
+  <!-- Cross-browser check that progress survives a reload. Open it from the
+       local server; it saves a record, reloads, reads the record back and
+       reports by requesting /save-check-result?engine=...&ok=... (see the
+       server log). Used in the plan's Task 4, step 5. -->
+  <p id="out">Checking…</p>
+  <script type="module">
+    import { createStorage, browserBackend } from '../../js/storage.js';
+    import { createProgressStore } from '../../js/progressStore.js';
+    import { markStep } from '../../js/progress.js';
+
+    const engine = /Firefox\//.test(navigator.userAgent) ? 'firefox' : /Chrome\//.test(navigator.userAgent) ? 'chromium' : 'other';
+    const params = new URLSearchParams(location.search);
+    const store = createProgressStore(createStorage(browserBackend()));
+    const out = document.getElementById('out');
+
+    if (!params.has('token')) {
+      const token = String(Math.floor(Math.random() * 1e9));
+      const progress = markStep(store.load(), `check-${token}`, 0);
+      const saved = store.save(progress);
+      if (!saved) {
+        out.textContent = 'Saving is unavailable.';
+        fetch(`/save-check-result?engine=${engine}&ok=false&reason=unavailable`);
+      } else {
+        location.replace(`?token=${token}`);
+      }
+    } else {
+      const token = params.get('token');
+      const ok = Boolean(store.load().modules[`check-${token}`]?.steps.includes(0));
+      out.textContent = ok ? 'Saved progress survived the reload.' : 'Saved progress was lost.';
+      fetch(`/save-check-result?engine=${engine}&ok=${ok}`);
+    }
+  </script>
+</body>
+</html>

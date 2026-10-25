@@ -23,7 +23,7 @@
   <script type="module">
     import { startAssessment } from './js/app/assess.js';
     const params = new URLSearchParams(location.search);
-    startAssessment(document.getElementById('main'), params.get('id') || 'demo', Number(params.get('v') || 1));
+    startAssessment(document.getElementById('main'), params.get('id') || 'demo', params.has('v') ? Number(params.get('v')) : null);
   </script>
 </body>
 </html>

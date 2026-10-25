@@ -5,7 +5,9 @@ import { escapeHTML } from '../html.js';
 import { ledgerHTML } from '../ledgerView.js';
 import { parseAmount } from '../money.js';
 import { gateVersions, assessmentVersions } from '../items.js';
-import { createSession, submit, currentItem, isComplete, summary } from '../session.js';
+import { createSession, resumeSession, submit, currentItem, isComplete, summary } from '../session.js';
+import { isUnlocked, nextVersion, openSession, saveSession, recordGate, recordCheckpoint, recordExam, recordPlacement, failureStep, addErrorEntry } from '../progress.js';
+import { store, save, mountChrome } from './chrome.js';
 import { DEMO_GATE } from '../../content/assess/demo.js';
 
 const ASSESSMENTS = { demo: DEMO_GATE };
@@ -124,17 +126,55 @@ function readEntry(form) {
 
 const safeAttempt = (n) => (Number.isInteger(n) && n >= 1 ? Math.min(n, 4) : 1);
 
-export function startAssessment(root, id, attempt = 1) {
+const NEXT_STEPS = {
+  retake: 'Do the module\'s practice set again with fresh problems, then take this check again. You will get a different version.',
+  'rework-example': 'Go back to the module\'s worked example and rework it by hand. Write in your error log below what went wrong and why, then take the check again.',
+  remediation: 'Work through the module\'s extra practice on common mistakes, and read the free articles linked at the end of the module. Then take the check again. Needing more tries is normal; it is how the course makes sure nothing is skipped.',
+};
+
+function errorLogFormHTML() {
+  return `<form class="answer-form error-log-form" data-kind="errorlog">
+    <h3>Add to your error log</h3>
+    <p>Writing down a mistake turns it into practice. Fill this in for any question you missed.</p>
+    <label for="log-error">What went wrong</label><input id="log-error" name="error" required>
+    <label for="log-cause">Why it happened</label><input id="log-cause" name="cause" required>
+    <label for="log-fix">The correct way</label><input id="log-fix" name="correction" required>
+    <button class="button" type="submit">Save to my error log</button>
+  </form>`;
+}
+
+// Records a finished sitting in the learner's progress.
+function recordResult(progress, session, at) {
+  const { assessmentId, kind, version } = session.meta;
+  const score = summary(session);
+  if (kind === 'gate') return recordGate(progress, assessmentId, score, at, version);
+  if (kind === 'checkpoint') return recordCheckpoint(progress, assessmentId, score, at, version);
+  if (kind === 'placement') return recordPlacement(progress, session.meta.checkpointId, score, at);
+  if (kind === 'exam') return recordExam(progress, score, at, version);
+  return progress;
+}
+
+export function startAssessment(root, id, requestedVersion) {
+  mountChrome();
+  let progress = store.load();
   const assessment = ASSESSMENTS[id];
   if (!assessment) {
     root.innerHTML = '<h1>Check not found</h1><p>There is no check with that name. Return to the course map to find your next step.</p>';
     return;
   }
-  const version = safeAttempt(attempt);
+  const access = assessment.alwaysOpen ? { unlocked: true } : isUnlocked(assessment.id, progress);
+  if (!access.unlocked) {
+    root.innerHTML = `<h1>${escapeHTML(assessment.title)}</h1><div class="lock-notice"><p><strong>Not open yet.</strong> ${escapeHTML(access.reason)}</p></div>`;
+    return;
+  }
+  // The demonstration gate lets ?v= choose a version; real checks use the learner's attempt count.
+  const version = assessment.alwaysOpen && requestedVersion ? safeAttempt(requestedVersion) : nextVersion(progress, assessment.id);
   const items = assessment.kind === 'gate'
     ? gateVersions(assessment.templates, assessment.id)[version - 1]
     : assessmentVersions(assessment.templates, assessment.id, { count: 2 })[(version - 1) % 2];
-  let session = createSession(items, { assessmentId: assessment.id, kind: assessment.kind, version });
+  const meta = { assessmentId: assessment.id, kind: assessment.kind, version, ...(assessment.checkpointId ? { checkpointId: assessment.checkpointId } : {}) };
+  const saved = openSession(progress, assessment.id);
+  let session = saved && saved.meta.version === version ? resumeSession(items, meta, saved.results) : createSession(items, meta);
   let pendingText = '';
 
   root.innerHTML = `<h1>${escapeHTML(assessment.title)}</h1>
@@ -147,6 +187,12 @@ export function startAssessment(root, id, attempt = 1) {
     responseBox.innerHTML = '';
     if (isComplete(session)) {
       itemBox.innerHTML = resultsHTML(session);
+      const s = summary(session);
+      if (session.meta.kind === 'gate' && !s.passed) {
+        const failed = (progress.modules[session.meta.assessmentId]?.gateAttempts ?? []).filter((a) => !a.passed).length;
+        itemBox.insertAdjacentHTML('beforeend', `<div class="next-step"><h3>What to do next</h3><p>${NEXT_STEPS[failureStep(failed)]}</p></div>`);
+      }
+      if (!s.passed) itemBox.insertAdjacentHTML('beforeend', errorLogFormHTML());
       itemBox.querySelector('#results-heading').focus();
       return;
     }
@@ -177,6 +223,12 @@ export function startAssessment(root, id, attempt = 1) {
     e.preventDefault();
     const form = e.target;
     const kind = form.dataset.kind;
+    if (kind === 'errorlog') {
+      progress = addErrorEntry(store.load(), { moduleId: session.meta.assessmentId, error: form.error.value.trim(), cause: form.cause.value.trim(), correction: form.correction.value.trim() }, new Date().toISOString());
+      save(progress);
+      form.outerHTML = '<p class="feedback feedback-right">Saved to your error log. Review it before your next try.</p>';
+      return;
+    }
     let response;
     if (kind === 'numeric') response = form.answer.value;
     if (kind === 'entry') {
@@ -207,6 +259,11 @@ export function startAssessment(root, id, attempt = 1) {
       responseBox.querySelector('[name=tick]')?.focus();
       return;
     }
+    // Keep the sitting safe: save after every answer, record the result at the end.
+    progress = isComplete(session)
+      ? recordResult(store.load(), session, new Date().toISOString())
+      : saveSession(store.load(), session.meta, session.results);
+    save(progress);
     itemBox.querySelectorAll('form input, form select, form textarea, form button').forEach((el) => { el.disabled = true; });
     responseBox.innerHTML = feedbackHTML(result);
     responseBox.querySelector('[data-action=next]')?.focus();

@@ -74,3 +74,18 @@ test('sessions are not changed in place', () => {
   submit(s, formatCents(items[0].answer));
   assert.equal(s.results.length, 0);
 });
+
+test('a saved session resumes at the next unanswered item', async () => {
+  const { resumeSession } = await import('../js/session.js');
+  let s = createSession(items, { assessmentId: 'm03', kind: 'gate', version: 1 });
+  s = submit(s, formatCents(items[0].answer));
+  const resumed = resumeSession(items, s.meta, s.results);
+  assert.equal(currentItem(resumed), items[1]);
+  assert.deepEqual(resumed.results, s.results);
+});
+
+test('resuming ignores saved results that do not match the items', async () => {
+  const { resumeSession } = await import('../js/session.js');
+  const resumed = resumeSession(items, { assessmentId: 'm03', kind: 'gate', version: 1 }, [{ templateId: 'something-else', points: 2, max: 2 }]);
+  assert.equal(resumed.results.length, 0);
+});

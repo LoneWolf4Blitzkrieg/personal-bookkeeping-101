@@ -65,5 +65,6 @@ export const DEMO_GATE = {
   id: 'demo',
   title: 'Practice gate (demonstration)',
   kind: 'gate',
+  alwaysOpen: true,
   templates: [savingShare, blowMoney, recordTransfer, explainDebit],
 };

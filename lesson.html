@@ -43,37 +43,9 @@
   </footer>
 
   <script type="module">
-    import { MODULES, PHASES } from './content/course.js';
-    import { renderCourseMap, moduleIdFromParam } from './js/app/nav.js';
-
-    const param = new URLSearchParams(location.search).get('m');
-    const id = param === null ? 'm01' : moduleIdFromParam(param);
-    const module = MODULES.find((m) => m.id === id);
-    renderCourseMap(document.getElementById('course-map'), {}, module ? module.id : null, { headingLevel: 3 });
-
-    const title = document.getElementById('module-title');
-    if (module) {
-      title.textContent = module.title;
-      document.getElementById('crumb').textContent = PHASES[module.phase];
-      document.title = `${module.title} · Personal Bookkeeping 101`;
-    } else {
-      title.textContent = 'Module not found';
-      document.getElementById('lesson-body').innerHTML =
-        '<p>There is no module with that name. Choose one from the course map.</p>';
-    }
-
-    const layout = document.getElementById('layout');
-    const menu = document.querySelector('.menu-button');
-    menu.addEventListener('click', () => {
-      const open = layout.classList.toggle('map-open');
-      menu.setAttribute('aria-expanded', String(open));
-    });
-    const toggle = document.querySelector('.map-toggle');
-    toggle.addEventListener('click', () => {
-      const hidden = layout.classList.toggle('map-hidden');
-      toggle.setAttribute('aria-expanded', String(!hidden));
-      toggle.textContent = hidden ? 'Show course map' : 'Hide course map';
-    });
+    import { startLessonPage, wireLayoutButtons } from './js/app/lesson.js';
+    wireLayoutButtons();
+    startLessonPage(location.search);
   </script>
 </body>
 </html>

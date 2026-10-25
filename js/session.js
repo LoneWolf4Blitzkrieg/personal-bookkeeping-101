@@ -8,6 +8,17 @@ export function createSession(items, meta = { kind: 'gate' }) {
   return { items, meta, results: [], last: null };
 }
 
+// Rebuilds a sitting from saved results. Results are kept only while they
+// line up with the items (same template, same order).
+export function resumeSession(items, meta, savedResults = []) {
+  const results = [];
+  for (const r of savedResults) {
+    if (items[results.length]?.templateId !== r.templateId) break;
+    results.push(r);
+  }
+  return { items, meta, results, last: null };
+}
+
 export function currentItem(session) {
   return session.items[session.results.length] ?? null;
 }

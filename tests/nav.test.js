@@ -68,3 +68,17 @@ test('module ids are escaped inside links', () => {
   const html = courseMapHTML({}, null, [{ id: 'x"1', title: 'T', phase: 'core', ideas: [] }]);
   assert.ok(html.includes('m=x&quot;1"'));
 });
+
+test('passed modules are ticked and locked ones are marked locked', async () => {
+  const { emptyProgress, recordGate } = await import('../js/progress.js');
+  const p = recordGate(emptyProgress('2026-07-01T00:00:00.000Z'), 'm01', { points: 9, max: 10, passed: true }, '2026-07-01T00:00:00.000Z', 1);
+  const html = courseMapHTML(p, 'm02');
+  assert.match(html, /<a class="map-module done" href="lesson.html\?m=m01"[^>]*>[^<]*<span class="visually-hidden"> \(done\)<\/span>/);
+  assert.match(html, /<a class="map-module" href="lesson.html\?m=m02"/);
+  assert.match(html, /<a class="map-module locked" href="lesson.html\?m=m03"[^>]*>[^<]*<span class="visually-hidden"> \(locked\)<\/span>/);
+});
+
+test('an empty progress object still draws the map', () => {
+  assert.doesNotThrow(() => courseMapHTML({}, 'm01'));
+  assert.match(courseMapHTML({}, 'm01'), /class="map-module locked" href="lesson.html\?m=m02"/);
+});

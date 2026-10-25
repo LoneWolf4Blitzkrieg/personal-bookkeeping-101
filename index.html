@@ -37,6 +37,18 @@
 
     <h2>Course map</h2>
     <nav class="course-map-overview" id="course-map" aria-label="Course map"></nav>
+
+    <h2>Your progress</h2>
+    <p>Your progress saves automatically in this browser, including after you close it. Open the course from the same web address each time. To keep a backup, or to move to another device, save a progress file and load it there.</p>
+    <p class="progress-tools">
+      <button class="button" type="button" id="export-progress">Save a progress file</button>
+      <input class="visually-hidden" type="file" id="import-progress" accept="application/json,.json">
+      <label class="button button-secondary" for="import-progress">Load a progress file</label>
+    </p>
+    <p id="import-status" role="status"></p>
+
+    <h2>Your error log</h2>
+    <div id="error-log"></div>
   </main>
 
   <footer class="site-footer">
@@ -44,8 +56,8 @@
   </footer>
 
   <script type="module">
-    import { renderCourseMap } from './js/app/nav.js';
-    renderCourseMap(document.getElementById('course-map'), {}, null, { headingLevel: 3 });
+    import { startHomePage } from './js/app/home.js';
+    startHomePage();
   </script>
 </body>
 </html>

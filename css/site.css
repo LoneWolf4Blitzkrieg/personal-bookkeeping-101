@@ -159,3 +159,20 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 .results { border-collapse: collapse; }
 .results th, .results td { border-bottom: 1px solid var(--rule); padding: .3rem .8rem; text-align: left; }
 .assess .ledger-sheet { max-width: 40rem; margin: .8rem 0; }
+
+/* Saving and progress */
+.saved-indicator { margin-left: auto; font-size: .85rem; color: var(--accent); opacity: 0; transition: opacity .3s; }
+.saved-indicator.visible { opacity: 1; }
+.saved-indicator.not-saved { color: #9a3412; }
+.storage-banner { margin: 0; padding: .7rem 1.25rem; background: #fdf0e1; border-bottom: 1px solid #f0c48a; color: #6b3a07; font-size: .92rem; }
+.lock-notice { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: .8rem 1rem; }
+.map-list a.done::after { content: " ✓"; color: var(--accent); }
+.map-list a.locked { color: #8a8475; }
+.map-list a.locked::after { content: " 🔒"; font-size: .75em; }
+.next-step { margin-top: 1rem; padding: .8rem 1rem; border-radius: 8px; background: var(--panel); max-width: 40rem; }
+.error-log-form { margin-top: 1.5rem; }
+.progress-tools { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.button-secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--rule); cursor: pointer; }
+.button-secondary:hover { background: #e7e3d8; }
+#import-progress:focus-visible + label { outline: 3px solid var(--focus); outline-offset: 2px; }
+.error-log td { vertical-align: top; }

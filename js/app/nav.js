@@ -4,6 +4,7 @@
 
 import { MODULES, PHASES, CHECKPOINTS } from '../../content/course.js';
 import { escapeHTML } from '../html.js';
+import { isUnlocked, emptyProgress } from '../progress.js';
 
 const CHECKPOINT_LABELS = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C' };
 
@@ -20,7 +21,14 @@ export function moduleIdFromParam(text, modules = MODULES) {
   return modules.some((m) => m.id === id) ? id : null;
 }
 
+function state(progress, id, done) {
+  if (done) return { cls: ' done', note: ' (done)' };
+  if (!isUnlocked(id, progress).unlocked) return { cls: ' locked', note: ' (locked)' };
+  return { cls: '', note: '' };
+}
+
 export function courseMapHTML(progress, currentId, modules = MODULES, { headingLevel = 2 } = {}) {
+  progress = { ...emptyProgress(''), ...(progress ?? {}) };
   const h = `h${headingLevel}`;
   const parts = [];
   let phase = null;
@@ -31,10 +39,14 @@ export function courseMapHTML(progress, currentId, modules = MODULES, { headingL
       parts.push(`<${h} class="map-phase">${escapeHTML(PHASES[phase] ?? phase)}</${h}><ol class="map-list">`);
     }
     const current = m.id === currentId ? ' aria-current="page"' : '';
-    parts.push(`<li><a class="map-module" href="lesson.html?m=${escapeHTML(m.id)}"${current}>${escapeHTML(moduleLabel(m))}</a></li>`);
+    const s = state(progress, m.id, progress.modules[m.id]?.passed);
+    const note = s.note ? `<span class="visually-hidden">${s.note}</span>` : '';
+    parts.push(`<li><a class="map-module${s.cls}" href="lesson.html?m=${escapeHTML(m.id)}"${current}>${escapeHTML(moduleLabel(m))}${note}</a></li>`);
     const cp = CHECKPOINTS.find((c) => c.after === m.id);
     if (cp) {
-      parts.push(`<li><a class="map-checkpoint" href="assess.html?id=${cp.id}">${CHECKPOINT_LABELS[cp.id]}</a></li>`);
+      const c = state(progress, cp.id, progress.checkpoints[cp.id]?.passed || progress.placement[cp.id]?.passed);
+      const cnote = c.note ? `<span class="visually-hidden">${c.note}</span>` : '';
+      parts.push(`<li><a class="map-checkpoint${c.cls}" href="assess.html?id=${cp.id}">${CHECKPOINT_LABELS[cp.id]}${cnote}</a></li>`);
     }
   }
   if (phase !== null) parts.push('</ol>');

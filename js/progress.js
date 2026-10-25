@@ -1,0 +1,234 @@
+// A learner's progress: what they have done, what is unlocked, and what to
+// do after a failed check. Plain data, changed only by these functions,
+// which always return a new object.
+
+import { MODULES, CHECKPOINTS } from '../content/course.js';
+
+export const PROGRESS_VERSION = 1;
+const APP = 'personal-bookkeeping-101';
+const DAY_MS = 24 * 60 * 60 * 1000;
+const RETENTION_DAYS = 28;
+const RECALL_SETS = 3;
+
+export function emptyProgress(started = new Date().toISOString()) {
+  return {
+    version: PROGRESS_VERSION,
+    started,
+    modules: {},
+    checkpoints: {},
+    placement: {},
+    exam: { attempts: [] },
+    examPassedAt: null,
+    sessions: {},
+    recall: {},
+    errorLog: [],
+    ledgers: {},
+  };
+}
+
+const clone = (p) => structuredClone(p);
+const moduleRecord = (p, id) => (p.modules[id] ??= { steps: [], timeMs: 0, gateAttempts: [], passed: false });
+
+const moduleTitle = (id) => {
+  const m = MODULES.find((x) => x.id === id);
+  if (!m) return id;
+  return id.startsWith('m') ? `Module ${Number(id.slice(1))}` : `Add-on ${id.toUpperCase()}`;
+};
+const CHECKPOINT_NAMES = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C' };
+
+const modulePassed = (p, id) => Boolean(p.modules[id]?.passed);
+const checkpointPassed = (p, id) => Boolean(p.checkpoints[id]?.passed) || Boolean(p.placement[id]?.passed);
+
+const open = { unlocked: true };
+const locked = (reason) => ({ unlocked: false, reason });
+
+export function isUnlocked(id, progress, now = Date.now()) {
+  if (id === 'prereq' || id === 'placement' || id === 'm01') return open;
+
+  const cp = CHECKPOINTS.find((c) => c.id === id);
+  if (cp) return modulePassed(progress, cp.after) ? open : locked(`Pass the check at the end of ${moduleTitle(cp.after)} first.`);
+
+  if (id === 'exam') return modulePassed(progress, 'a3') ? open : locked('Finish the add-on modules first.');
+  if (id === 'retention') {
+    if (!progress.examPassedAt) return locked('This review opens four weeks after you pass the final exam.');
+    const opens = Date.parse(progress.examPassedAt) + RETENTION_DAYS * DAY_MS;
+    return now >= opens ? open : locked(`This review opens on ${new Date(opens).toDateString()}, four weeks after your final exam.`);
+  }
+
+  const index = MODULES.findIndex((m) => m.id === id);
+  if (index <= 0) return locked('There is no such module.');
+  const gateCheckpoint = CHECKPOINTS.find((c) => MODULES[index - 1].id === c.after);
+  if (gateCheckpoint) {
+    return checkpointPassed(progress, gateCheckpoint.id) ? open : locked(`Pass ${CHECKPOINT_NAMES[gateCheckpoint.id]} first (or the placement test).`);
+  }
+  const previous = MODULES[index - 1].id;
+  return modulePassed(progress, previous) ? open : locked(`Finish ${moduleTitle(previous)} first.`);
+}
+
+export function recordGate(progress, moduleId, score, at, version) {
+  const p = clone(progress);
+  const m = moduleRecord(p, moduleId);
+  m.gateAttempts.push({ at, version, points: score.points, max: score.max, passed: score.passed });
+  if (score.passed) m.passed = true;
+  else p.recall[moduleId] = RECALL_SETS;
+  delete p.sessions[moduleId];
+  return p;
+}
+
+// For modules without a gate (the final project).
+export function completeModule(progress, moduleId, at) {
+  const p = clone(progress);
+  const m = moduleRecord(p, moduleId);
+  m.passed = true;
+  m.completedAt = at;
+  return p;
+}
+
+export function recordCheckpoint(progress, id, score, at, version) {
+  const p = clone(progress);
+  const c = (p.checkpoints[id] ??= { attempts: [], passed: false });
+  c.attempts.push({ at, version, percent: score.percent, passed: score.passed, missedModules: score.missedModules ?? [] });
+  if (score.passed) c.passed = true;
+  delete p.sessions[id];
+  return p;
+}
+
+// A placement test is a checkpoint taken early; passing it unlocks the
+// module after that checkpoint.
+export function recordPlacement(progress, checkpointId, score, at) {
+  const p = clone(progress);
+  const previous = p.placement[checkpointId];
+  p.placement[checkpointId] = { at, percent: score.percent, passed: Boolean(previous?.passed) || score.passed };
+  delete p.sessions[`placement-${checkpointId}`];
+  return p;
+}
+
+export function recordExam(progress, score, at, version) {
+  const p = clone(progress);
+  p.exam.attempts.push({ at, version, percent: score.percent, passed: score.passed });
+  if (score.passed && !p.examPassedAt) p.examPassedAt = at;
+  delete p.sessions.exam;
+  return p;
+}
+
+// After a failed gate: 1st -> retake (after a fresh practice set),
+// 2nd -> rework the worked example, 3rd and later -> remediation and help.
+export function failureStep(failedAttempts) {
+  if (failedAttempts <= 1) return 'retake';
+  if (failedAttempts === 2) return 'rework-example';
+  return 'remediation';
+}
+
+const VERSIONS = 4;
+
+function attemptsFor(progress, id) {
+  if (progress.modules[id]) return progress.modules[id].gateAttempts.length;
+  if (progress.checkpoints[id]) return progress.checkpoints[id].attempts.length;
+  if (id === 'exam') return progress.exam.attempts.length;
+  return 0;
+}
+
+// The version for the next sitting: an open session keeps its version;
+// otherwise each attempt moves to the next version, cycling through four.
+export function nextVersion(progress, id) {
+  const openOne = progress.sessions[id];
+  if (openOne) return openOne.meta.version;
+  return (attemptsFor(progress, id) % VERSIONS) + 1;
+}
+
+export function saveSession(progress, meta, results) {
+  const p = clone(progress);
+  p.sessions[meta.assessmentId] = { meta, results };
+  return p;
+}
+
+export function openSession(progress, id) {
+  return progress.sessions[id] ?? null;
+}
+
+export function clearSession(progress, id) {
+  const p = clone(progress);
+  delete p.sessions[id];
+  return p;
+}
+
+export function markStep(progress, moduleId, step) {
+  const p = clone(progress);
+  const m = moduleRecord(p, moduleId);
+  if (!m.steps.includes(step)) m.steps.push(step);
+  m.steps.sort((a, b) => a - b);
+  return p;
+}
+
+export function addTime(progress, moduleId, ms) {
+  const p = clone(progress);
+  moduleRecord(p, moduleId).timeMs += Math.max(0, Math.round(ms));
+  return p;
+}
+
+export function addErrorEntry(progress, { moduleId, error, cause, correction }, at) {
+  const p = clone(progress);
+  p.errorLog.push({ at, moduleId, error, cause, correction });
+  return p;
+}
+
+export function saveLedger(progress, pageId, rows) {
+  const p = clone(progress);
+  p.ledgers[pageId] = structuredClone(rows);
+  return p;
+}
+
+// Modules whose recall questions should be added to the next practice sets.
+export function recallDue(progress) {
+  return Object.entries(progress.recall).filter(([, n]) => n > 0).map(([id]) => id);
+}
+
+export function completePracticeSet(progress) {
+  const p = clone(progress);
+  for (const id of Object.keys(p.recall)) {
+    p.recall[id] -= 1;
+    if (p.recall[id] <= 0) delete p.recall[id];
+  }
+  return p;
+}
+
+export function exportProgress(progress) {
+  return JSON.stringify({ app: APP, ...progress }, null, 2);
+}
+
+const FIELDS = {
+  started: 'string', modules: 'object', checkpoints: 'object', placement: 'object', exam: 'object',
+  sessions: 'object', recall: 'object', errorLog: 'array', ledgers: 'object',
+};
+
+function typeOf(v) {
+  if (Array.isArray(v)) return 'array';
+  if (v === null) return 'null';
+  return typeof v;
+}
+
+export function validateProgress(data) {
+  if (typeOf(data) !== 'object') return 'This is not a progress file.';
+  if (data.version !== PROGRESS_VERSION) return `This progress file is from a different version of the course (${data.version ?? 'unknown'}).`;
+  for (const [field, type] of Object.entries(FIELDS)) {
+    if (!(field in data)) return `This progress file is missing "${field}".`;
+    if (typeOf(data[field]) !== type) return `This progress file has a damaged "${field}".`;
+  }
+  if (!(data.examPassedAt === null || typeof data.examPassedAt === 'string')) return 'This progress file has a damaged "examPassedAt".';
+  if (!Array.isArray(data.exam.attempts)) return 'This progress file has a damaged "exam".';
+  return null;
+}
+
+export function importProgress(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return { ok: false, reason: 'This file could not be read. Choose a progress file saved from this course.' };
+  }
+  if (typeOf(data) !== 'object' || data.app !== APP) return { ok: false, reason: 'This is not a Personal Bookkeeping 101 progress file.' };
+  const { app, ...progress } = data;
+  const problem = validateProgress(progress);
+  if (problem) return { ok: false, reason: problem };
+  return { ok: true, progress };
+}
