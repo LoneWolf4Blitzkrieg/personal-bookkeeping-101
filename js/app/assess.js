@@ -12,6 +12,7 @@ import { store, update, mountChrome, trackTime } from './chrome.js';
 import { ASSESSMENTS } from '../../content/assess/index.js';
 import { examIntroHTML } from '../examView.js';
 import { celebrationHTML, wireCelebration } from '../celebration.js';
+import { longDate } from '../dates.js';
 
 const moduleName = (id) => (/^m\d\d$/.test(id) ? `Module ${Number(id.slice(1))}` : /^a\d$/.test(id) ? `Add-on ${id.toUpperCase()}` : id === 'prereq' ? 'Money arithmetic refresher' : id);
 
@@ -230,13 +231,18 @@ export function startAssessment(root, id, requestedVersion) {
   const attemptsAtStart = attemptsFor(progress, assessment.id);
   let pendingText = '';
   let examBegun = false;
+  let practiceChosen = false;
   let stale = false;
   // A sitting that was already complete when saved (for example after a
   // template changed) is recorded now rather than left hanging.
   if (saved && isComplete(session)) progress = update((p) => recordResult(p, session, new Date().toISOString()));
   if (assessment.kind === 'gate') trackTime(assessment.id);
 
-  root.innerHTML = `<h1>${escapeHTML(assessment.title)}</h1>
+  document.title = `${assessment.title} · Personal Bookkeeping 101`;
+  const about = assessment.kind === 'retention'
+    ? '<p class="lede-small">Four weeks after the final exam, this short review shows what you still remember. It is optional and does not change your pass or your certificate.</p>'
+    : '';
+  root.innerHTML = `<h1>${escapeHTML(assessment.title)}</h1>${about}
     <p class="lede-small">Answer each question before you check it. Take as long as you need; nothing is timed.</p>
     <div id="item"></div><div id="response" aria-live="polite"></div>`;
   const itemBox = root.querySelector('#item');
@@ -265,6 +271,17 @@ export function startAssessment(root, id, requestedVersion) {
       itemBox.querySelector('#results-heading').focus();
       return;
     }
+    // Already passed, with no sitting open: say so first; another sitting is
+    // practice and never removes the pass.
+    const passedOn = store.load().examPassedAt;
+    if (session.meta.kind === 'exam' && session.results.length === 0 && !examBegun && passedOn && !practiceChosen) {
+      itemBox.innerHTML = `<div class="feedback feedback-right"><p><strong>You passed the final exam on ${escapeHTML(longDate(passedOn))}.</strong></p>
+        <p><a class="button" href="certificate.html">Get your certificate</a> <button class="button button-secondary" type="button" data-action="practice-exam">Take the exam again for practice (your pass stays)</button></p></div>`;
+      itemBox.insertAdjacentHTML('beforeend', celebrationHTML());
+      wireCelebration(itemBox.querySelector('.celebration'));
+      itemBox.querySelector('a.button')?.focus();
+      return;
+    }
     // Before the exam's first question: the author's note on honest work.
     if (session.meta.kind === 'exam' && session.results.length === 0 && !examBegun) {
       itemBox.innerHTML = examIntroHTML();
@@ -278,6 +295,7 @@ export function startAssessment(root, id, requestedVersion) {
     const action = e.target.dataset?.action;
     if (action === 'next') show();
     if (action === 'begin-exam') { examBegun = true; show(); }
+    if (action === 'practice-exam') { practiceChosen = true; show(); }
     if (action === 'add-line') {
       const tbody = itemBox.querySelector('.entry-table tbody');
       tbody.insertAdjacentHTML('beforeend', entryRowHTML(currentItem(session), tbody.rows.length));

@@ -70,5 +70,6 @@ test('the celebration keeps the author\'s words, starts only from a click, and c
   assert.match(html, /data-action="stop-celebration" hidden/);
   assert.ok(!/<audio[^>]*autoplay/.test(html), 'no autoplay');
   assert.ok(html.includes('href="certificate.html"'));
-  assert.ok(html.includes('not covered by the course licence'));
+  assert.ok(html.includes('not covered by the course license'));
+  assert.match(html, /<a href="media\/NOTICE.md">/);
 });

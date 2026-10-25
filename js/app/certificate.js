@@ -52,10 +52,21 @@ export function startCertificatePage(root) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = cleanName(form.name.value);
-    if (!name) return;
+    form.querySelector('.feedback-note')?.remove();
+    form.name.removeAttribute('aria-invalid');
+    if (!name) {
+      form.name.setAttribute('aria-invalid', 'true');
+      form.name.insertAdjacentHTML('afterend', '<p class="feedback feedback-note" id="name-note">Type your name as it should appear.</p>');
+      form.name.setAttribute('aria-describedby', 'name-note');
+      form.name.focus();
+      return;
+    }
     update((p) => saveCertificateName(p, name));
     draw(name);
-    view.querySelector('.certificate')?.scrollIntoView({ behavior: 'smooth' });
+    // Focus brings the certificate into view and tells screen readers it is there.
+    const certificate = view.querySelector('.certificate');
+    certificate?.setAttribute('tabindex', '-1');
+    certificate?.focus();
   });
   if (progress.certificateName) draw(progress.certificateName);
 }

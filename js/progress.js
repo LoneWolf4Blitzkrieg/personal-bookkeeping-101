@@ -3,6 +3,7 @@
 // which always return a new object.
 
 import { MODULES, CHECKPOINTS } from '../content/course.js';
+import { longDate } from './dates.js';
 
 export const PROGRESS_VERSION = 1;
 const APP = 'personal-bookkeeping-101';
@@ -73,7 +74,7 @@ export function isUnlocked(id, progress, now = Date.now()) {
   if (id === 'retention') {
     if (!progress.examPassedAt) return locked('This review opens four weeks after you pass the final exam.');
     const opens = Date.parse(progress.examPassedAt) + RETENTION_DAYS * DAY_MS;
-    return now >= opens ? open : locked(`This review opens on ${new Date(opens).toDateString()}, four weeks after your final exam.`);
+    return now >= opens ? open : locked(`This review opens on ${longDate(opens)}, four weeks after your final exam.`);
   }
 
   const index = moduleIndex(id);

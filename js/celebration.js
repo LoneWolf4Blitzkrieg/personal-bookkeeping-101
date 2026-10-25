@@ -14,11 +14,12 @@ export function celebrationHTML(text = CELEBRATION) {
   <p class="celebration-controls"><button class="button" type="button" data-action="celebrate">${escapeHTML(text.button)}</button>
   <button class="button button-secondary" type="button" data-action="stop-celebration" hidden>Stop the music and fireworks</button></p>
   <p><a class="button" href="certificate.html">Get your certificate</a></p>
-  <p class="celebration-credit">${escapeHTML(text.musicCredit)}</p>
+  <p class="celebration-credit">${escapeHTML(text.musicCredit)} <a href="${escapeHTML(text.musicNotice.href)}">${escapeHTML(text.musicNotice.text)}</a>.</p>
 </section>`;
 }
 
-const COLORS = ['#f4d35e', '#ee964b', '#f95738', '#7bd389', '#5fa8d3', '#c77dff', '#ffffff'];
+// Saturated colours that show up on the course's light paper.
+const COLORS = ['#d1495b', '#edae49', '#00798c', '#30638e', '#8e44ad', '#2a9d8f', '#e76f51'];
 
 // Runs in the browser only. Returns a function that stops everything.
 export function startCelebration({ reducedMotion = false, music = CELEBRATION.music, onStop = () => {} } = {}) {
@@ -95,6 +96,8 @@ export function startCelebration({ reducedMotion = false, music = CELEBRATION.mu
     if (frame) cancelAnimationFrame(frame);
     if (sparkleTimer) clearInterval(sparkleTimer);
     audio.pause();
+    audio.removeAttribute('src'); // let the browser stop fetching the file
+    audio.load();
     window.removeEventListener('resize', fit);
     window.removeEventListener('keydown', onKey);
     canvas.remove();
@@ -119,7 +122,12 @@ export function wireCelebration(section) {
     start.hidden = true;
     stopButton.hidden = false;
     stopButton.focus();
-    stop = startCelebration({ reducedMotion, onStop: () => { stop = null; start.hidden = false; stopButton.hidden = true; start.focus(); } });
+    stop = startCelebration({ reducedMotion, onStop: () => {
+      // Move focus only if it was on Stop, the control that is going away.
+      const hadFocus = document.activeElement === stopButton;
+      stop = null; start.hidden = false; stopButton.hidden = true;
+      if (hadFocus) start.focus();
+    } });
   });
   stopButton.addEventListener('click', () => stop?.());
 }

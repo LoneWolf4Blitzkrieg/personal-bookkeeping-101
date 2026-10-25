@@ -5,20 +5,17 @@
 // screen, prints them and offers the download.
 
 import { escapeHTML } from './html.js';
+import { longDate } from './dates.js';
 
 export const COURSE_TITLE = 'Personal Bookkeeping 101';
+// True on every path through the course: the final project has no module
+// check, and placement tests can skip the early checks.
+export const CERTIFICATE_BODY = 'worked through all 16 modules and the three add-on modules, kept, proved and reported a full month of books in the final project, and passed the 50-question final exam with at least 80% of the points.';
 export const UNOFFICIAL = 'This certificate is unofficial and unaccredited. It is not a degree, diploma, license or credential from any school, employer or government agency.';
-export const LICENCE_CREDIT = 'Personal Bookkeeping 101 by Raul Bautista is licensed under CC BY-NC-SA 4.0 (free for non-commercial use).';
 const LICENCE_URL = 'https://creativecommons.org/licenses/by-nc-sa/4.0/';
 const MAX_NAME = 80;
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-// "2026-10-25T08:00:00.000Z" -> "October 25, 2026", in the learner's own time zone.
-export function longDate(iso) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
+const LONG_NAME = 40;
+export { longDate };
 
 // The name as the learner types it, trimmed, with runs of spaces closed up.
 export function cleanName(text) {
@@ -41,8 +38,8 @@ export function certificateHTML({ name, date }) {
   <p class="certificate-kicker">Certificate of completion</p>
   <h2 class="certificate-course">${escapeHTML(COURSE_TITLE)}</h2>
   <p class="certificate-presented">This is to say that</p>
-  <p class="certificate-name">${escapeHTML(cleanName(name))}</p>
-  <p class="certificate-body">kept, proved and reported a full month of books, passed the check at the end of each of the 16 modules and the three add-on modules, and passed the 50-question final exam with at least 80% of the points.</p>
+  <p class="certificate-name${cleanName(name).length > LONG_NAME ? ' certificate-name-long' : ''}">${escapeHTML(cleanName(name))}</p>
+  <p class="certificate-body">${CERTIFICATE_BODY}</p>
   <p class="certificate-date">Completed on ${escapeHTML(longDate(date))}</p>
   <p class="certificate-unofficial">${escapeHTML(UNOFFICIAL)}</p>
   <p class="certificate-credit"><i>${escapeHTML(COURSE_TITLE)}</i> by Raul Bautista is licensed under <a href="${LICENCE_URL}" rel="license">CC BY-NC-SA 4.0</a> (free for non-commercial use).</p>
@@ -52,18 +49,22 @@ export function certificateHTML({ name, date }) {
 // Styles shared by the course page and the downloaded file. Plain, printable
 // on one landscape page, no images and nothing loaded from elsewhere.
 export const CERTIFICATE_CSS = `
-.certificate { box-sizing: border-box; max-width: 9.5in; margin: 0 auto; padding: .6in .7in; border: 6px double #2f5d46; background: #f7fbf6; color: #1d2a22; font-family: Georgia, 'Times New Roman', serif; text-align: center; }
-.certificate p { margin: .5em 0; }
-.certificate-kicker { font-variant: small-caps; letter-spacing: .12em; font-size: 1.1rem; color: #2f5d46; }
-.certificate .certificate-course { font-size: 2.1rem; margin: .2em 0 .4em; }
-.certificate-presented { font-style: italic; }
-.certificate .certificate-name { font-size: 2rem; border-bottom: 1px solid #2f5d46; display: inline-block; min-width: 60%; padding: 0 .5em .1em; margin: .3em 0 .6em; overflow-wrap: anywhere; }
-.certificate-body { max-width: 34em; margin-left: auto; margin-right: auto; line-height: 1.5; }
-.certificate-date { font-weight: bold; margin-top: 1em; }
-.certificate-unofficial { font-size: .85rem; max-width: 40em; margin: 1.4em auto .4em; }
-.certificate-credit { font-size: .8rem; }
+.certificate { box-sizing: border-box; max-width: 9.5in; margin: 0 auto; padding: .6in .7in; border: 6px double #2f5d46; background: #f7fbf6; color: #1d2a22; font-family: Georgia, 'Times New Roman', serif; font-size: 1rem; text-align: center; }
+.certificate p { margin-top: .5em; margin-bottom: .5em; }
+.certificate .certificate-kicker { font-variant: small-caps; letter-spacing: .12em; font-size: 1.1em; color: #2f5d46; }
+.certificate .certificate-course { font-size: 2.1em; margin: .2em 0 .4em; }
+.certificate .certificate-presented { font-style: italic; }
+.certificate .certificate-name { font-size: 2em; border-bottom: 1px solid #2f5d46; display: inline-block; min-width: 60%; padding: 0 .5em .1em; margin: .3em 0 .6em; overflow-wrap: anywhere; }
+.certificate .certificate-name-long { font-size: 1.45em; }
+.certificate .certificate-body { max-width: 34em; margin-left: auto; margin-right: auto; line-height: 1.5; }
+.certificate .certificate-date { font-weight: bold; margin-top: 1em; }
+.certificate .certificate-unofficial { font-size: .85em; max-width: 40em; margin: 1.4em auto .4em; }
+.certificate .certificate-credit { font-size: .8em; }
 .certificate-credit a { color: inherit; }
-@media print { @page { size: letter landscape; margin: .4in; } .certificate { page-break-inside: avoid; } }
+@media print {
+  @page { size: landscape; margin: .4in; }
+  .certificate { font-size: 12pt; padding: .4in .55in; margin-top: 0; page-break-inside: avoid; }
+}
 `;
 
 // A complete, self-contained HTML file for download: it opens on its own,
@@ -84,4 +85,5 @@ ${certificateHTML({ name, date })}
 `;
 }
 
-export const certificateFileName = (name) => `certificate-personal-bookkeeping-101-${cleanName(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'learner'}.html`;
+// Accents are dropped for the file name: "Ana María López" -> ...-ana-maria-lopez.html.
+export const certificateFileName = (name) => `certificate-personal-bookkeeping-101-${cleanName(name).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'learner'}.html`;

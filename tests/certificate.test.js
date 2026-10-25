@@ -40,7 +40,16 @@ test('the download is one self-contained HTML file that opens without the course
   assert.match(doc, /<html lang="en">/);
   assert.match(doc, /<style>[\s\S]*\.certificate[\s\S]*<\/style>/);
   assert.ok(!/<script|<link|src=/.test(doc), 'no scripts, stylesheets or images loaded from elsewhere');
-  assert.match(doc, /@page \{ size: letter landscape/, 'prints on one landscape page');
-  assert.equal(certificateFileName('Ana María López'), 'certificate-personal-bookkeeping-101-ana-mar-a-l-pez.html');
+  assert.match(doc, /@page \{ size: landscape/, 'prints on one landscape page');
+  assert.match(doc, /\.certificate \{ font-size: 12pt/, 'fixed print sizes, whatever the browser\'s text size');
+  assert.equal(certificateFileName('Ana María López'), 'certificate-personal-bookkeeping-101-ana-maria-lopez.html');
   assert.equal(certificateFileName('   '), 'certificate-personal-bookkeeping-101-learner.html');
+});
+
+test('the certificate claims only what is true on every path, and long names print smaller', async () => {
+  const { CERTIFICATE_BODY } = await import('../js/certificate.js');
+  assert.ok(!/check at the end of each/.test(CERTIFICATE_BODY), 'Modules 15–16 have no check, and placement skips early checks');
+  assert.match(CERTIFICATE_BODY, /final project/);
+  assert.match(certificateHTML({ name: 'A'.repeat(41), date: T0 }), /certificate-name certificate-name-long/);
+  assert.ok(!certificateHTML({ name: 'Ana', date: T0 }).includes('certificate-name-long'));
 });
