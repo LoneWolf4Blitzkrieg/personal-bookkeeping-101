@@ -202,3 +202,9 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 .model-answer { margin-top: .3rem; }
 .model-answer summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 .model-answer p { margin: .4rem 0 0; padding: .5rem .7rem; background: var(--panel); border-radius: 6px; }
+
+/* The author's note on honest work (home page and final exam) */
+.author-note { border-left: 4px solid var(--rule-strong, #6f9a6e); background: #f4f8f1; padding: .8rem 1.1rem; margin: 1.2rem 0 1.4rem; border-radius: 0 6px 6px 0; }
+.author-note h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
+.author-note p { margin: 0 0 .6rem; }
+.author-note-signature { font-style: italic; color: var(--ink-soft); margin-bottom: 0; }

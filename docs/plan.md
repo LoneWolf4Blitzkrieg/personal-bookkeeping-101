@@ -244,12 +244,12 @@ Task 9 adds a test: the sample month's books close, reconcile to its bank statem
 
 ### Task 11: Final exam and retention test
 
-**Files:** `content/assess/exam.js`, `content/assess/retention.js`, `tests/exam.test.js`
+**Files:** `content/assess/exam.js`, `content/assess/retention.js`, `tests/exam.test.js`, `certificate.html`, `js/certificate.js`, `tests/certificate.test.js`
 
-- [ ] **Step 1: Write failing tests:** the exam has 36–44 items; add-on items ≤ 20% of items and ≤ 20% of points; every core phase is represented; the retention test draws only on core items and is unlocked 28 days after the exam.
+- [ ] **Step 1: Write failing tests:** the exam has 36–44 items; add-on items ≤ 20% of items and ≤ 20% of points; every core phase is represented; the retention test draws only on core items and is unlocked 28 days after the exam. The exam page shows the author's pre-exam note (`content/honor.js`, `HONOR_NOTES.exam`) before the first question. The certificate (added at the author's request, October 24, 2026) is locked until the final exam is passed and the final project is marked complete; it states that it is unofficial and unaccredited, and shows the learner's typed name, the course title, the completion date and the licence credit; it prints on one page, and its download is a self-contained file that opens without the course.
 - [ ] **Step 2:** Run `npm test`. Expected: FAIL.
 - [ ] **Step 3:** Write the exam and retention item sets from existing templates.
-- [ ] **Step 4:** Run `npm test`. Expected: PASS. Take the exam once in the browser pane.
+- [ ] **Step 4:** Run `npm test`. Expected: PASS. Take the exam once in the browser pane, then print and download the certificate.
 - [ ] **Step 5:** Commit; Opus review; fix; commit.
 
 ### Task 12: Accessibility, print and publishing readiness
