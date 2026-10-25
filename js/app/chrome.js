@@ -1,13 +1,29 @@
-// Shared page furniture for saving: the progress store, the "Saved"
-// indicator in the top bar and the banner shown when saving is blocked.
+// Shared page furniture for saving: the progress store (localStorage, or a
+// same-tab fallback when storage is blocked), the "Saved" indicator, the
+// banners, time tracking, and refreshing when progress changes elsewhere.
 
-import { createStorage, browserBackend } from '../storage.js';
+import { createStorage, browserBackend, windowNameBackend } from '../storage.js';
 import { createProgressStore } from '../progressStore.js';
+import { addTime } from '../progress.js';
 
-export const store = createProgressStore(createStorage(browserBackend()));
+const primary = createStorage(browserBackend());
+// When localStorage is blocked, progress still follows the learner from page
+// to page in the same tab (window.name), but is lost when the tab closes.
+export const persistent = primary.available;
+export const store = createProgressStore(persistent ? primary : createStorage(windowNameBackend()));
 
 let indicator = null;
 let hideTimer = null;
+let flip = false;
+
+function banner(className, text) {
+  if (document.querySelector(`.${className}`)) return;
+  const p = document.createElement('p');
+  p.className = className;
+  p.textContent = text;
+  const topbar = document.querySelector('.topbar');
+  (topbar ?? document.body.firstElementChild)?.insertAdjacentElement('afterend', p);
+}
 
 export function mountChrome() {
   const topbar = document.querySelector('.topbar');
@@ -17,22 +33,61 @@ export function mountChrome() {
     indicator.setAttribute('role', 'status');
     topbar.insertBefore(indicator, topbar.querySelector('.map-toggle'));
   }
-  if (!store.available && !document.querySelector('.storage-banner')) {
-    const banner = document.createElement('p');
-    banner.className = 'storage-banner';
-    banner.textContent = 'Your browser is not letting this course save progress (for example in a private window). You can keep learning, but your progress will be lost when you close the page. To keep it, open the course in a normal window, or use "Save a progress file" on the home page.';
-    (topbar ?? document.body.firstElementChild)?.insertAdjacentElement('afterend', banner);
+  if (!persistent) {
+    banner('storage-banner', 'Your browser is not letting this course save progress (storage is blocked or full). Your progress is kept while this tab stays open, but it will be lost when you close the tab. To keep it, use "Save a progress file" on the home page before closing, or open the course in a normal browser window.');
+  }
+  store.load();
+  if (store.recovered) {
+    banner('storage-banner recovered-banner', 'Your saved progress could not be read, so the course started fresh. A copy of the damaged data was kept in this browser. If you saved a progress file, you can load it on the home page.');
   }
 }
 
-export function save(progress) {
+function flash(ok) {
+  if (!indicator) return;
+  flip = !flip;
+  // Alternate the text so screen readers announce every save.
+  indicator.textContent = ok ? (flip ? 'Saved' : 'Saved.') : 'Not saved';
+  indicator.classList.toggle('not-saved', !ok);
+  indicator.classList.add('visible');
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => indicator.classList.remove('visible'), 2500);
+}
+
+// Applies a change to the latest saved progress and saves it.
+export function update(change) {
+  const before = store.load();
+  const next = change(before);
+  const ok = store.save(next);
+  flash(ok);
+  return next;
+}
+
+// Replaces progress outright (loading a progress file).
+export function replace(progress) {
   const ok = store.save(progress);
-  if (indicator) {
-    indicator.textContent = ok ? 'Saved' : 'Not saved';
-    indicator.classList.toggle('not-saved', !ok);
-    indicator.classList.add('visible');
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => indicator.classList.remove('visible'), 2500);
-  }
+  flash(ok);
   return ok;
+}
+
+// Calls back when progress may have changed elsewhere: another tab saved,
+// or this page was restored from the browser's back/forward cache.
+export function onExternalChange(callback) {
+  window.addEventListener('storage', (e) => { if (e.key === null || e.key?.startsWith('pb101-progress')) callback(); });
+  window.addEventListener('pageshow', (e) => { if (e.persisted) callback(); });
+}
+
+// Adds the time this page is visible to a module's total.
+export function trackTime(moduleId) {
+  let shownAt = document.visibilityState === 'visible' ? Date.now() : null;
+  const flushTime = () => {
+    if (shownAt === null) return;
+    const ms = Date.now() - shownAt;
+    shownAt = null;
+    store.update((p) => addTime(p, moduleId, ms));
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushTime();
+    else shownAt = Date.now();
+  });
+  window.addEventListener('pagehide', flushTime);
 }

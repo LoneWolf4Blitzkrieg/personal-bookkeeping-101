@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   emptyProgress, isUnlocked, recordGate, recordCheckpoint, recordPlacement, recordExam, completeModule,
   failureStep, nextVersion, saveSession, openSession, clearSession, markStep, addTime, addErrorEntry,
-  saveLedger, recallDue, completePracticeSet, exportProgress, importProgress,
+  saveLedger, recallDue, completePracticeSet, exportProgress, importProgress, recordOther, sessionMatches,
 } from '../js/progress.js';
 
 const T0 = '2026-07-01T12:00:00.000Z';
@@ -41,13 +41,13 @@ test('module 5 waits for Checkpoint A, which waits for module 4', () => {
 });
 
 test('passing Checkpoint A as a placement test unlocks module 5 directly', () => {
-  const p = recordPlacement(emptyProgress(T0), 'ca', { percent: 90, passed: true, missedModules: [] }, T0);
+  const p = recordPlacement(emptyProgress(T0), 'ca', { percent: 90, passed: true, missedModules: [] }, T0, 1);
   assert.equal(isUnlocked('m05', p).unlocked, true);
   assert.equal(isUnlocked('m06', p).unlocked, false);
 });
 
 test('a failed placement test unlocks nothing', () => {
-  const p = recordPlacement(emptyProgress(T0), 'cb', { percent: 60, passed: false, missedModules: ['m06'] }, T0);
+  const p = recordPlacement(emptyProgress(T0), 'cb', { percent: 60, passed: false, missedModules: ['m06'] }, T0, 1);
   assert.equal(isUnlocked('m09', p).unlocked, false);
 });
 
@@ -90,19 +90,17 @@ test('failureStep follows the proposal\'s sequence', () => {
   assert.equal(failureStep(7), 'remediation');
 });
 
-test('each new attempt gets the next version, cycling through four', () => {
+test('each new attempt gets the next version number', () => {
   let p = emptyProgress(T0);
   assert.equal(nextVersion(p, 'm01'), 1);
   for (let v = 1; v <= 4; v++) p = recordGate(p, 'm01', fail, T0, v);
-  assert.equal(nextVersion(p, 'm01'), 1);
-  p = recordGate(p, 'm01', fail, T0, 1);
-  assert.equal(nextVersion(p, 'm01'), 2);
+  assert.equal(nextVersion(p, 'm01'), 5, 'a fifth attempt gets a fifth version, not a repeat');
   assert.equal(nextVersion(p, 'ca'), 1);
 });
 
 test('gate attempts are recorded with time, version and score', () => {
   const p = recordGate(emptyProgress(T0), 'm03', fail, T0, 2);
-  assert.deepEqual(p.modules.m03.gateAttempts, [{ at: T0, version: 2, points: 6, max: 10, passed: false }]);
+  assert.deepEqual(p.modules.m03.gateAttempts, [{ at: T0, version: 2, points: 6, max: 10, passed: false, items: [] }]);
 });
 
 test('a failed gate schedules that module\'s recall questions into the next three practice sets', () => {
@@ -168,4 +166,58 @@ test('bad progress files are rejected with a reason', () => {
     assert.equal(r.ok, false, name);
     assert.equal(typeof r.reason, 'string', name);
   }
+});
+
+test('placement tests are separate per checkpoint, keep attempts and clear their own session', () => {
+  let p = saveSession(emptyProgress(T0), { assessmentId: 'placement-ca', kind: 'placement', checkpointId: 'ca', version: 1 }, []);
+  assert.equal(isUnlocked('placement-ca', p).unlocked, true);
+  assert.equal(isUnlocked('placement-cb', p).unlocked, true);
+  p = recordPlacement(p, 'ca', { percent: 50, passed: false, missedModules: ['m02'] }, T0, 1);
+  assert.equal(openSession(p, 'placement-ca'), null);
+  assert.equal(p.placement.ca.attempts.length, 1);
+  assert.equal(nextVersion(p, 'placement-ca'), 2);
+});
+
+test('passing a later checkpoint counts the earlier ones and opens earlier modules for review', () => {
+  const p = recordPlacement(emptyProgress(T0), 'cb', { percent: 90, passed: true, missedModules: [] }, T0, 1);
+  for (const id of ['m02', 'm05', 'm06', 'm08', 'm09', 'ca', 'cb']) assert.equal(isUnlocked(id, p).unlocked, true, id);
+  assert.equal(isUnlocked('m10', p).unlocked, false);
+  assert.equal(isUnlocked('cc', p).unlocked, false);
+});
+
+test('a locked item says what to do next', () => {
+  assert.equal(isUnlocked('m02', emptyProgress(T0)).next, 'm01');
+  const p = passGates(emptyProgress(T0), core(1, 4));
+  assert.equal(isUnlocked('m05', p).next, 'ca');
+});
+
+test('attempts keep per-item results for the evaluation plan', () => {
+  const items = [{ templateId: 't1', module: 'm03', part: 'explaining', points: 1, max: 2, selfMarked: true }];
+  const p = recordCheckpoint(emptyProgress(T0), 'ca', { percent: 80, passed: true, missedModules: [] }, T0, 1, items);
+  assert.deepEqual(p.checkpoints.ca.attempts[0].items, items);
+});
+
+test('prerequisite and retention results are recorded, and remedial need follows the prerequisite', () => {
+  let p = recordOther(emptyProgress(T0), 'prereq', { percent: 50, passed: false }, T0, 1, []);
+  assert.equal(p.other.prereq.attempts.length, 1);
+  assert.equal(p.remedialNeeded, true);
+  p = recordOther(p, 'prereq', { percent: 90, passed: true }, T0, 2, []);
+  assert.equal(p.remedialNeeded, true, 'once needed, the pilot keeps the learner in that group');
+  assert.equal(openSession(p, 'prereq'), null);
+});
+
+test('a sitting only saves if no other tab has changed it', () => {
+  const meta = { assessmentId: 'm03', kind: 'gate', version: 1 };
+  let p = saveSession(emptyProgress(T0), meta, [{ templateId: 'a' }]);
+  assert.equal(sessionMatches(p, meta, 1, 0), true, 'one answer saved, about to save the second');
+  assert.equal(sessionMatches(p, meta, 0, 0), false, 'another tab already saved an answer');
+  p = recordGate(p, 'm03', fail, T0, 1);
+  assert.equal(sessionMatches(p, meta, 1, 0), false, 'another tab already finished this attempt');
+  assert.equal(sessionMatches(emptyProgress(T0), meta, 0, 0), true, 'first answer of a new sitting');
+});
+
+test('imported files with damaged module records are rejected', () => {
+  const good = JSON.parse(exportProgress(emptyProgress(T0)));
+  const r = importProgress(JSON.stringify({ ...good, modules: { m01: {} } }));
+  assert.equal(r.ok, false);
 });

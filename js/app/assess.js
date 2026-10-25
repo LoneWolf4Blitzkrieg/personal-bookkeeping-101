@@ -4,10 +4,10 @@
 import { escapeHTML } from '../html.js';
 import { ledgerHTML } from '../ledgerView.js';
 import { parseAmount } from '../money.js';
-import { gateVersions, assessmentVersions } from '../items.js';
+import { assessmentVersions } from '../items.js';
 import { createSession, resumeSession, submit, currentItem, isComplete, summary } from '../session.js';
-import { isUnlocked, nextVersion, openSession, saveSession, recordGate, recordCheckpoint, recordExam, recordPlacement, failureStep, addErrorEntry } from '../progress.js';
-import { store, save, mountChrome } from './chrome.js';
+import { isUnlocked, nextVersion, attemptsFor, openSession, saveSession, sessionMatches, recordGate, recordCheckpoint, recordExam, recordPlacement, recordOther, failureStep, addErrorEntry } from '../progress.js';
+import { store, update, mountChrome, trackTime } from './chrome.js';
 import { DEMO_GATE } from '../../content/assess/demo.js';
 
 const ASSESSMENTS = { demo: DEMO_GATE };
@@ -143,15 +143,29 @@ function errorLogFormHTML() {
   </form>`;
 }
 
-// Records a finished sitting in the learner's progress.
+// Records a finished sitting in the learner's progress, with per-question
+// results for the evaluation plan.
 function recordResult(progress, session, at) {
   const { assessmentId, kind, version } = session.meta;
   const score = summary(session);
-  if (kind === 'gate') return recordGate(progress, assessmentId, score, at, version);
-  if (kind === 'checkpoint') return recordCheckpoint(progress, assessmentId, score, at, version);
-  if (kind === 'placement') return recordPlacement(progress, session.meta.checkpointId, score, at);
-  if (kind === 'exam') return recordExam(progress, score, at, version);
-  return progress;
+  const items = session.results.map((r) => ({ templateId: r.templateId, module: r.module, part: r.part, points: r.points, max: r.max, selfMarked: Boolean(r.selfMarked) }));
+  if (kind === 'gate') return recordGate(progress, assessmentId, score, at, version, items);
+  if (kind === 'checkpoint') return recordCheckpoint(progress, assessmentId, score, at, version, items);
+  if (kind === 'placement') return recordPlacement(progress, session.meta.checkpointId, score, at, version, items);
+  if (kind === 'exam') return recordExam(progress, score, at, version, items);
+  return recordOther(progress, assessmentId, score, at, version, items);
+}
+
+// Items for a given attempt. Every attempt gets fresh numbers; if a check's
+// templates cannot make that many different versions, versions repeat.
+function itemsFor(assessment, version) {
+  const shape = assessment.kind === 'gate' ? 'gate' : null;
+  const base = assessment.kind === 'gate' ? 4 : 2;
+  try {
+    return assessmentVersions(assessment.templates, assessment.id, { count: Math.max(base, version), shape })[version - 1];
+  } catch {
+    return assessmentVersions(assessment.templates, assessment.id, { count: base, shape })[(version - 1) % base];
+  }
 }
 
 export function startAssessment(root, id, requestedVersion) {
@@ -169,13 +183,17 @@ export function startAssessment(root, id, requestedVersion) {
   }
   // The demonstration gate lets ?v= choose a version; real checks use the learner's attempt count.
   const version = assessment.alwaysOpen && requestedVersion ? safeAttempt(requestedVersion) : nextVersion(progress, assessment.id);
-  const items = assessment.kind === 'gate'
-    ? gateVersions(assessment.templates, assessment.id)[version - 1]
-    : assessmentVersions(assessment.templates, assessment.id, { count: 2 })[(version - 1) % 2];
+  const items = itemsFor(assessment, version);
   const meta = { assessmentId: assessment.id, kind: assessment.kind, version, ...(assessment.checkpointId ? { checkpointId: assessment.checkpointId } : {}) };
   const saved = openSession(progress, assessment.id);
   let session = saved && saved.meta.version === version ? resumeSession(items, meta, saved.results) : createSession(items, meta);
+  const attemptsAtStart = attemptsFor(progress, assessment.id);
   let pendingText = '';
+  let stale = false;
+  // A sitting that was already complete when saved (for example after a
+  // template changed) is recorded now rather than left hanging.
+  if (saved && isComplete(session)) progress = update((p) => recordResult(p, session, new Date().toISOString()));
+  if (assessment.kind === 'gate') trackTime(assessment.id);
 
   root.innerHTML = `<h1>${escapeHTML(assessment.title)}</h1>
     <p class="lede-small">Answer each question before you check it. Take as long as you need; nothing is timed.</p>
@@ -189,7 +207,7 @@ export function startAssessment(root, id, requestedVersion) {
       itemBox.innerHTML = resultsHTML(session);
       const s = summary(session);
       if (session.meta.kind === 'gate' && !s.passed) {
-        const failed = (progress.modules[session.meta.assessmentId]?.gateAttempts ?? []).filter((a) => !a.passed).length;
+        const failed = (store.load().modules[session.meta.assessmentId]?.gateAttempts ?? []).filter((a) => !a.passed).length;
         itemBox.insertAdjacentHTML('beforeend', `<div class="next-step"><h3>What to do next</h3><p>${NEXT_STEPS[failureStep(failed)]}</p></div>`);
       }
       if (!s.passed) itemBox.insertAdjacentHTML('beforeend', errorLogFormHTML());
@@ -224,11 +242,12 @@ export function startAssessment(root, id, requestedVersion) {
     const form = e.target;
     const kind = form.dataset.kind;
     if (kind === 'errorlog') {
-      progress = addErrorEntry(store.load(), { moduleId: session.meta.assessmentId, error: form.error.value.trim(), cause: form.cause.value.trim(), correction: form.correction.value.trim() }, new Date().toISOString());
-      save(progress);
-      form.outerHTML = '<p class="feedback feedback-right">Saved to your error log. Review it before your next try.</p>';
+      progress = update((p) => addErrorEntry(p, { moduleId: session.meta.assessmentId, error: form.error.value.trim(), cause: form.cause.value.trim(), correction: form.correction.value.trim() }, new Date().toISOString()));
+      form.outerHTML = '<p class="feedback feedback-right" id="log-saved" tabindex="-1">Saved to your error log. Review it before your next try.</p>';
+      root.querySelector('#log-saved').focus();
       return;
     }
+    if (stale) return;
     let response;
     if (kind === 'numeric') response = form.answer.value;
     if (kind === 'entry') {
@@ -247,6 +266,7 @@ export function startAssessment(root, id, requestedVersion) {
     }
 
     const before = session.results.length;
+    const previous = session;
     session = submit(session, response);
     const result = session.last;
     if (result.invalid) {
@@ -259,11 +279,19 @@ export function startAssessment(root, id, requestedVersion) {
       responseBox.querySelector('[name=tick]')?.focus();
       return;
     }
+    // Another tab or window may have moved this sitting on. If so, keep its
+    // version of events and ask the learner to reload.
+    if (!sessionMatches(store.load(), session.meta, previous.results.length, attemptsAtStart)) {
+      stale = true;
+      session = previous;
+      responseBox.innerHTML = '<p class="feedback feedback-wrong">This check was changed in another tab or window. Reload this page to continue from where it is now.</p>';
+      itemBox.querySelectorAll('form input, form select, form textarea, form button').forEach((el) => { el.disabled = true; });
+      return;
+    }
     // Keep the sitting safe: save after every answer, record the result at the end.
-    progress = isComplete(session)
-      ? recordResult(store.load(), session, new Date().toISOString())
-      : saveSession(store.load(), session.meta, session.results);
-    save(progress);
+    progress = update((p) => (isComplete(session)
+      ? recordResult(p, session, new Date().toISOString())
+      : saveSession(p, session.meta, session.results)));
     itemBox.querySelectorAll('form input, form select, form textarea, form button').forEach((el) => { el.disabled = true; });
     responseBox.innerHTML = feedbackHTML(result);
     responseBox.querySelector('[data-action=next]')?.focus();

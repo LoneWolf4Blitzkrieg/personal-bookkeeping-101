@@ -17,7 +17,8 @@
 
     const engine = /Firefox\//.test(navigator.userAgent) ? 'firefox' : /Chrome\//.test(navigator.userAgent) ? 'chromium' : 'other';
     const params = new URLSearchParams(location.search);
-    const store = createProgressStore(createStorage(browserBackend()));
+    // A separate key, so the check never touches a learner's real progress.
+    const store = createProgressStore(createStorage(browserBackend()), undefined, 'pb101-save-check');
     const out = document.getElementById('out');
 
     if (!params.has('token')) {

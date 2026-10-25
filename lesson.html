@@ -47,5 +47,11 @@
     wireLayoutButtons();
     startLessonPage(location.search);
   </script>
+  <script>
+    // Module scripts do not run when a page is opened straight from a file.
+    if (location.protocol === 'file:') {
+      document.body.insertAdjacentHTML('afterbegin', '<p class="storage-banner">This course must be opened from its web address (or a local web server), not by opening the file directly. See the README for how to start it.</p>');
+    }
+  </script>
 </body>
 </html>

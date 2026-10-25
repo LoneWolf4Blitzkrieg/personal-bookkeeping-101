@@ -19,10 +19,18 @@ export function createStorage(backend) {
   return {
     available,
     get(key) {
+      const text = this.getRaw(key);
+      if (text == null) return null;
+      try {
+        return JSON.parse(text);
+      } catch {
+        return null;
+      }
+    },
+    getRaw(key) {
       if (!backend) return null;
       try {
-        const text = backend.getItem(key);
-        return text == null ? null : JSON.parse(text);
+        return backend.getItem(key);
       } catch {
         return null;
       }
@@ -36,6 +44,26 @@ export function createStorage(backend) {
         return false;
       }
     },
+  };
+}
+
+// A fallback for when localStorage is blocked: keeps values in window.name,
+// which survives moving between pages in the same tab (but not closing it).
+const NAME_PREFIX = 'pb101:';
+
+export function windowNameBackend(win = globalThis.window) {
+  const read = () => {
+    try {
+      return win.name.startsWith(NAME_PREFIX) ? JSON.parse(win.name.slice(NAME_PREFIX.length)) : {};
+    } catch {
+      return {};
+    }
+  };
+  const write = (data) => { win.name = NAME_PREFIX + JSON.stringify(data); };
+  return {
+    getItem: (k) => read()[k] ?? null,
+    setItem: (k, v) => { const d = read(); d[k] = String(v); write(d); },
+    removeItem: (k) => { const d = read(); delete d[k]; write(d); },
   };
 }
 

@@ -39,7 +39,7 @@
     <nav class="course-map-overview" id="course-map" aria-label="Course map"></nav>
 
     <h2>Your progress</h2>
-    <p>Your progress saves automatically in this browser, including after you close it. Open the course from the same web address each time. To keep a backup, or to move to another device, save a progress file and load it there.</p>
+    <p>Your progress saves automatically in this browser, including after you close it. Open the course from the same web address each time. In a private or incognito window, progress lasts only until that window is closed. To keep a backup, or to move to another device, save a progress file and load it there.</p>
     <p class="progress-tools">
       <button class="button" type="button" id="export-progress">Save a progress file</button>
       <input class="visually-hidden" type="file" id="import-progress" accept="application/json,.json">
@@ -58,6 +58,12 @@
   <script type="module">
     import { startHomePage } from './js/app/home.js';
     startHomePage();
+  </script>
+  <script>
+    // Module scripts do not run when a page is opened straight from a file.
+    if (location.protocol === 'file:') {
+      document.body.insertAdjacentHTML('afterbegin', '<p class="storage-banner">This course must be opened from its web address (or a local web server), not by opening the file directly. See the README for how to start it.</p>');
+    }
   </script>
 </body>
 </html>

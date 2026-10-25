@@ -21,6 +21,8 @@ export function emptyProgress(started = new Date().toISOString()) {
     examPassedAt: null,
     sessions: {},
     recall: {},
+    other: {},
+    remedialNeeded: false,
     errorLog: [],
     ledgers: {},
   };
@@ -37,38 +39,57 @@ const moduleTitle = (id) => {
 const CHECKPOINT_NAMES = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C' };
 
 const modulePassed = (p, id) => Boolean(p.modules[id]?.passed);
-const checkpointPassed = (p, id) => Boolean(p.checkpoints[id]?.passed) || Boolean(p.placement[id]?.passed);
+const moduleIndex = (id) => MODULES.findIndex((m) => m.id === id);
+
+// The furthest checkpoint passed, as a checkpoint or as a placement test.
+// Passing a later checkpoint counts every earlier one.
+function furthestCheckpoint(p) {
+  let best = -1;
+  CHECKPOINTS.forEach((c, i) => {
+    if (p.checkpoints[c.id]?.passed || p.placement[c.id]?.passed) best = Math.max(best, i);
+  });
+  return best;
+}
+const checkpointPassed = (p, id) => furthestCheckpoint(p) >= CHECKPOINTS.findIndex((c) => c.id === id);
+// Modules up to the furthest passed checkpoint stay open for review.
+const coveredModule = (p, id) => {
+  const best = furthestCheckpoint(p);
+  return best >= 0 && moduleIndex(id) <= moduleIndex(CHECKPOINTS[best].after);
+};
 
 const open = { unlocked: true };
-const locked = (reason) => ({ unlocked: false, reason });
+const locked = (reason, next) => ({ unlocked: false, reason, ...(next ? { next } : {}) });
 
 export function isUnlocked(id, progress, now = Date.now()) {
-  if (id === 'prereq' || id === 'placement' || id === 'm01') return open;
+  if (id === 'prereq' || id === 'placement' || id === 'm01' || /^placement-c[abc]$/.test(id)) return open;
 
   const cp = CHECKPOINTS.find((c) => c.id === id);
-  if (cp) return modulePassed(progress, cp.after) ? open : locked(`Pass the check at the end of ${moduleTitle(cp.after)} first.`);
+  if (cp) return modulePassed(progress, cp.after) || checkpointPassed(progress, id) ? open : locked(`Pass the check at the end of ${moduleTitle(cp.after)} first.`, cp.after);
 
-  if (id === 'exam') return modulePassed(progress, 'a3') ? open : locked('Finish the add-on modules first.');
+  if (id === 'exam') return modulePassed(progress, 'a3') ? open : locked('Finish the add-on modules first.', 'a3');
   if (id === 'retention') {
     if (!progress.examPassedAt) return locked('This review opens four weeks after you pass the final exam.');
     const opens = Date.parse(progress.examPassedAt) + RETENTION_DAYS * DAY_MS;
     return now >= opens ? open : locked(`This review opens on ${new Date(opens).toDateString()}, four weeks after your final exam.`);
   }
 
-  const index = MODULES.findIndex((m) => m.id === id);
+  const index = moduleIndex(id);
   if (index <= 0) return locked('There is no such module.');
+  if (coveredModule(progress, id)) return open;
   const gateCheckpoint = CHECKPOINTS.find((c) => MODULES[index - 1].id === c.after);
   if (gateCheckpoint) {
-    return checkpointPassed(progress, gateCheckpoint.id) ? open : locked(`Pass ${CHECKPOINT_NAMES[gateCheckpoint.id]} first (or the placement test).`);
+    return checkpointPassed(progress, gateCheckpoint.id) ? open : locked(`Pass ${CHECKPOINT_NAMES[gateCheckpoint.id]} first (or the placement test).`, gateCheckpoint.id);
   }
   const previous = MODULES[index - 1].id;
-  return modulePassed(progress, previous) ? open : locked(`Finish ${moduleTitle(previous)} first.`);
+  return modulePassed(progress, previous) ? open : locked(`Finish ${moduleTitle(previous)} first.`, previous);
 }
 
-export function recordGate(progress, moduleId, score, at, version) {
+// items: per-question results [{ templateId, module, part, points, max, selfMarked }],
+// kept for the evaluation plan (self-marking accuracy, per-module results).
+export function recordGate(progress, moduleId, score, at, version, items = []) {
   const p = clone(progress);
   const m = moduleRecord(p, moduleId);
-  m.gateAttempts.push({ at, version, points: score.points, max: score.max, passed: score.passed });
+  m.gateAttempts.push({ at, version, points: score.points, max: score.max, passed: score.passed, items });
   if (score.passed) m.passed = true;
   else p.recall[moduleId] = RECALL_SETS;
   delete p.sessions[moduleId];
@@ -84,10 +105,10 @@ export function completeModule(progress, moduleId, at) {
   return p;
 }
 
-export function recordCheckpoint(progress, id, score, at, version) {
+export function recordCheckpoint(progress, id, score, at, version, items = []) {
   const p = clone(progress);
   const c = (p.checkpoints[id] ??= { attempts: [], passed: false });
-  c.attempts.push({ at, version, percent: score.percent, passed: score.passed, missedModules: score.missedModules ?? [] });
+  c.attempts.push({ at, version, percent: score.percent, passed: score.passed, missedModules: score.missedModules ?? [], items });
   if (score.passed) c.passed = true;
   delete p.sessions[id];
   return p;
@@ -95,17 +116,32 @@ export function recordCheckpoint(progress, id, score, at, version) {
 
 // A placement test is a checkpoint taken early; passing it unlocks the
 // module after that checkpoint.
-export function recordPlacement(progress, checkpointId, score, at) {
+// Placement tests have the ids "placement-ca" and "placement-cb".
+export function recordPlacement(progress, checkpointId, score, at, version, items = []) {
   const p = clone(progress);
-  const previous = p.placement[checkpointId];
-  p.placement[checkpointId] = { at, percent: score.percent, passed: Boolean(previous?.passed) || score.passed };
+  const record = (p.placement[checkpointId] ??= { attempts: [], passed: false });
+  record.attempts.push({ at, version, percent: score.percent, passed: score.passed, missedModules: score.missedModules ?? [], items });
+  if (score.passed) record.passed = true;
   delete p.sessions[`placement-${checkpointId}`];
   return p;
 }
 
-export function recordExam(progress, score, at, version) {
+// Other recorded checks: the prerequisite check ("prereq") and the
+// four-week retention test ("retention"). A failed prerequisite check puts
+// the learner in the group that needed the remedial unit.
+export function recordOther(progress, id, score, at, version, items = []) {
   const p = clone(progress);
-  p.exam.attempts.push({ at, version, percent: score.percent, passed: score.passed });
+  const record = (p.other[id] ??= { attempts: [], passed: false });
+  record.attempts.push({ at, version, percent: score.percent, passed: score.passed, items });
+  if (score.passed) record.passed = true;
+  if (id === 'prereq' && !score.passed) p.remedialNeeded = true;
+  delete p.sessions[id];
+  return p;
+}
+
+export function recordExam(progress, score, at, version, items = []) {
+  const p = clone(progress);
+  p.exam.attempts.push({ at, version, percent: score.percent, passed: score.passed, items });
   if (score.passed && !p.examPassedAt) p.examPassedAt = at;
   delete p.sessions.exam;
   return p;
@@ -119,21 +155,32 @@ export function failureStep(failedAttempts) {
   return 'remediation';
 }
 
-const VERSIONS = 4;
-
-function attemptsFor(progress, id) {
+export function attemptsFor(progress, id) {
+  if (id === 'exam') return progress.exam.attempts.length;
+  const placement = /^placement-(c[abc])$/.exec(id);
+  if (placement) return progress.placement[placement[1]]?.attempts.length ?? 0;
   if (progress.modules[id]) return progress.modules[id].gateAttempts.length;
   if (progress.checkpoints[id]) return progress.checkpoints[id].attempts.length;
-  if (id === 'exam') return progress.exam.attempts.length;
+  if (progress.other[id]) return progress.other[id].attempts.length;
   return 0;
 }
 
 // The version for the next sitting: an open session keeps its version;
-// otherwise each attempt moves to the next version, cycling through four.
+// otherwise each attempt gets the next version number (1, 2, 3, ...).
 export function nextVersion(progress, id) {
   const openOne = progress.sessions[id];
   if (openOne) return openOne.meta.version;
-  return (attemptsFor(progress, id) % VERSIONS) + 1;
+  return attemptsFor(progress, id) + 1;
+}
+
+// Before saving an answer: true only if no other tab has changed this
+// sitting since this page started it (same version, same number of saved
+// answers, and no attempt finished in the meantime).
+export function sessionMatches(progress, meta, resultsBefore, attemptsAtStart) {
+  if (attemptsFor(progress, meta.assessmentId) !== attemptsAtStart) return false;
+  const stored = progress.sessions[meta.assessmentId];
+  if (!stored) return resultsBefore === 0;
+  return stored.meta.version === meta.version && stored.results.length === resultsBefore;
 }
 
 export function saveSession(progress, meta, results) {
@@ -198,7 +245,7 @@ export function exportProgress(progress) {
 
 const FIELDS = {
   started: 'string', modules: 'object', checkpoints: 'object', placement: 'object', exam: 'object',
-  sessions: 'object', recall: 'object', errorLog: 'array', ledgers: 'object',
+  sessions: 'object', recall: 'object', other: 'object', remedialNeeded: 'boolean', errorLog: 'array', ledgers: 'object',
 };
 
 function typeOf(v) {
@@ -216,6 +263,19 @@ export function validateProgress(data) {
   }
   if (!(data.examPassedAt === null || typeof data.examPassedAt === 'string')) return 'This progress file has a damaged "examPassedAt".';
   if (!Array.isArray(data.exam.attempts)) return 'This progress file has a damaged "exam".';
+  for (const [id, m] of Object.entries(data.modules)) {
+    if (typeOf(m) !== 'object' || !Array.isArray(m.steps) || typeof m.timeMs !== 'number' || !Array.isArray(m.gateAttempts) || typeof m.passed !== 'boolean') {
+      return `This progress file has a damaged record for ${id}.`;
+    }
+  }
+  for (const group of ['checkpoints', 'placement', 'other']) {
+    for (const [id, c] of Object.entries(data[group])) {
+      if (typeOf(c) !== 'object' || !Array.isArray(c.attempts) || typeof c.passed !== 'boolean') return `This progress file has a damaged record for ${id}.`;
+    }
+  }
+  for (const [id, s] of Object.entries(data.sessions)) {
+    if (typeOf(s) !== 'object' || typeOf(s.meta) !== 'object' || !Array.isArray(s.results)) return `This progress file has a damaged sitting for ${id}.`;
+  }
   return null;
 }
 

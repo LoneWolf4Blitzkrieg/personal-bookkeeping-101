@@ -4,7 +4,7 @@
 import { renderCourseMap } from './nav.js';
 import { exportProgress, importProgress } from '../progress.js';
 import { escapeHTML } from '../html.js';
-import { store, save, mountChrome } from './chrome.js';
+import { store, replace, mountChrome, onExternalChange } from './chrome.js';
 
 function errorLogHTML(log) {
   if (log.length === 0) return '<p>Nothing yet. When you miss a question in a check, you can note what went wrong here.</p>';
@@ -14,15 +14,16 @@ function errorLogHTML(log) {
 
 export function startHomePage() {
   mountChrome();
-  let progress = store.load();
   const draw = () => {
+    const progress = store.load();
     renderCourseMap(document.getElementById('course-map'), progress, null, { headingLevel: 3 });
     document.getElementById('error-log').innerHTML = errorLogHTML(progress.errorLog);
   };
   draw();
+  onExternalChange(draw);
 
   document.getElementById('export-progress').addEventListener('click', () => {
-    const blob = new Blob([exportProgress(progress)], { type: 'application/json' });
+    const blob = new Blob([exportProgress(store.load())], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `bookkeeping-101-progress-${new Date().toISOString().slice(0, 10)}.json`;
@@ -42,12 +43,11 @@ export function startHomePage() {
       status.textContent = `${result.reason} Your current progress has not changed.`;
       return;
     }
-    if (!window.confirm('Replace your current progress with the progress in this file?')) {
+    if (!window.confirm('Replace your current progress with the progress in this file? Anything you did after the file was saved will be replaced.')) {
       status.textContent = 'Nothing changed.';
       return;
     }
-    progress = result.progress;
-    status.textContent = save(progress) ? 'Progress loaded from the file.' : 'Progress loaded, but this browser cannot save it. It will last until you close the page.';
+    status.textContent = replace(result.progress) ? 'Progress loaded from the file.' : 'This browser could not store the progress. Try again in a normal browser window.';
     draw();
   });
 }

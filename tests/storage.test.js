@@ -53,3 +53,26 @@ test('a backend whose reads throw is handled', () => {
   const backend = { ...memoryBackend(), getItem: () => { throw new Error('SecurityError'); } };
   assert.equal(createStorage(backend).get('k'), null);
 });
+
+test('the window-name backend keeps values across pages in one tab', async () => {
+  const { windowNameBackend } = await import('../js/storage.js');
+  const win = { name: '' };
+  const a = createStorage(windowNameBackend(win));
+  assert.equal(a.available, true);
+  a.set('k', { x: 1 });
+  const b = createStorage(windowNameBackend(win)); // the next page in the same tab
+  assert.deepEqual(b.get('k'), { x: 1 });
+});
+
+test('the window-name backend ignores a name set by someone else', async () => {
+  const { windowNameBackend } = await import('../js/storage.js');
+  const s = createStorage(windowNameBackend({ name: 'some-other-site' }));
+  assert.equal(s.get('k'), null);
+});
+
+test('raw text is available when saved data cannot be parsed', () => {
+  const data = new Map([['k', '{broken']]);
+  const s = createStorage({ getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v), removeItem: (k) => data.delete(k) });
+  assert.equal(s.get('k'), null);
+  assert.equal(s.getRaw('k'), '{broken');
+});

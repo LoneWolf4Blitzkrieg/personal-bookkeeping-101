@@ -3,24 +3,33 @@
 
 import { MODULES, PHASES } from '../../content/course.js';
 import { renderCourseMap, moduleIdFromParam } from './nav.js';
-import { isUnlocked, markStep, addTime } from '../progress.js';
+import { isUnlocked, markStep } from '../progress.js';
 import { escapeHTML } from '../html.js';
-import { store, save, mountChrome } from './chrome.js';
+import { store, update, mountChrome, onExternalChange, trackTime } from './chrome.js';
+
+const CHECK_NAMES = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C', a3: 'Add-on A3' };
+
+function nextLink(next) {
+  if (!next) return '';
+  if (/^c[abc]$/.test(next)) {
+    return `<p><a class="button" href="assess.html?id=${next}">Go to ${CHECK_NAMES[next]}</a> or <a href="assess.html?id=placement-${next}">take the placement test</a> if you already know this material.</p>`;
+  }
+  const m = MODULES.find((x) => x.id === next);
+  return m ? `<p><a class="button" href="lesson.html?m=${m.id}">Go to ${escapeHTML(m.title)}</a></p>` : '';
+}
 
 export function startLessonPage(search) {
   mountChrome();
-  let progress = store.load();
 
   const param = new URLSearchParams(search).get('m');
   const id = param === null ? 'm01' : moduleIdFromParam(param);
   const module = MODULES.find((m) => m.id === id);
   const mapBox = document.getElementById('course-map');
-  const drawMap = () => renderCourseMap(mapBox, progress, module ? module.id : null, { headingLevel: 3 });
-  drawMap();
-
   const title = document.getElementById('module-title');
   const body = document.getElementById('lesson-body');
+
   if (!module) {
+    renderCourseMap(mapBox, store.load(), null, { headingLevel: 3 });
     title.textContent = 'Module not found';
     body.innerHTML = '<p>There is no module with that name. Choose one from the course map.</p>';
     return;
@@ -29,40 +38,30 @@ export function startLessonPage(search) {
   document.getElementById('crumb').textContent = PHASES[module.phase];
   document.title = `${module.title} · Personal Bookkeeping 101`;
 
-  const access = isUnlocked(module.id, progress);
-  if (!access.unlocked) {
-    body.innerHTML = `<div class="lock-notice"><p><strong>This module is locked.</strong> ${escapeHTML(access.reason)}</p>
-      <p>Each module opens when you pass the check at the end of the one before it, so you never build on a gap.</p></div>`;
-    document.getElementById('ledger').textContent = 'The ledger page appears when the module opens.';
-    return;
+  function draw() {
+    const progress = store.load();
+    renderCourseMap(mapBox, progress, module.id, { headingLevel: 3 });
+    const access = isUnlocked(module.id, progress);
+    if (!access.unlocked) {
+      body.innerHTML = `<div class="lock-notice"><p><strong>This module is locked.</strong> ${escapeHTML(access.reason)}</p>
+        <p>Each module opens when you pass the check at the end of the one before it, so you never build on a gap.</p>${nextLink(access.next)}</div>`;
+      document.getElementById('ledger').textContent = 'The ledger page appears when the module opens.';
+      return false;
+    }
+    // Placeholder first step until Task 5 renders real lesson steps.
+    const done = progress.modules[module.id]?.steps.includes(0);
+    body.innerHTML = `<p>This module's lessons are being written.</p>
+      <p><button class="button" type="button" id="mark-step" ${done ? 'disabled' : ''}>${done ? 'Introduction read ✓' : 'Mark the introduction as read'}</button></p>`;
+    document.getElementById('mark-step')?.addEventListener('click', () => {
+      update((p) => markStep(p, module.id, 0));
+      draw();
+    });
+    return true;
   }
 
-  // Placeholder first step until Task 5 renders real lesson steps.
-  const done = () => progress.modules[module.id]?.steps.includes(0);
-  const drawStep = () => {
-    body.innerHTML = `<p>This module's lessons are being written.</p>
-      <p><button class="button" type="button" id="mark-step" ${done() ? 'disabled' : ''}>${done() ? 'Introduction read ✓' : 'Mark the introduction as read'}</button></p>`;
-    document.getElementById('mark-step')?.addEventListener('click', () => {
-      progress = markStep(progress, module.id, 0);
-      save(progress);
-      drawStep();
-    });
-  };
-  drawStep();
-
-  // Time on the module, saved whenever the page is hidden or closed.
-  let shownAt = document.visibilityState === 'visible' ? Date.now() : null;
-  const flushTime = () => {
-    if (shownAt === null) return;
-    progress = addTime(store.load(), module.id, Date.now() - shownAt);
-    shownAt = null;
-    store.save(progress);
-  };
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flushTime();
-    else shownAt = Date.now();
-  });
-  window.addEventListener('pagehide', flushTime);
+  const opened = draw();
+  onExternalChange(draw);
+  if (opened) trackTime(module.id);
 }
 
 export function wireLayoutButtons() {
