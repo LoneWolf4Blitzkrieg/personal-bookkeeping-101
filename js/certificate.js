@@ -61,6 +61,10 @@ export const CERTIFICATE_CSS = `
 .certificate .certificate-unofficial { font-size: .85em; max-width: 40em; margin: 1.4em auto .4em; }
 .certificate .certificate-credit { font-size: .8em; }
 .certificate-credit a { color: inherit; }
+@media screen and (max-width: 759px) {
+  .certificate { padding: 1.2rem .9rem; }
+  .certificate .certificate-course { font-size: 1.6em; overflow-wrap: anywhere; }
+}
 @media print {
   @page { size: landscape; margin: .4in; }
   .certificate { font-size: 12pt; padding: .4in .55in; margin-top: 0; page-break-inside: avoid; }

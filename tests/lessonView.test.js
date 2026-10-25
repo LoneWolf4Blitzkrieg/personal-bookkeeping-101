@@ -31,7 +31,7 @@ test('prediction feedback is announced and invalid input is tied to the field', 
   const after = stepHTML(predict, 1, { revealed: true, feedback: gradePrediction(predict.steps[1], '181.80') });
   assert.match(after, /class="feedback[^"]*"[^>]*role="status"/);
   const invalid = stepHTML(predict, 1, { feedback: gradePrediction(predict.steps[1], 'abc') });
-  assert.match(invalid, /<input[^>]*aria-invalid="true"[^>]*aria-describedby="prediction-note"/);
+  assert.match(invalid, /<input[^>]*aria-invalid="true"[^>]*aria-describedby="[^"]*prediction-note"/);
   assert.match(invalid, /id="prediction-note"/);
 });
 

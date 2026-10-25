@@ -33,12 +33,14 @@ Progress is saved in your own browser (local storage) and never leaves it. To mo
 3. Under **Build and deployment**, choose **Deploy from a branch**, then the **main** branch and the **/ (root)** folder, and save.
 4. After a minute or two, the course is live at `https://<your-user-name>.github.io/<repository-name>/`.
 
+Keep the empty [`.nojekyll`](.nojekyll) file at the top of the repository: it tells GitHub Pages to publish the files exactly as they are, without rebuilding them.
+
 ## Accessibility
 
 - Ledgers and reports are real HTML tables with headers, so screen readers can read them.
 - Everything works with the keyboard; nothing is timed.
 - A **Larger text** button in the top bar makes all text 25% larger, and the choice is remembered.
-- Pages work on phones (the ledger is pinned above the lesson text), and ledger sheets print on one page with the answers hidden.
+- Pages work on phones (the ledger is pinned above the lesson text). Each ledger sheet prints whole on one page, with the answers hidden; the certificate prints on one page.
 
 ## Running the tests
 
@@ -50,10 +52,10 @@ node --test tests/
 
 They check the code and the content: every ledger balances, every running balance is right, every example uses only ideas already taught, every source and link resolves, every check has exactly 10 questions, and no question shows another question's answer.
 
-## Licence
+## License
 
 *Personal Bookkeeping 101* by Raul Bautista is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) (free for non-commercial use).
 
-This covers everything in this repository, lessons and code alike, except the one file named below. You may use, share and adapt it for non-commercial purposes, provided you credit Raul Bautista and release your adaptations under the same licence. The full legal text is in [`LICENSE`](LICENSE).
+This covers everything in this repository, lessons and code alike, except the one file named below. You may use, share and adapt it for non-commercial purposes, provided you credit Raul Bautista and release your adaptations under the same license. The full legal text is in [`LICENSE`](LICENSE).
 
-**One exception:** the celebration music, [`media/ode-to-joy-finale.mp3`](media/ode-to-joy-finale.mp3), is a third-party recording. Beethoven's music and Schiller's words are public domain, but the recording is not, and it is not covered by this licence. See [`media/NOTICE.md`](media/NOTICE.md).
+**One exception:** the celebration music, [`media/ode-to-joy-finale.mp3`](media/ode-to-joy-finale.mp3), is a third-party recording. Beethoven's music and Schiller's words are public domain, but the recording is not, and it is not covered by this license. See [`media/NOTICE.md`](media/NOTICE.md).

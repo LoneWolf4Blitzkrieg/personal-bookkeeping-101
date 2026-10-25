@@ -2,7 +2,7 @@
 // with the ledger pinned beside them, step progress and time on the module.
 
 import { MODULES, PHASES, PREREQUISITE } from '../../content/course.js';
-import { renderCourseMap, moduleIdFromParam } from './nav.js';
+import { renderCourseMap, moduleIdFromParam, nextLinkHTML as nextLink } from './nav.js';
 import { isUnlocked, markStep, saveProject, completeModule } from '../progress.js';
 import { parseAmount } from '../money.js';
 import { escapeHTML } from '../html.js';
@@ -11,16 +11,7 @@ import { DEMO_LESSON } from '../../content/modules/demo.js';
 import { stepHTML, ledgerPanelHTML, gradePrediction, projectReady } from '../lessonView.js';
 import { store, update, mountChrome, onExternalChange, trackTime } from './chrome.js';
 
-const CHECK_NAMES = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C', a3: 'Add-on A3' };
 
-function nextLink(next) {
-  if (!next) return '';
-  if (/^c[abc]$/.test(next)) {
-    return `<p><a class="button" href="assess.html?id=${next}">Go to ${CHECK_NAMES[next]}</a> or <a href="assess.html?id=placement-${next}">take the placement test</a> if you already know this material.</p>`;
-  }
-  const m = MODULES.find((x) => x.id === next);
-  return m ? `<p><a class="button" href="lesson.html?m=${m.id}">Go to ${escapeHTML(m.title)}</a></p>` : '';
-}
 
 export function startLessonPage(search) {
   mountChrome();
@@ -64,10 +55,14 @@ export function startLessonPage(search) {
     body.innerHTML = stepHTML(content, index, { revealed: revealed.has(index), feedback: feedback[index], project: step.kind === 'project' ? projectState() : null });
     const panel = ledgerPanelHTML(step, { revealed: revealed.has(index) });
     ledgerBox.className = panel ? 'ledger-content' : 'ledger-placeholder';
+    ledgerBox.closest('.ledger-panel')?.classList.toggle('empty', !panel);
     ledgerBox.innerHTML = panel
       ? `${panel}<p class="print-link"><a href="print.html?lesson=${encodeURIComponent(content.id)}&amp;step=${encodeURIComponent(step.id)}">Print this page</a></p>`
       : 'No ledger page for this step.';
-    if (focus) (body.querySelector('#prediction-feedback') ?? body.querySelector('#prediction') ?? body.querySelector('#step-title'))?.focus();
+    // After Next or Back: the step's heading, so the step is read from the top.
+    // After a prediction: its feedback.
+    if (focus === 'answered') (body.querySelector('#prediction-feedback') ?? body.querySelector('#step-title'))?.focus();
+    else if (focus) body.querySelector('#step-title')?.focus();
     // Reaching the end of the lesson counts the last step as done.
     const last = index === content.steps.length - 1;
     const waiting = step.kind === 'predict' && !revealed.has(index);
@@ -94,7 +89,6 @@ export function startLessonPage(search) {
       body.querySelector('.project-check [role="status"]')?.focus();
     }
     if (action === 'reread') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       body.querySelector('#step-title')?.focus();
     }
   });
@@ -134,7 +128,7 @@ export function startLessonPage(search) {
     const result = gradePrediction(content.steps[index], e.target.prediction.value);
     feedback[index] = result;
     if (!result.invalid) revealed.add(index);
-    drawStep(!result.invalid);
+    drawStep(result.invalid ? false : 'answered');
     if (result.invalid) body.querySelector('#prediction')?.focus();
   });
 

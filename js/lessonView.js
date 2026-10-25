@@ -123,7 +123,9 @@ export function stepHTML(module, index, { revealed = false, feedback = null, pro
   const step = module.steps[index];
   const last = index === module.steps.length - 1;
   const core = index === 0 && module.coreIdea ? `<p class="core-idea"><strong>Core idea:</strong> ${escapeHTML(module.coreIdea)}</p>` : '';
-  const text = (step.text ?? []).map((p) => `<p>${escapeHTML(p)}</p>`).join('');
+  // The last paragraph of a prediction step is its question; the answer box points to it.
+  const paras = step.text ?? [];
+  const text = paras.map((p, i) => `<p${step.kind === 'predict' && i === paras.length - 1 ? ' id="step-question"' : ''}>${escapeHTML(p)}</p>`).join('');
   const title = step.title ? `<h2 class="step-title" id="step-title" tabindex="-1">${escapeHTML(step.title)}</h2>` : `<h2 class="visually-hidden" id="step-title" tabindex="-1">Step ${index + 1}</h2>`;
   let body = core + text + citationHTML(step) + printLinksHTML(step.printLinks ?? []);
   if (step.prompt) {
@@ -134,7 +136,8 @@ export function stepHTML(module, index, { revealed = false, feedback = null, pro
   const waiting = step.kind === 'predict' && !revealed;
   if (waiting) {
     const invalid = feedback?.invalid;
-    const noteAttrs = invalid ? ' aria-invalid="true" aria-describedby="prediction-note"' : '';
+    const described = paras.length ? 'step-question' : '';
+    const noteAttrs = invalid ? ` aria-invalid="true" aria-describedby="${described} prediction-note"` : described ? ` aria-describedby="${described}"` : '';
     body += `<form class="answer-form predict-form" data-kind="predict">
       <label for="prediction">Your prediction (in dollars)</label>
       <div class="answer-row"><span aria-hidden="true">$</span><input id="prediction" name="prediction" inputmode="decimal" autocomplete="off" required${noteAttrs}></div>

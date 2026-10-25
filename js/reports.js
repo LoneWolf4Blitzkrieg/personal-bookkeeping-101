@@ -174,7 +174,7 @@ export function reportHTML(report, { showAnswers = false } = {}) {
   }).join('\n');
   return `<div class="ledger-sheet report-sheet">
 <div class="ledger-head"><div class="ledger-head-row"><div class="ledger-field"><span class="ledger-field-label">${escapeHTML(title)}</span><span class="ledger-field-value">${escapeHTML(when)}</span></div><div class="ledger-field"><span class="ledger-field-label">Name</span><span class="ledger-field-value">${escapeHTML(report.name ?? '')}</span></div></div></div>
-<div class="ledger-scroll">
+<div class="ledger-scroll" tabindex="0" role="region" aria-label="${escapeHTML(title)}">
 <table class="ledger report report-${escapeHTML(report.report)}" aria-label="${escapeHTML(title)}">
 <thead>${head}</thead>
 <tbody>

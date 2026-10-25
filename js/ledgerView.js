@@ -162,7 +162,7 @@ export function ledgerHTML(page, { highlightRow = null, editable = false, showAn
   const notesHTML = notes ? `<ul class="money-notes" aria-label="Money in and out">${notes}</ul>` : '';
   return `<div class="ledger-sheet">
 ${headerFields(page)}
-<div class="ledger-scroll">
+<div class="ledger-scroll" tabindex="0" role="region" aria-label="Ledger page: ${escapeHTML(label)}">
 <table class="ledger" aria-label="Ledger page: ${escapeHTML(label)}">
 <thead><tr>${head}</tr></thead>
 <tbody>
@@ -194,7 +194,7 @@ export function journalHTML(page, { highlightEntry = null, minRows = page.minRow
   const blanks = Array.from({ length: Math.max(0, minRows - used) }, () => '<tr><td class="col-date"></td><td class="col-items"></td><td class="col-folio"></td><td class="col-debit money"></td><td class="col-credit money"></td></tr>').join('\n');
   return `<div class="ledger-sheet journal-sheet">
 <div class="ledger-head"><div class="ledger-head-row"><div class="ledger-field"><span class="ledger-field-label">Journal</span><span class="ledger-field-value">Page ${escapeHTML(page.sheetNo ?? '')}</span></div><div class="ledger-field"><span class="ledger-field-label">Name</span><span class="ledger-field-value">${escapeHTML(page.name ?? '')}</span></div></div></div>
-<div class="ledger-scroll">
+<div class="ledger-scroll" tabindex="0" role="region" aria-label="Journal page ${escapeHTML(page.sheetNo ?? '')}">
 <table class="ledger journal" aria-label="Journal page ${escapeHTML(page.sheetNo ?? '')}">
 <thead><tr><th scope="col" class="col-date">Date</th><th scope="col" class="col-items">Items</th><th scope="col" class="col-folio">Folio</th><th scope="col" class="col-debit">Debits</th><th scope="col" class="col-credit">Credits</th></tr></thead>
 <tbody>

@@ -4,12 +4,13 @@
 import { renderCourseMap } from './nav.js';
 import { exportProgress, importProgress } from '../progress.js';
 import { escapeHTML } from '../html.js';
+import { moduleName } from '../names.js';
 import { store, replace, mountChrome, onExternalChange } from './chrome.js';
 
 function errorLogHTML(log) {
   if (log.length === 0) return '<p>Nothing yet. When you miss a question in a check, you can note what went wrong here.</p>';
-  const rows = [...log].reverse().map((e) => `<tr><td>${escapeHTML(new Date(e.at).toLocaleDateString())}</td><td>${escapeHTML(e.moduleId)}</td><td>${escapeHTML(e.error)}</td><td>${escapeHTML(e.cause)}</td><td>${escapeHTML(e.correction)}</td></tr>`).join('');
-  return `<table class="results error-log"><thead><tr><th scope="col">Date</th><th scope="col">Where</th><th scope="col">What went wrong</th><th scope="col">Why</th><th scope="col">The correct way</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const rows = [...log].reverse().map((e) => `<tr><td>${escapeHTML(new Date(e.at).toLocaleDateString())}</td><td>${escapeHTML(moduleName(e.moduleId))}</td><td>${escapeHTML(e.error)}</td><td>${escapeHTML(e.cause)}</td><td>${escapeHTML(e.correction)}</td></tr>`).join('');
+  return `<div class="table-scroll" role="region" aria-label="Your error log" tabindex="0"><table class="results error-log"><thead><tr><th scope="col">Date</th><th scope="col">Where</th><th scope="col">What went wrong</th><th scope="col">Why</th><th scope="col">The correct way</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 export function startHomePage() {

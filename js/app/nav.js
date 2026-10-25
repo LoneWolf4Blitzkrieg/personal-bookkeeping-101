@@ -7,6 +7,20 @@ import { escapeHTML } from '../html.js';
 import { isUnlocked, emptyProgress } from '../progress.js';
 
 const CHECKPOINT_LABELS = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C' };
+// Placement tests exist for Checkpoints A and B only.
+const PLACEMENT_FOR = new Set(['ca', 'cb']);
+
+// The way on from a lock notice: the checkpoint (with its placement test,
+// where there is one) or the module to finish first.
+export function nextLinkHTML(next, modules = MODULES) {
+  if (!next) return '';
+  if (CHECKPOINT_LABELS[next]) {
+    const placement = PLACEMENT_FOR.has(next) ? ` or <a href="assess.html?id=placement-${next}">take the placement test</a> if you already know this material` : '';
+    return `<p><a class="button" href="assess.html?id=${next}">Go to ${CHECKPOINT_LABELS[next]}</a>${placement}.</p>`;
+  }
+  const m = modules.find((x) => x.id === next);
+  return m ? `<p><a class="button" href="lesson.html?m=${m.id}">Go to ${escapeHTML(m.title)}</a></p>` : '';
+}
 
 function moduleLabel(m) {
   return m.id.startsWith('m') ? `${Number(m.id.slice(1))}. ${m.title}` : `${m.id.toUpperCase()}. ${m.title}`;

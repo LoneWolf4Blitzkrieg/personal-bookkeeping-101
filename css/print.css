@@ -4,7 +4,7 @@
   @page { size: letter landscape; margin: .4in; }
 
   body { background: #fff; }
-  .topbar, .site-footer, .no-print, .skip-link { display: none !important; }
+  .topbar, .site-footer, .no-print, .skip-link, .storage-banner, .saved-indicator { display: none !important; }
 
   .print-page { padding: 0; max-width: none; }
   .ledger-sheet { break-inside: avoid; page-break-inside: avoid; box-shadow: none; font-size: 10pt; }
@@ -22,4 +22,14 @@
   .certificate-page { padding: 0; max-width: none; }
   .certificate-page h1 { display: none; }
   .certificate-page .certificate { margin-top: 0; }
+
+  /* Sheets printed together keep a little space between them */
+  #sheet > * + * { margin-top: .6rem; }
+
+  /* Lesson and check pages printed with Ctrl+P: the ledger and text only,
+     never the controls, the course map or an answer already shown */
+  .course-map, .menu-button, .map-toggle, .step-nav, .print-link, .ledger-caption, .answer-form, .lesson-end-links,
+  .feedback, .self-explain, .celebration, .text-size-toggle { display: none !important; }
+  .lesson-layout { display: block; }
+  .ledger-panel, .ledger-pin { position: static !important; max-height: none !important; overflow: visible !important; max-width: none !important; }
 }

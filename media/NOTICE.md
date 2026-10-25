@@ -6,3 +6,4 @@
 - **This file is not covered by the course's CC BY-NC-SA 4.0 licence.** Do not reuse it under that licence.
 - The author, Raul Bautista, chose on October 25, 2026 to include it and takes responsibility for that choice.
 - If the rights holder objects, or if a free recording is preferred, replace this one file and keep its name; nothing else in the course needs to change.
+- The same notice is shown to learners as a web page, [`notice.html`](notice.html); change both together.

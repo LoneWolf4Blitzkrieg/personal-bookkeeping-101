@@ -12,5 +12,5 @@ export const CELEBRATION = {
   button: 'Start the celebration',
   music: 'media/ode-to-joy-finale.mp3',
   musicCredit: 'Music: Ludwig van Beethoven, "Ode to Joy" (Symphony No. 9, finale; words by Friedrich Schiller). The recording is not covered by the course license.',
-  musicNotice: { href: 'media/NOTICE.md', text: 'Read the music notice' },
+  musicNotice: { href: 'media/notice.html', text: 'Read the music notice' },
 };

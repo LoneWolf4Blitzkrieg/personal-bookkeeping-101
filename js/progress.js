@@ -82,7 +82,7 @@ export function isUnlocked(id, progress, now = Date.now()) {
   if (coveredModule(progress, id)) return open;
   const gateCheckpoint = CHECKPOINTS.find((c) => MODULES[index - 1].id === c.after);
   if (gateCheckpoint) {
-    return checkpointPassed(progress, gateCheckpoint.id) ? open : locked(`Pass ${CHECKPOINT_NAMES[gateCheckpoint.id]} first (or the placement test).`, gateCheckpoint.id);
+    return checkpointPassed(progress, gateCheckpoint.id) ? open : locked(`Pass ${CHECKPOINT_NAMES[gateCheckpoint.id]} first${gateCheckpoint.id === 'cc' ? '' : ' (or the placement test)'}.`, gateCheckpoint.id);
   }
   const previous = MODULES[index - 1].id;
   return modulePassed(progress, previous) ? open : locked(`Finish ${moduleTitle(previous)} first.`, previous);

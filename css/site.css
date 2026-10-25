@@ -31,21 +31,21 @@ body {
 a { color: var(--accent); }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 .skip-link { position: absolute; left: -999px; top: 0; background: var(--ink); color: #fff; padding: .5rem 1rem; z-index: 10; }
 .skip-link:focus { left: 1rem; }
 
 /* Top bar */
 .topbar {
-  display: flex; align-items: center; gap: 1rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; row-gap: .4rem;
   padding: .6rem 1.25rem; border-bottom: 1px solid var(--rule); background: #fff;
 }
-.brand { font-weight: 700; color: var(--ink); text-decoration: none; letter-spacing: .01em; }
+.brand { min-width: 0; font-weight: 700; color: var(--ink); text-decoration: none; letter-spacing: .01em; }
 .brand span { color: var(--accent); }
 .topbar .spacer { flex: 1; }
 .menu-button, .map-toggle {
-  font: inherit; font-size: .9rem; border: 1px solid var(--rule); background: var(--panel);
+  font: inherit; font-size: .9rem; border: 1px solid #857f70; background: var(--panel);
   color: var(--ink); border-radius: 6px; padding: .3rem .7rem; cursor: pointer; white-space: nowrap;
 }
 .menu-button { display: none; }
@@ -100,8 +100,8 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
 /* Footer */
 .site-footer { border-top: 1px solid var(--rule); padding: .9rem 1.25rem; font-size: .85rem; color: var(--ink-soft); background: #fff; }
 
-/* Phone and narrow screens */
-@media (max-width: 759px) {
+/* Phone and narrow screens (screen only, so printing never gets this layout) */
+@media screen and (max-width: 759px) {
   .menu-button { display: inline-block; }
   .map-toggle { display: none; }
   .lesson-layout { flex-direction: column; }
@@ -136,13 +136,14 @@ button.button { border: none; font: inherit; font-weight: 600; cursor: pointer; 
 .answer-form label { font-weight: 600; }
 .answer-row { display: flex; align-items: center; gap: .4rem; max-width: 14rem; }
 .answer-form input, .answer-form select, .answer-form textarea {
-  font: inherit; padding: .45rem .55rem; border: 1px solid #b9b3a3; border-radius: 6px; background: #fff; color: var(--ink);
+  font: inherit; padding: .45rem .55rem; border: 1px solid #857f70; border-radius: 6px; background: #fff; color: var(--ink);
 }
 .answer-form input:focus, .answer-form select:focus, .answer-form textarea:focus { outline: 3px solid var(--focus); outline-offset: 1px; }
 .answer-form .button { justify-self: start; }
 .entry-table { border-collapse: collapse; width: 100%; }
 .entry-table th { text-align: left; font-size: .85rem; color: var(--ink-soft); padding: .2rem .3rem; }
 .entry-table td { padding: .2rem .3rem; }
+.entry-table th:first-child { width: 45%; }
 .entry-table input { width: 100%; text-align: right; }
 .entry-table select { width: 100%; }
 .link-button { background: none; border: none; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
@@ -163,18 +164,21 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 .assess .ledger-sheet { max-width: 40rem; margin: .8rem 0; }
 
 /* Saving and progress */
-.saved-indicator { margin-left: auto; font-size: .85rem; color: var(--accent); opacity: 0; transition: opacity .3s; }
+/* "Saved" shows as a small pill in the corner, so it is seen wherever the learner is on the page */
+.saved-indicator { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; font-size: .85rem; color: var(--accent); background: #fff; border: 1px solid #857f70; border-radius: 999px; padding: .2rem .7rem; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.topbar .map-toggle { margin-left: auto; }
+.topbar .text-size-toggle:not(.map-toggle ~ .text-size-toggle) { margin-left: auto; }
 .saved-indicator.visible { opacity: 1; }
 .saved-indicator.not-saved { color: #9a3412; }
 .storage-banner { margin: 0; padding: .7rem 1.25rem; background: #fdf0e1; border-bottom: 1px solid #f0c48a; color: #6b3a07; font-size: .92rem; }
 .lock-notice { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: .8rem 1rem; }
 .map-list a.done::after { content: " ✓"; color: var(--accent); }
-.map-list a.locked { color: #8a8475; }
+.map-list a.locked { color: #6b6557; }
 .map-list a.locked::after { content: " 🔒"; font-size: .75em; }
 .next-step { margin-top: 1rem; padding: .8rem 1rem; border-radius: 8px; background: var(--panel); max-width: 40rem; }
 .error-log-form { margin-top: 1.5rem; }
 .progress-tools { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
-.button-secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--rule); cursor: pointer; }
+.button-secondary { background: var(--panel); color: var(--ink); border: 1px solid #857f70; cursor: pointer; }
 .button-secondary:hover { background: #e7e3d8; }
 #import-progress:focus-visible + label { outline: 3px solid var(--focus); outline-offset: 2px; }
 .error-log td { vertical-align: top; }
@@ -184,7 +188,7 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 .step-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.2rem; }
 .self-explain { margin-top: 1rem; display: grid; gap: .4rem; max-width: 40rem; }
 .self-explain label { font-weight: 600; }
-.self-explain textarea { font: inherit; padding: .45rem .55rem; border: 1px solid #b9b3a3; border-radius: 6px; }
+.self-explain textarea { font: inherit; padding: .45rem .55rem; border: 1px solid #857f70; border-radius: 6px; }
 .lesson-end { margin-top: 1.4rem; padding: .9rem 1rem; border-radius: 8px; background: var(--accent-soft); }
 .ledger-content > * + * { margin-top: .8rem; }
 .source-doc { margin: 0; background: #fff; border: 1px solid #cfcab9; border-radius: 4px; padding: .6rem .8rem; font-size: .85rem; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
@@ -226,6 +230,32 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 
 /* Larger text: every size is relative, so the whole course scales */
 :root.large-text { font-size: 125%; }
-.text-size-toggle { font: inherit; font-size: .85rem; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); border-radius: 6px; padding: .25rem .6rem; cursor: pointer; margin-left: .5rem; }
+.text-size-toggle { font: inherit; font-size: .85rem; border: 1px solid #857f70; background: var(--panel); color: var(--ink); border-radius: 6px; padding: .25rem .6rem; cursor: pointer; margin-left: .5rem; }
 .text-size-toggle[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
 @media print { .text-size-toggle { display: none; } }
+
+/* Disabled buttons look disabled */
+.button:disabled, button.button:disabled { background: #66756d; color: #fff; cursor: not-allowed; }
+.button-secondary:disabled { background: #e7e3d8; color: #4b5563; }
+
+/* Tables that can be wider than a phone scroll inside their own box */
+.table-scroll { overflow-x: auto; max-width: 100%; }
+
+/* Larger text at mid widths: use the phone layout, so the ledger keeps room */
+@media screen and (min-width: 760px) and (max-width: 1099px) {
+  :root.large-text .menu-button { display: inline-block; }
+  :root.large-text .map-toggle { display: none; }
+  :root.large-text .topbar .text-size-toggle { margin-left: auto; }
+  :root.large-text .lesson-layout { flex-direction: column; }
+  :root.large-text .course-map { display: none; order: -2; width: auto; border-right: none; border-bottom: 1px solid var(--rule); }
+  :root.large-text .lesson-layout.map-open .course-map { display: block; }
+  :root.large-text .ledger-panel { order: -1; width: auto; max-width: none; flex: none; position: sticky; top: 0; z-index: 2; border-left: none; border-bottom: 1px solid var(--rule); padding: .6rem; max-height: 45vh; overflow: auto; }
+  :root.large-text .ledger-pin { position: static; max-height: none; }
+  :root.large-text .lesson-text { padding: 1rem; min-width: 0; scroll-margin-top: 46vh; }
+}
+
+/* Phones: an empty ledger area takes no room, and wide tables pad less */
+@media screen and (max-width: 759px) {
+  .ledger-panel.empty { display: none; }
+  .results th, .results td { padding: .3rem .4rem; }
+}

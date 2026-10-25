@@ -13,15 +13,15 @@ import { ASSESSMENTS } from '../../content/assess/index.js';
 import { examIntroHTML } from '../examView.js';
 import { celebrationHTML, wireCelebration } from '../celebration.js';
 import { longDate } from '../dates.js';
+import { moduleName } from '../names.js';
 
-const moduleName = (id) => (/^m\d\d$/.test(id) ? `Module ${Number(id.slice(1))}` : /^a\d$/.test(id) ? `Add-on ${id.toUpperCase()}` : id === 'prereq' ? 'Money arithmetic refresher' : id);
 
 const PART_LABELS = { interpreting: 'Read and predict', producing: 'Record it yourself', explaining: 'Explain why' };
 
 function entryRowHTML(item, i) {
   const options = ['<option value="">Choose an account</option>', ...item.accounts.map((a) => `<option value="${escapeHTML(a.id)}">${escapeHTML(a.label)}</option>`)].join('');
   return `<tr>
-    <td><select name="account" aria-label="Line ${i + 1} account">${options}</select></td>
+    <td><select name="account" aria-label="Line ${i + 1} account"${i === 0 ? ' aria-describedby="prompt"' : ''}>${options}</select></td>
     <td><input name="debit" inputmode="decimal" aria-label="Line ${i + 1} debit"></td>
     <td><input name="credit" inputmode="decimal" aria-label="Line ${i + 1} credit"></td>
   </tr>`;
@@ -40,7 +40,7 @@ function itemHTML(item, index, total) {
       </form>`;
   }
   if (item.kind === 'amounts') {
-    const fields = item.fields.map((f, i) => `<div class="amount-field"><label for="amount-${i}">${escapeHTML(f.label)}</label><div class="answer-row"><span aria-hidden="true">$</span><input id="amount-${i}" name="amount" inputmode="decimal" autocomplete="off" required></div></div>`).join('');
+    const fields = item.fields.map((f, i) => `<div class="amount-field"><label for="amount-${i}">${escapeHTML(f.label)}</label><div class="answer-row"><span aria-hidden="true">$</span><input id="amount-${i}" name="amount" inputmode="decimal" autocomplete="off" aria-describedby="prompt" required></div></div>`).join('');
     return `${head}
       <form class="answer-form" data-kind="amounts" aria-describedby="prompt">
         ${fields}
@@ -83,8 +83,8 @@ function feedbackHTML(result) {
     : '';
   const tone = result.correct === false || (result.selfMarked && result.points < result.max) ? 'feedback-wrong' : 'feedback-right';
   return `<div class="feedback ${tone}">
-    <p><strong>${result.points} of ${result.max} ${result.max === 1 ? 'point' : 'points'}.</strong> ${escapeHTML(result.feedback ?? '')}</p>${rubric}
-    <button class="button" type="button" data-action="next">Next</button>
+    <p id="result-text"><strong>${result.points} of ${result.max} ${result.max === 1 ? 'point' : 'points'}.</strong> ${escapeHTML(result.feedback ?? '')}</p>${rubric}
+    <button class="button" type="button" data-action="next" aria-describedby="result-text">Next</button>
   </div>`;
 }
 

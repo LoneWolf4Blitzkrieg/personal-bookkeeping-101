@@ -6,7 +6,9 @@
   <title>Lesson · Personal Bookkeeping 101</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/print.css">
   <link rel="stylesheet" href="css/ledger.css">
+  <script>try { if (localStorage.getItem('pb101-large-text') === '1') document.documentElement.classList.add('large-text'); } catch (e) { /* storage blocked */ }</script>
 </head>
 <body>
   <a class="skip-link" href="#lesson">Skip to the lesson</a>
@@ -19,8 +21,7 @@
   </header>
 
   <div class="lesson-layout" id="layout">
-    <nav class="course-map" id="course-map-nav" aria-labelledby="course-map-heading">
-      <h2 class="visually-hidden" id="course-map-heading">Course map</h2>
+    <nav class="course-map" id="course-map-nav" aria-label="Course map">
       <div id="course-map"></div>
     </nav>
 
