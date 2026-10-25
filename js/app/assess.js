@@ -2,10 +2,10 @@
 // before seeing feedback, then sees results with explanations.
 
 import { escapeHTML } from '../html.js';
-import { ledgerPanelHTML } from '../lessonView.js';
+import { ledgerPanelHTML, citationHTML } from '../lessonView.js';
 import { MODULE_CONTENT } from '../../content/modules/index.js';
 import { parseAmount } from '../money.js';
-import { assessmentVersions } from '../items.js';
+import { assessmentVersions, withRecall } from '../items.js';
 import { createSession, resumeSession, submit, currentItem, isComplete, summary } from '../session.js';
 import { isUnlocked, nextVersion, attemptsFor, openSession, saveSession, sessionMatches, recordGate, recordCheckpoint, recordExam, recordPlacement, recordOther, recordPractice, recallDue, failureStep, addErrorEntry } from '../progress.js';
 import { store, update, mountChrome, trackTime } from './chrome.js';
@@ -27,7 +27,7 @@ function entryRowHTML(item, i) {
 function itemHTML(item, index, total) {
   const head = `<p class="crumb">Question ${index + 1} of ${total} · ${PART_LABELS[item.part]} · ${item.points} points</p>
     <p class="item-prompt" id="prompt">${escapeHTML(item.prompt)}</p>
-    ${ledgerPanelHTML({ ...item, highlightRow: item.highlightRow ?? 0 })}`;
+    ${ledgerPanelHTML({ ...item, highlightRow: item.highlightRow ?? 0 })}${citationHTML(item)}`;
   if (item.kind === 'numeric') {
     return `${head}
       <form class="answer-form" data-kind="numeric">
@@ -102,20 +102,25 @@ const VERDICTS = {
   practice: { pass: 'Practice set done. When you are ready, take the module check.', retry: 'Practice set done. Look over the explanations for the questions you missed, then take the module check when you are ready.' },
 };
 
-// Placement results name the module the learner may start at.
+// Placement results name the module the learner may start at. A failed
+// Module 9 test whose misses are all in Modules 5–8 points to the Module 5
+// test instead of back to the beginning.
 const PLACEMENT_START = { ca: 'm05', cb: 'm09' };
-function placementWords(checkpointId) {
+function placementWords(checkpointId, missedModules = []) {
   const start = PLACEMENT_START[checkpointId];
+  const onlyLater = checkpointId === 'cb' && missedModules.length > 0 && missedModules.every((m) => m >= 'm05');
   return {
     pass: `Passed. You can start at <a href="lesson.html?m=${start}">Module ${Number(start.slice(1))}</a>. The earlier modules stay open if you want to review them.`,
-    retry: 'Not yet. You need 80%. Start at Module 1 and work through the modules listed below; nothing is lost by starting at the beginning. You can try the placement test again later.',
+    retry: onlyLater
+      ? 'Not yet. You need 80%. Every question you missed was from Modules 5 to 8, so take the <a href="assess.html?id=placement-ca">Module 5 placement test</a>: if you pass it, start at Module 5. Otherwise, start at Module 1.'
+      : 'Not yet. You need 80%. Start at Module 1 and work through the modules listed below; nothing is lost by starting at the beginning. You can try the placement test again later.',
   };
 }
 
 function resultsHTML(session) {
   const s = summary(session);
   const kind = session.meta?.kind ?? 'gate';
-  const words = kind === 'placement' ? placementWords(session.meta.checkpointId) : VERDICTS[kind] ?? VERDICTS.gate;
+  const words = kind === 'placement' ? placementWords(session.meta.checkpointId, s.missedModules) : VERDICTS[kind] ?? VERDICTS.gate;
   const score = s.max !== undefined ? `${s.points} of ${s.max}` : `${s.percent}%`;
   const missed = s.missedModules?.length ? `<p>Review these first: ${s.missedModules.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
   const rows = session.results.map((r, i) => {
@@ -177,7 +182,7 @@ function recordResult(progress, session, at) {
   if (kind === 'checkpoint') return recordCheckpoint(progress, assessmentId, score, at, version, items);
   if (kind === 'placement') return recordPlacement(progress, session.meta.checkpointId, score, at, version, items);
   if (kind === 'exam') return recordExam(progress, score, at, version, items);
-  if (kind === 'practice') return recordPractice(progress, session.meta.module, score, at);
+  if (kind === 'practice') return recordPractice(progress, session.meta.module, score, at, session.meta.recalled ?? null);
   return recordOther(progress, assessmentId, score, at, version, items);
 }
 
@@ -211,11 +216,10 @@ export function startAssessment(root, id, requestedVersion) {
   const version = assessment.alwaysOpen && requestedVersion ? safeAttempt(requestedVersion) : nextVersion(progress, assessment.id);
   // A module's practice set also carries recall questions from any module
   // whose gate was failed recently (proposal: "Passing and retaking").
-  const recall = assessment.kind === 'practice'
-    ? recallDue(progress).filter((m) => m !== assessment.module).flatMap((m) => MODULE_CONTENT[m]?.recallTemplates ?? [])
-    : [];
-  const items = itemsFor(recall.length ? { ...assessment, templates: [...recall, ...assessment.templates] } : assessment, version);
-  const meta = { assessmentId: assessment.id, kind: assessment.kind, version, ...(assessment.checkpointId ? { checkpointId: assessment.checkpointId } : {}), ...(assessment.module ? { module: assessment.module } : {}) };
+  const recalled = assessment.kind === 'practice' ? recallDue(progress).filter((m) => m !== assessment.module && MODULE_CONTENT[m]?.recallTemplates) : [];
+  const recall = recalled.flatMap((m) => MODULE_CONTENT[m].recallTemplates);
+  const items = itemsFor(recall.length ? { ...assessment, templates: withRecall(assessment.templates, recall) } : assessment, version);
+  const meta = { assessmentId: assessment.id, kind: assessment.kind, version, ...(assessment.checkpointId ? { checkpointId: assessment.checkpointId } : {}), ...(assessment.module ? { module: assessment.module, recalled } : {}) };
   const saved = openSession(progress, assessment.id);
   let session = saved && saved.meta.version === version ? resumeSession(items, meta, saved.results) : createSession(items, meta);
   const attemptsAtStart = attemptsFor(progress, assessment.id);

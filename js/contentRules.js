@@ -89,6 +89,11 @@ function checkCommon(node, path, position, problems) {
         else if (!taught.has(idea)) problems.push(`${p}: "${idea}" is not taught yet at ${position}.`);
       }
     }
+    // Learners cannot type a minus sign, and no balance in this course goes below zero.
+    if (o.kind === 'numeric' && Number.isSafeInteger(o.answer) && o.answer < 0) problems.push(`${p}: the answer (${o.answer} cents) is below zero.`);
+    for (const f of o.kind === 'amounts' ? o.fields ?? [] : []) {
+      if (f.answer < 0) problems.push(`${p}: "${f.label}" has an answer below zero.`);
+    }
     if (o.sourceDoc) {
       for (const [label, value] of o.sourceDoc.lines ?? []) {
         if (typeof value === 'number' && !Number.isSafeInteger(value)) problems.push(`${p}.sourceDoc: "${label}" must be whole cents.`);
@@ -109,6 +114,7 @@ function checkSteps(module, problems) {
     if (s.prompt && !s.promptAnswer) problems.push(`steps[${i}]: a self-explanation prompt needs a model answer ("promptAnswer") to compare with.`);
     if (s.kind === 'predict') {
       if (!Number.isSafeInteger(s.answer)) { problems.push(`steps[${i}]: a predict step needs an answer in whole cents.`); return; }
+      if (s.answer < 0) problems.push(`steps[${i}]: the answer is below zero, which a learner cannot type.`);
       if (typeof s.explanation !== 'string' || !s.explanation) problems.push(`steps[${i}]: a predict step needs an explanation.`);
       const shown = ledgerPanelHTML(s, { revealed: false }) + (s.text ?? []).join(' ');
       if (shown.includes(formatCents(s.answer))) problems.push(`steps[${i}]: the page shows the answer (${formatCents(s.answer)}) before the learner predicts it.`);

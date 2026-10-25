@@ -79,3 +79,9 @@ test('the last step leads to the practice set and the module check', () => {
   assert.match(html, /href="assess.html\?id=m06"/);
   assert.match(html, /href="assess.html\?id=m06-practice"/);
 });
+
+test('citations can be drawn for any step or question that names its sources', async () => {
+  const { citationHTML } = await import('../js/lessonView.js');
+  assert.match(citationHTML({ sources: ['fed-g19-2026q2'] }), /Source: .*22\.15%.*Federal Reserve/);
+  assert.equal(citationHTML({ sources: [] }), '');
+});

@@ -131,6 +131,15 @@ test('practice sets are recorded and count down scheduled recall', async () => {
   assert.deepEqual(recallDue(p), []);
 });
 
+test('a practice set counts down only the recall it actually carried', async () => {
+  const { recordPractice } = await import('../js/progress.js');
+  let p = recordGate(recordGate(emptyProgress(T0), 'm03', fail, T0, 1), 'm05', fail, T0, 1);
+  p = recordPractice(p, 'm05', { percent: 90 }, T0, ['m03']);
+  assert.deepEqual(p.recall, { m03: 2, m05: 3 });
+  p = recordPractice(p, 'm06', { percent: 90 }, T0, []);
+  assert.deepEqual(p.recall, { m03: 2, m05: 3 });
+});
+
 test('steps can be stored by id', () => {
   const p = markStep(markStep(emptyProgress(T0), 'm01', 'warm-up'), 'm01', 'warm-up');
   assert.deepEqual(p.modules.m01.steps, ['warm-up']);

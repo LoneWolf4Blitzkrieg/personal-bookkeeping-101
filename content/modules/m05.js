@@ -12,9 +12,9 @@ const num = (id, part, params, build) => ({ id, module: 'm05', kind: 'numeric', 
 const no = (id) => CHART[id].no;
 const balancesList = (pairs) => pairs.map(([id, cents]) => `account ${no(id)}, ${money(cents)}`).join('; ');
 
-// The chart of accounts as one sentence per group, from CHART.
+// The chart of accounts, one line per group, from CHART.
 const GROUPS = [['asset', 'Assets'], ['liability', 'Liabilities'], ['networth', 'Net worth'], ['income', 'Income'], ['expense', 'Expenses']];
-const CHART_TEXT = GROUPS.map(([type, word]) => `${word}: ${Object.values(CHART).filter((a) => a.type === type).map((a) => `${a.no} ${a.name}`).join(', ')}.`).join(' ');
+const CHART_LINES = GROUPS.map(([type, word]) => `${word}: ${Object.values(CHART).filter((a) => a.type === type).map((a) => `${a.no} ${a.name}`).join(', ')}.`);
 
 // --- Question templates -----------------------------------------------------
 
@@ -69,29 +69,30 @@ const followFolio = num('m05-follow-folio', 'interpreting', {
 const RECORD_ACCOUNTS = accountOptions(['checking', 'spending', 'saving', 'cash', 'gifts', 'phone']);
 const RECORD_EVENTS = {
   atm: (p) => ({
-    prompt: `Using the chart of accounts, write the debits and credits: you take ${money(p.amount)} out of account 2 as cash for your wallet (account 7).`,
+    prompt: `Using the chart of accounts, write the debits and credits: you take ${money(p.amount)} out of account 2 as cash for your wallet, account 7.`,
     answer: [{ account: 'cash', debit: p.amount, credit: 0 }, { account: 'spending', debit: 0, credit: p.amount }],
-    explanation: 'Account 7, Cash (an asset), goes up: debit. Account 2, the Spending bucket (an asset), goes down: credit.',
+    explanation: 'Accounts 7 and 2 are both assets (1 to 19). Account 7, Cash, goes up: debit. Account 2, the Spending bucket, goes down: credit.',
   }),
   gift: (p) => ({
-    prompt: `Using the chart of accounts, write the debits and credits: a relative gives you ${money(p.amount)} in cash. The cash goes to account 7, and the gift is income on account 41.`,
+    prompt: `Using the chart of accounts, write the debits and credits: a relative gives you ${money(p.amount)} in cash. Use account 7 for the cash and account 41 for the gift.`,
     answer: [{ account: 'cash', debit: p.amount, credit: 0 }, { account: 'gifts', debit: 0, credit: p.amount }],
-    explanation: 'Account 7, Cash (an asset), goes up: debit. Account 41, Gifts received (income), goes up: credit.',
+    explanation: 'Account 7, Cash, is an asset (1 to 19) and goes up: debit. Account 41, Gifts received, is income (40 to 49) and goes up: credit.',
   }),
   phone: (p) => ({
-    prompt: `Using the chart of accounts, write the debits and credits: you pay the ${money(p.amount)} phone bill (account 55) from account 2.`,
+    prompt: `Using the chart of accounts, write the debits and credits: you pay a ${money(p.amount)} bill that belongs on account 55, from account 2.`,
     answer: [{ account: 'phone', debit: p.amount, credit: 0 }, { account: 'spending', debit: 0, credit: p.amount }],
-    explanation: 'Account 55, Phone (an expense), goes up: debit. Account 2, the Spending bucket (an asset), goes down: credit.',
+    explanation: 'Account 55, Phone, is an expense (50 to 99) and goes up: debit. Account 2, the Spending bucket, is an asset (1 to 19) and goes down: credit.',
   }),
   save: (p) => ({
     prompt: `Using the chart of accounts, write the debits and credits: you move ${money(p.amount)} from account 2 to account 3.`,
     answer: [{ account: 'saving', debit: p.amount, credit: 0 }, { account: 'spending', debit: 0, credit: p.amount }],
-    explanation: 'Account 3, the Saving bucket (an asset), goes up: debit. Account 2, the Spending bucket (an asset), goes down: credit.',
+    explanation: 'Accounts 3 and 2 are both assets (1 to 19). Account 3, the Saving bucket, goes up: debit. Account 2, the Spending bucket, goes down: credit.',
   }),
 };
 const recordNumbers = {
   id: 'm05-record-numbers', module: 'm05', kind: 'entry', part: 'producing', points: 4,
-  params: { amount: { min: 1000, max: 15000, step: 1 }, event: { pick: Object.keys(RECORD_EVENTS) } },
+  // Each gate version gets a different scenario; all four are two-line entries.
+  params: { amount: { min: 1000, max: 15000, step: 1 }, event: { byVersion: Object.keys(RECORD_EVENTS) } },
   build: (p) => ({ accounts: RECORD_ACCOUNTS, ...RECORD_EVENTS[p.event](p) }),
 };
 
@@ -115,7 +116,8 @@ const explainChart = explainTemplate({
 
 const netWorthChart = num('m05-net-worth-chart', 'interpreting', {
   spending: { min: 10000, max: 50000, step: 1 }, saving: { min: 20000, max: 150000, step: 1 }, cash: { min: 500, max: 9000, step: 1 },
-  friend: { min: 1000, max: 9000, step: 1 }, card: { min: 1000, max: 40000, step: 1 },
+  // What is owed stays below what is owned, so net worth is never below zero.
+  friend: { min: 1000, max: 6000, step: 1 }, card: { min: 1000, max: 15000, step: 1 },
 }, (p) => {
   const own = p.spending + p.saving + p.cash;
   const owe = p.friend + p.card;
@@ -190,10 +192,11 @@ export const M05_LESSON = {
       id: 'numbers', kind: 'explain', title: 'Account numbers', uses: ['account-numbers', 'personal-accounts'],
       text: [
         'Each page has an account number in its header. The numbers are grouped by kind of account, so the number alone tells you what kind of account a page is. Accounts 1 to 19 are assets, 20 to 29 are liabilities, 30 is net worth, 40 to 49 are income, and 50 to 99 are expenses.',
-        `The list of every account and its number is your chart of accounts. This course uses this one. ${CHART_TEXT}`,
+        'The list of every account and its number is your chart of accounts. This course uses this one:',
+        ...CHART_LINES,
         'Your own chart can have different expense pages. Keep the groups, and give a new page the next free number in its group. Keep the pages in number order, so any page is easy to find.',
       ],
-      prompt: 'Account 57 is one you have not used yet. What kind of account is it, and how can you tell?',
+      prompt: 'Account 63 is not on this list. If you added it, what kind of account would it be, and how can you tell?',
       promptAnswer: 'An expense, because every number from 50 to 99 is an expense.',
       ledger: chartPage('groceries', [['2026-06-08', 'Desert Mart (fictional)', '', 2136, 0]]),
     },
@@ -289,7 +292,7 @@ const paycheckMixed = { ...M04_GATE.templates.find((t) => t.part === 'producing'
 
 export const M05_PRACTICE = {
   id: 'm05-practice', kind: 'practice', module: 'm05', title: 'Module 5 practice set',
-  templates: [...drill, ...M04_LESSON.recallTemplates, ...M03_LESSON.recallTemplates, ...M01_LESSON.recallTemplates, groupTotal, followFolio, netWorthChart, folioBalances, recordNumbers, paycheckMixed, { ...explainChart, id: 'm05-explain-practice' }],
+  templates: [...M04_LESSON.recallTemplates, ...M03_LESSON.recallTemplates, ...M01_LESSON.recallTemplates, ...drill, groupTotal, followFolio, netWorthChart, folioBalances, recordNumbers, paycheckMixed, { ...explainChart, id: 'm05-explain-practice' }],
 };
 
 export const M05_EXTRA = {

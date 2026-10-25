@@ -3,7 +3,10 @@
 //
 // A template:
 //   { id, module, kind: 'numeric'|'entry'|'explain', part: 'interpreting'|'producing'|'explaining',
-//     points, params: { name: { min, max, step } | { pick: [...] } }, build(params) -> fields }
+//     points, params: { name: { min, max, step } | { pick: [...] } | { byVersion: [...] } }, build(params) -> fields }
+// A byVersion parameter takes its value from the version number (version 1
+// gets the first value, and so on, round again), so the versions of a check
+// cycle through every scenario; outside a versioned check it is picked at random.
 // build() returns the item's prompt and answer fields (see js/grade.js).
 
 // mulberry32: a small, fast, seeded pseudo-random generator.
@@ -28,11 +31,14 @@ export function seedFor(...parts) {
   return h;
 }
 
-function sampleParams(spec, rand) {
+function sampleParams(spec, rand, version) {
   const params = {};
   for (const key of Object.keys(spec).sort()) {
     const s = spec[key];
-    if (Array.isArray(s.pick)) {
+    if (Array.isArray(s.byVersion)) {
+      const pickAt = Math.floor(rand() * s.byVersion.length);
+      params[key] = s.byVersion[version === null ? pickAt : version % s.byVersion.length];
+    } else if (Array.isArray(s.pick)) {
       params[key] = s.pick[Math.floor(rand() * s.pick.length)];
     } else {
       const step = s.step ?? 1;
@@ -46,8 +52,8 @@ function sampleParams(spec, rand) {
   return params;
 }
 
-export function generateItem(template, seed) {
-  const params = sampleParams(template.params ?? {}, mulberry32(seed));
+export function generateItem(template, seed, { version = null } = {}) {
+  const params = sampleParams(template.params ?? {}, mulberry32(seed), version);
   return {
     ...template.build(params),
     templateId: template.id,
@@ -98,7 +104,7 @@ export function assessmentVersions(templates, id, { count = 4, shape = null } = 
     for (let v = 0; v < count; v++) {
       let chosen = null;
       for (let salt = 0; salt < MAX_TRIES && !chosen; salt++) {
-        const item = generateItem(template, seedFor(id, v, template.id, salt));
+        const item = generateItem(template, seedFor(id, v, template.id, salt), { version: v });
         if (template.fixed || !used.has(versionKey(item))) chosen = item;
       }
       if (!chosen) throw new Error(`Template ${template.id} gives the same answer too often to make ${count} versions; widen its parameter ranges or mark it fixed.`);
@@ -113,4 +119,13 @@ export function assessmentVersions(templates, id, { count = 4, shape = null } = 
 // Four versions of a module gate, one per attempt.
 export function gateVersions(templates, gateId) {
   return assessmentVersions(templates, gateId, { count: 4, shape: 'gate' });
+}
+
+// A practice set with recall scheduled after a failed gate: the recall goes
+// first, under its own ids (so its numbers differ from any copy of the same
+// template already in the set), and no template appears twice.
+export function withRecall(templates, recallTemplates) {
+  const due = recallTemplates.map((t) => ({ ...t, id: `${t.id}-due` }));
+  const seen = new Set();
+  return [...due, ...templates].filter((t) => !seen.has(t.id) && seen.add(t.id));
 }

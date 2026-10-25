@@ -94,3 +94,21 @@ test('an amounts template must have one field per point', () => {
     build: (p) => ({ prompt: 'x', fields: [{ label: 'a', answer: p.p }, { label: 'b', answer: p.p + 1 }, { label: 'c', answer: p.p + 2 }] }) };
   assert.throws(() => assessmentVersions([t], 'x', { count: 2 }), /field/);
 });
+
+test('a byVersion parameter picks its value by version, so each version gets its own scenario', async () => {
+  const t = { ...splitBalance, id: 'fx-by-version', params: { ...splitBalance.params, scene: { byVersion: ['a', 'b', 'c'] } }, build: (p) => ({ ...splitBalance.build(p), scene: p.scene }) };
+  const versions = assessmentVersions([t], 'fx', { count: 4 });
+  assert.deepEqual(versions.map((v) => v[0].scene), ['a', 'b', 'c', 'a']);
+  // Outside a versioned check (content rules, previews) it is picked at random from the same list.
+  const seen = new Set(Array.from({ length: 40 }, (_, s) => generateItem(t, s).params.scene));
+  assert.deepEqual([...seen].sort(), ['a', 'b', 'c']);
+});
+
+test('withRecall puts scheduled recall first, with its own ids so its numbers differ', async () => {
+  const { withRecall } = await import('../js/items.js');
+  const set = withRecall([splitBalance, explainDebit], [splitBalance]);
+  assert.deepEqual(set.map((t) => t.id), ['fx-split-balance-due', 'fx-split-balance', explainDebit.id]);
+  const [due, own] = assessmentVersions(set, 'fx-practice', { count: 1 })[0];
+  assert.notDeepEqual(due.params, own.params);
+  assert.deepEqual(withRecall([splitBalance], []).map((t) => t.id), ['fx-split-balance']);
+});

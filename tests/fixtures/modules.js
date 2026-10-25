@@ -48,4 +48,5 @@ export const badModules = {
   emptyActiveColumnsModule1: (() => { const m = clone(goodModule); m.id = 'm01'; step(m).uses = ['five-buckets']; delete step(m).journalPage; step(m).ledger.activeColumns = []; return m; })(),
   untaughtIdeaInPractice: (() => { const m = clone(goodModule); m.practice = { recall: [{ id: 'r1', uses: ['trial-balance'] }] }; return m; })(),
   sourceDocNotCents: (() => { const m = clone(goodModule); step(m).sourceDoc = { kind: 'paystub', title: 'Pay stub', lines: [['Gross pay', 1212.5]] }; return m; })(),
+  negativeAnswer: (() => { const m = clone(goodModule); m.steps.push({ id: 'n', kind: 'predict', text: ['Balance?'], uses: ['debit-credit-rules'], answer: -500, explanation: 'x' }); return m; })(),
 };

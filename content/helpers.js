@@ -141,23 +141,23 @@ export const CHART = {
   household: { no: 59, name: 'Household supplies', type: 'expense' },
 };
 
-const TYPE_WORDS = { asset: 'asset', liability: 'liability', networth: 'net worth', income: 'income', expense: 'expense' };
-
-export const accountLabel = (id) => `${CHART[id].no} ${CHART[id].name} (${TYPE_WORDS[CHART[id].type]})`;
+// Labels give the number and name only: from Module 5 the learner tells the
+// kind of account from its number.
+export const accountLabel = (id) => `${CHART[id].no} ${CHART[id].name}`;
 export const accountOptions = (ids) => ids.map((id) => ({ id, label: accountLabel(id) }));
 
 // A ledger page for an account in the chart. Rows are
 // [date, items, folio, debit, credit, ticked?]; a ticked row has the posting
-// mark on the side its amount is on. Rows from askFrom on ask for the
-// balance and side.
-export function chartPage(id, rows, { name = 'Jordan (example)', sheetNo = 1, askFrom = null, creditLimit } = {}) {
+// mark on the side its amount is on. Rows from askFrom on ask for askKeys
+// (the balance and side, unless the amounts are to be posted too).
+export function chartPage(id, rows, { name = 'Jordan (example)', sheetNo = 1, askFrom = null, askKeys = ['balance', 'side'], creditLimit } = {}) {
   const a = CHART[id];
   return {
     sheetNo, accountNo: a.no, name, account: a.name, type: a.type,
     ...(creditLimit ? { creditLimit } : {}),
     rows: rows.map(([date, items, folio, debit, credit, ticked = false], i) => ({
       date, items, folio, debit, credit, posted: [ticked && debit > 0, ticked && credit > 0],
-      ...(askFrom !== null && i >= askFrom ? { ask: ['balance', 'side'] } : {}),
+      ...(askFrom !== null && i >= askFrom ? { ask: [...askKeys] } : {}),
     })),
   };
 }

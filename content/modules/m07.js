@@ -11,12 +11,12 @@ const num = (id, part, params, build) => ({ id, module: 'm07', kind: 'numeric', 
 const sum = (list) => list.reduce((s, x) => s + x, 0);
 
 // A receipt as a source document. Items are [label, cents].
-function receipt(store, items, paidBy = 'Debit card') {
+function receipt(store, items, paidBy = 'Debit card', note = 'Store and prices are fictional (illustrative). Prices include sales tax.') {
   return {
     kind: 'receipt',
     title: `Receipt: ${store}`,
     lines: [...items, ['Total', sum(items.map(([, c]) => c))], ['Paid by', paidBy]],
-    note: 'Store and prices are fictional (illustrative). Prices include sales tax.',
+    note,
   };
 }
 
@@ -44,26 +44,60 @@ const receiptSplit = num('m07-receipt-split', 'interpreting', {
   };
 });
 
-const spentOrMoved = num('m07-spent', 'interpreting', {
-  atm: { min: 2000, max: 8000, step: 100 }, groc: { min: 1500, max: 9000, step: 1 }, save: { min: 1000, max: 6000, step: 100 }, lunch: { min: 500, max: 1500, step: 1 },
-  ask: { pick: ['spent', 'bucket'] }, name: { pick: NAMES },
-}, (p) => {
-  const events = `${p.name} takes ${money(p.atm)} out of an ATM, pays ${money(p.groc)} for groceries by debit card, moves ${money(p.save)} from the Spending bucket into Saving, and pays ${money(p.lunch)} cash for lunch.`;
-  if (p.ask === 'spent') {
-    return {
-      prompt: `In one week, ${events} How much did ${p.name} spend? That is, how much was debited to expense pages?`,
-      answer: p.groc + p.lunch,
-      misconceptions: [{ cents: p.atm + p.groc + p.save + p.lunch, explanation: 'The ATM withdrawal and the move to Saving are transfers: no expense page changes.' }],
-      explanation: `Only the groceries and the lunch are expenses: ${money(p.groc)} + ${money(p.lunch)} = ${money(p.groc + p.lunch)}.`,
-    };
-  }
-  return {
-    prompt: `In one week, ${events} By how much did the Spending bucket go down?`,
-    answer: p.atm + p.groc + p.save,
-    misconceptions: [{ cents: p.groc + p.lunch, explanation: 'Transfers out of the Spending bucket lower it too, and the lunch was paid from Cash, not from the Spending bucket.' }],
-    explanation: `The Spending bucket is credited for the ATM withdrawal, the groceries and the move to Saving: ${money(p.atm)} + ${money(p.groc)} + ${money(p.save)} = ${money(p.atm + p.groc + p.save)}. The lunch came out of Cash.`,
-  };
-});
+const WEEK = {
+  atm: { min: 2000, max: 8000, step: 100 }, groc: { min: 1500, max: 9000, step: 1 }, save: { min: 1000, max: 6000, step: 100 }, lunch: { min: 500, max: 1500, step: 1 }, name: { pick: NAMES },
+};
+const week = (p) => `${p.name} takes ${money(p.atm)} from the Spending bucket at an ATM, pays ${money(p.groc)} for groceries by debit card, moves ${money(p.save)} from the Spending bucket into Saving, and pays ${money(p.lunch)} cash for lunch.`;
+
+const spent = num('m07-spent', 'interpreting', WEEK, (p) => ({
+  prompt: `In one week, ${week(p)} How much did ${p.name} spend? That is, how much was debited to expense pages?`,
+  answer: p.groc + p.lunch,
+  misconceptions: [{ cents: p.atm + p.groc + p.save + p.lunch, explanation: 'The ATM withdrawal and the move to Saving are transfers: no expense page changes.' }],
+  explanation: `Only the groceries and the lunch are expenses: ${money(p.groc)} + ${money(p.lunch)} = ${money(p.groc + p.lunch)}.`,
+}));
+
+const bucketDrop = num('m07-bucket-drop', 'interpreting', WEEK, (p) => ({
+  prompt: `In one week, ${week(p)} By how much did the Spending bucket go down?`,
+  answer: p.atm + p.groc + p.save,
+  misconceptions: [{ cents: p.groc + p.lunch, explanation: 'Transfers out of the Spending bucket lower it too, and the lunch was paid from Cash, not from the Spending bucket.' }],
+  explanation: `The Spending bucket is credited for the ATM withdrawal, the groceries and the move to Saving: ${money(p.atm)} + ${money(p.groc)} + ${money(p.save)} = ${money(p.atm + p.groc + p.save)}. The lunch came out of Cash.`,
+}));
+
+// The gate's producing question: one two-line entry from a source document,
+// a different scenario in each version.
+const DOC_ACCOUNTS = accountOptions(['spending', 'charity', 'cash', 'groceries', 'eating-out', 'donations']);
+const DOC_EVENTS = {
+  groceries: (p) => ({
+    prompt: 'Write the journal entry for this receipt. It was paid by debit card from the Spending bucket.',
+    sourceDoc: receipt(STORES[p.store], [['Bread', p.a], ['Eggs', p.b]]),
+    answer: [{ account: 'groceries', debit: p.a + p.b, credit: 0 }, { account: 'spending', debit: 0, credit: p.a + p.b }],
+    explanation: 'Groceries (an expense) is debited. The debit card took the money from the Spending bucket, so it is credited.',
+  }),
+  meal: (p) => ({
+    prompt: 'Write the journal entry for this receipt.',
+    sourceDoc: receipt('Taco Stand (fictional)', [['Burrito', p.a], ['Drink', p.b]], 'Cash'),
+    answer: [{ account: 'eating-out', debit: p.a + p.b, credit: 0 }, { account: 'cash', debit: 0, credit: p.a + p.b }],
+    explanation: 'Eating out (an expense) is debited. It was paid in cash, so Cash is credited.',
+  }),
+  donation: (p) => ({
+    prompt: 'Write the journal entry for this receipt. The money came from your Charity bucket.',
+    sourceDoc: receipt('Valley Food Bank (fictional)', [['Donation', p.a + p.b]], 'Debit card', 'Charity and amount are fictional (illustrative).'),
+    answer: [{ account: 'donations', debit: p.a + p.b, credit: 0 }, { account: 'charity', debit: 0, credit: p.a + p.b }],
+    explanation: 'Donations (an expense) is debited. The money came from the Charity bucket, so it is credited.',
+  }),
+  atm: (p) => ({
+    prompt: 'Write the journal entry for this ATM slip. The cash came out of the money in your Spending bucket.',
+    sourceDoc: { kind: 'atm', title: 'ATM slip: Desert Bank (fictional)', lines: [['Withdrawal', p.twenties * 2000], ['Fee', 'None']], note: 'Bank and amount are fictional (illustrative).' },
+    answer: [{ account: 'cash', debit: p.twenties * 2000, credit: 0 }, { account: 'spending', debit: 0, credit: p.twenties * 2000 }],
+    explanation: 'A transfer: Cash (an asset) goes up, so it is debited. The Spending bucket goes down, so it is credited. No expense page changes.',
+  }),
+};
+const recordFromDoc = {
+  id: 'm07-record-from-doc', module: 'm07', kind: 'entry', part: 'producing', points: 4,
+  // ATMs give $20 bills, so a withdrawal is a whole number of twenties.
+  params: { a: { min: 200, max: 1500, step: 1 }, b: { min: 150, max: 900, step: 1 }, twenties: { min: 2, max: 10, step: 1 }, store: { pick: [0, 1, 2] }, event: { byVersion: Object.keys(DOC_EVENTS) } },
+  build: (p) => ({ accounts: DOC_ACCOUNTS, ...DOC_EVENTS[p.event](p) }),
+};
 
 const PURCHASE_ACCOUNTS = accountOptions(['spending', 'charity', 'blow', 'cash', 'groceries', 'eating-out', 'donations', 'household']);
 const PURCHASE_EVENTS = {
@@ -113,7 +147,8 @@ const explainSpending = explainTemplate({
   ],
 });
 
-const cashPage = num('m07-cash-page', 'interpreting', { atm: { min: 2000, max: 8000, step: 100 }, a: { min: 300, max: 1500, step: 1 }, b: { min: 150, max: 800, step: 1 }, name: { pick: NAMES } }, (p) => ({
+// The ATM amount is always more than the lunch and fare together, so Cash stays above zero.
+const cashPage = num('m07-cash-page', 'interpreting', { atm: { min: 2500, max: 8000, step: 100 }, a: { min: 300, max: 1500, step: 1 }, b: { min: 150, max: 800, step: 1 }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name} takes cash out of an ATM, then pays cash for lunch and a bus fare. What does the Cash page read after the bus fare?`,
   ledger: chartPage('cash', [
     ['2026-06-03', 'ATM withdrawal', 'J4', p.atm, 0, true],
@@ -274,12 +309,12 @@ export const M07_LESSON = {
     },
   ],
   resources: ['cfpb-bank-accounts', 'cfpb-budget'],
-  recallTemplates: [receiptSplit, spentOrMoved].map((t) => ({ ...t, id: `${t.id}-recall`, points: 1 })),
+  recallTemplates: [receiptSplit, spent].map((t) => ({ ...t, id: `${t.id}-recall`, points: 1 })),
 };
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M07_GATE = { id: 'm07', kind: 'gate', title: 'Module 7 check', templates: [receiptSplit, spentOrMoved, recordPurchase, explainSpending] };
+export const M07_GATE = { id: 'm07', kind: 'gate', title: 'Module 7 check', templates: [receiptSplit, spent, recordFromDoc, explainSpending] };
 
 // Fluency drill on the core operation: a debit-card purchase.
 const drill = [1, 2, 3].map((n) => num(`m07-drill-${n}`, 'interpreting', { a: { min: 10000, max: 50000, step: 1 }, b: { min: 150, max: 9000, step: 1 } }, (p) => ({
@@ -291,18 +326,18 @@ const recordJournalMixed = { ...M06_GATE.templates.find((t) => t.part === 'produ
 
 export const M07_PRACTICE = {
   id: 'm07-practice', kind: 'practice', module: 'm07', title: 'Module 7 practice set',
-  templates: [...drill, ...M06_LESSON.recallTemplates, ...M05_LESSON.recallTemplates, ...M03_LESSON.recallTemplates, receiptSplit, spentOrMoved, cashPage, weekBalances, recordPurchase, recordJournalMixed, { ...explainSpending, id: 'm07-explain-practice' }],
+  templates: [...M06_LESSON.recallTemplates, ...M05_LESSON.recallTemplates, ...M03_LESSON.recallTemplates, ...drill, receiptSplit, spent, bucketDrop, cashPage, weekBalances, recordPurchase, recordJournalMixed, { ...explainSpending, id: 'm07-explain-practice' }],
 };
 
 export const M07_EXTRA = {
   id: 'm07-extra', kind: 'practice', module: 'm07', title: 'Module 7 extra practice',
-  templates: [receiptSplit, cashPage, recordPurchase].map((t) => ({ ...t, id: `${t.id}-extra` })),
+  templates: [receiptSplit, cashPage, recordFromDoc].map((t) => ({ ...t, id: `${t.id}-extra` })),
 };
 
 export const M07_REMEDIAL = {
   id: 'm07-remedial', kind: 'practice', module: 'm07', title: 'Module 7: common mistakes',
-  templates: [spentOrMoved, weekBalances, recordPurchase].map((t) => ({ ...t, id: `${t.id}-remedial` })),
+  templates: [bucketDrop, weekBalances, recordPurchase].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
 // Questions Checkpoint B draws from this module.
-export const M07_CHECKPOINT = [receiptSplit, spentOrMoved, recordPurchase];
+export const M07_CHECKPOINT = [receiptSplit, spent, recordFromDoc];

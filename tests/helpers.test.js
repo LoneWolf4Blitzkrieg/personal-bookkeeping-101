@@ -62,7 +62,7 @@ test('paying only the minimum on $1,000.00 at 22.15% takes 71 months; $100.00 a 
 
 test('the chart of accounts groups numbers by kind of account', async () => {
   const { CHART, accountOptions } = await import('../content/helpers.js');
-  const group = { asset: [1, 19], liability: [20, 29], networth: [30, 39], income: [40, 49], expense: [50, 99] };
+  const group = { asset: [1, 19], liability: [20, 29], networth: [30, 30], income: [40, 49], expense: [50, 99] };
   const numbers = new Set();
   for (const [id, a] of Object.entries(CHART)) {
     const [lo, hi] = group[a.type];
@@ -70,7 +70,8 @@ test('the chart of accounts groups numbers by kind of account', async () => {
     assert.ok(!numbers.has(a.no), `account number ${a.no} used twice`);
     numbers.add(a.no);
   }
-  assert.deepEqual(accountOptions(['groceries', 'card']), [{ id: 'groceries', label: '52 Groceries (expense)' }, { id: 'card', label: '21 Credit card (liability)' }]);
+  // From Module 5 the number tells the kind of account, so labels leave the kind out.
+  assert.deepEqual(accountOptions(['groceries', 'card']), [{ id: 'groceries', label: '52 Groceries' }, { id: 'card', label: '21 Credit card' }]);
 });
 
 test('chartPage builds a ledger page from the chart, with folios, ticks and asked rows', async () => {
@@ -83,6 +84,8 @@ test('chartPage builds a ledger page from the chart, with folios, ticks and aske
   assert.deepEqual(page.rows[1].posted, [false, false]);
   assert.deepEqual(page.rows[1].ask, ['balance', 'side']);
   assert.equal(chartPage('card', [], { creditLimit: 50000 }).creditLimit, 50000);
+  // A line still to be posted can hide its amounts too, so the learner works them out from the journal.
+  assert.deepEqual(chartPage('cash', [['2026-06-05', 'Lunch', 'J2', 0, 1140]], { askFrom: 0, askKeys: ['debit', 'credit', 'balance', 'side'] }).rows[0].ask, ['debit', 'credit', 'balance', 'side']);
 });
 
 test('journal builds entries whose posted lines carry the ledger account number', async () => {

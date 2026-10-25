@@ -227,11 +227,13 @@ export function saveLedger(progress, pageId, rows) {
 
 // A finished practice set: kept for the evaluation plan, and it counts down
 // any recall questions scheduled after a failed gate.
-export function recordPractice(progress, moduleId, score, at) {
+// recalled lists the modules whose scheduled recall this set carried; only
+// those count down. Without it (sittings saved before this rule), all do.
+export function recordPractice(progress, moduleId, score, at, recalled = null) {
   const p = clone(progress);
   const m = moduleRecord(p, moduleId);
   (m.practice ??= []).push({ at, percent: score.percent });
-  return completePracticeSet(p);
+  return completePracticeSet(p, recalled);
 }
 
 // Modules whose recall questions should be added to the next practice sets.
@@ -239,9 +241,9 @@ export function recallDue(progress) {
   return Object.entries(progress.recall).filter(([, n]) => n > 0).map(([id]) => id);
 }
 
-export function completePracticeSet(progress) {
+export function completePracticeSet(progress, recalled = null) {
   const p = clone(progress);
-  for (const id of Object.keys(p.recall)) {
+  for (const id of Object.keys(p.recall).filter((m) => recalled === null || recalled.includes(m))) {
     p.recall[id] -= 1;
     if (p.recall[id] <= 0) delete p.recall[id];
   }

@@ -56,4 +56,10 @@ export const SOURCES = {
     url: 'https://www.consumerfinance.gov/ask-cfpb/what-is-a-daily-periodic-rate-on-a-credit-card-en-46/',
     accessed: '2026-10-24',
   },
+  'cfpb-grace-period': {
+    title: 'What is a grace period for a credit card?',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/ask-cfpb/what-is-a-grace-period-for-a-credit-card-en-47/',
+    accessed: '2026-10-24',
+  },
 };

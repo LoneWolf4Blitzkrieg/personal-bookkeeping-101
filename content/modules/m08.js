@@ -20,12 +20,14 @@ const yearly = (cents) => exactPercent(cents, APR_DECIMAL);
 
 // --- Question templates -----------------------------------------------------
 
+// The payment is a share of what is owed (30% to 80%, in whole $5), so it
+// never clears the balance; the amounts always fit under the $500.00 limit.
 const cardBalance = num('m08-card-balance', 'interpreting', {
-  start: { min: 5000, max: 40000, step: 1 }, a: { min: 1000, max: 9000, step: 1 }, b: { min: 500, max: 7000, step: 1 }, pay: { min: 5000, max: 30000, step: 500 },
+  start: { min: 5000, max: 30000, step: 1 }, a: { min: 1000, max: 9000, step: 1 }, b: { min: 500, max: 7000, step: 1 }, share: { min: 30, max: 80, step: 1 },
   limit: { pick: [50000, 80000, 100000] }, name: { pick: NAMES },
 }, (p) => {
   const owed = p.start + p.a + p.b;
-  const pay = Math.min(p.pay, owed);
+  const pay = Math.floor((owed * p.share) / 100 / 500) * 500;
   return {
     prompt: `${p.name} makes two charges and then a payment on the card. What does the card page show after the payment?`,
     ledger: chartPage('card', [
@@ -38,6 +40,24 @@ const cardBalance = num('m08-card-balance', 'interpreting', {
     answer: owed - pay,
     misconceptions: [{ cents: owed + pay, explanation: 'A payment lowers what you owe: the card is debited, so subtract.' }],
     explanation: `Charges add to what is owed and the payment takes it down: ${money(p.start)} + ${money(p.a)} + ${money(p.b)} − ${money(pay)} = ${money(owed - pay)}, a credit balance.`,
+  };
+});
+
+// Works out a month's interest, adds it, then takes off a minimum payment:
+// what a learner has to see to understand why a minimum payment costs so much.
+const afterMinimum = num('m08-after-minimum', 'interpreting', { balance: { min: 100000, max: 300000, step: 1 }, name: { pick: NAMES } }, (p) => {
+  const i = monthlyInterest(p.balance, APR);
+  const pay = minimumPayment(p.balance, i);
+  const answer = p.balance + i - pay;
+  return {
+    prompt: `${p.name}'s card balance is ${money(p.balance)} at ${APR_TEXT} APR. This month's interest (balance × APR ÷ 12, rounded to the cent) is added, then ${p.name} pays the minimum of ${money(pay)}. What is owed after the payment?`,
+    answer,
+    misconceptions: [
+      { cents: p.balance - pay, explanation: 'The month\'s interest is added to the balance before the payment comes off.' },
+      { cents: p.balance + percentOf(p.balance, APR_DECIMAL) - pay, explanation: 'That adds a whole year\'s interest. One month is the year\'s interest ÷ 12.' },
+    ],
+    explanation: `Interest: ${money(p.balance)} × ${APR_DECIMAL} ÷ 12 = ${exactMonthlyInterest(p.balance, APR)}, which rounds to ${money(i)}. ${money(p.balance)} + ${money(i)} − ${money(pay)} = ${money(answer)}. Only ${money(p.balance - answer)} of the ${money(pay)} payment lowered what is owed.`,
+    sources: APR_SOURCES,
   };
 });
 
@@ -76,7 +96,8 @@ const CARD_EVENTS = {
 };
 const recordCard = {
   id: 'm08-record-card', module: 'm08', kind: 'entry', part: 'producing', points: 4,
-  params: { amount: { min: 500, max: 15000, step: 1 }, what: { pick: [0, 1, 2] }, event: { pick: Object.keys(CARD_EVENTS) } },
+  // Each gate version gets a scenario: a charge, a payment, interest, then another charge.
+  params: { amount: { min: 500, max: 15000, step: 1 }, what: { pick: [0, 1, 2] }, event: { byVersion: ['charge', 'payment', 'interest', 'charge'] } },
   build: (p) => ({ accounts: CARD_ACCOUNTS, ...CARD_EVENTS[p.event](p) }),
 };
 
@@ -145,6 +166,9 @@ const cardMonth = {
 const minOnly = payoff(100000, APR);
 const hundred = payoff(100000, APR, { payment: 10000 });
 const [m1, m2] = minOnly.rows;
+const i1500 = monthlyInterest(150000, APR);
+const min1500 = minimumPayment(150000, i1500);
+const after1500 = 150000 + i1500 - min1500;
 
 export const M08_LESSON = {
   id: 'm08',
@@ -183,7 +207,7 @@ export const M08_LESSON = {
       text: [
         'A charge: debit the expense and credit Credit card. A payment: debit Credit card, because you owe less, and credit the bucket you pay from, usually the Spending bucket.',
         'A charge does not touch any bucket. So treat it as money already spent: keep enough in the Spending bucket to pay the card in full.',
-        'If you pay the whole statement balance by the due date, most cards charge no interest on purchases. This is called the grace period.',
+        'Most cards give a grace period: the time between the end of the billing month and the payment due date. If you pay the whole statement balance by the due date, you usually pay no interest on purchases.',
       ],
       prompt: 'You pay $49.05 to the card from the Spending bucket. Which two pages change, and how?',
       promptAnswer: 'Credit card is debited, so you owe $49.05 less. The Spending bucket is credited, so it holds $49.05 less.',
@@ -195,7 +219,7 @@ export const M08_LESSON = {
       highlightEntry: 2,
       ledger: chartPage('card', [['2026-06-04', 'Groceries', 'J5', 0, 3680, true], ['2026-06-09', 'Eating out', 'J5', 0, 1225, true], ['2026-06-25', 'Payment', 'J5', 4905, 0, true]], { creditLimit: 50000 }),
       highlightRow: 2,
-      sources: ['cfpb-apr'],
+      sources: ['cfpb-grace-period'],
     },
     {
       id: 'predict-payment', kind: 'predict', title: 'Predict: after a payment', uses: ['card-entries'],
@@ -215,7 +239,7 @@ export const M08_LESSON = {
       id: 'interest', kind: 'explain', title: 'Interest', uses: ['card-entries', 'percentages'],
       text: [
         `If you do not pay the whole balance, the card company charges interest on what is left. Card interest is stated as an APR, a yearly rate. In the second quarter of 2026, the average rate on credit card accounts that were charged interest was ${APR_TEXT} (Federal Reserve).`,
-        `A month's interest is about balance × APR ÷ 12. On a $500.00 balance: $500.00 × ${APR_DECIMAL} = ${yearly(50000)} a year, and ${yearly(50000)} ÷ 12 = ${exactMonthlyInterest(50000, APR)} a month, which rounds to ${money(monthlyInterest(50000, APR))}. Many card companies work it out day by day instead, with a daily rate (the APR divided by 360 or 365), so the real amount can differ a little.`,
+        `A month's interest is about balance × APR ÷ 12. On a $500.00 balance: $500.00 × ${APR_DECIMAL} = ${yearly(50000)} a year, and ${yearly(50000)} ÷ 12 = ${exactMonthlyInterest(50000, APR)} a month, which rounds to ${money(monthlyInterest(50000, APR))}. Some card companies work it out day by day instead, with a daily rate (the APR divided by 360 or 365), so the real amount can differ a little.`,
         'Interest is recorded like a charge: debit Card interest (58, an expense) and credit Credit card. It adds to what you owe.',
       ],
       prompt: 'Why is card interest debited to an expense page?',
@@ -229,7 +253,7 @@ export const M08_LESSON = {
       text: [`Your card balance is $800.00 and the APR is ${APR_TEXT}. Using balance × APR ÷ 12, how much interest is charged for one month? Round to the cent.`],
       answer: monthlyInterest(80000, APR),
       misconceptions: [{ cents: percentOf(80000, APR_DECIMAL), explanation: 'That is a whole year\'s interest. Divide by 12 for one month.' }],
-      explanation: `$800.00 × ${APR_DECIMAL} = ${yearly(80000)} a year. ÷ 12 = ${exactMonthlyInterest(80000, APR)} The thousandths digit is 6, so it rounds up to ${money(monthlyInterest(80000, APR))}.`,
+      explanation: `$800.00 × ${APR_DECIMAL} = ${yearly(80000)} a year. ÷ 12 = ${exactMonthlyInterest(80000, APR)}, and the thousandths digit is 6, so it rounds up to ${money(monthlyInterest(80000, APR))}.`,
       sources: APR_SOURCES,
     },
     {
@@ -237,7 +261,7 @@ export const M08_LESSON = {
       text: [
         `Each card statement shows a minimum payment: the least you must pay that month. Each card agreement sets its own rule. This course uses an example rule: ${MINIMUM_RULE}.`,
         `On a $1,000.00 balance, the month's interest is ${money(m1.interest)}, so the minimum is ${money(m1.interest)} + $10.00 = ${money(m1.payment)}. Only $10.00 of the payment lowers what you owe. The rest pays the interest.`,
-        `Paying only the minimum, with no new charges, this card takes ${minOnly.months} months (almost six years) to pay off and costs ${money(minOnly.interest)} in interest. Paying $100.00 a month takes ${hundred.months} months and costs ${money(hundred.interest)}. The course worked these out month by month with the example rule.`,
+        `Paying only the minimum, with no new charges, this card takes ${minOnly.months} months (about ${Math.round(minOnly.months / 12)} years) to pay off and costs ${money(minOnly.interest)} in interest. Paying $100.00 a month takes ${hundred.months} months and costs ${money(hundred.interest)}. The course worked these out month by month with the example rule.`,
         'By law, card statements show a "Minimum Payment Warning": how long paying only the minimum would take, and how much to pay each month to clear the balance in three years.',
       ],
       prompt: 'Why does the balance fall so slowly when you pay only the minimum?',
@@ -254,10 +278,10 @@ export const M08_LESSON = {
     },
     {
       id: 'predict-principal', kind: 'predict', title: 'Predict: after a minimum payment', uses: ['minimum-payment-cost', 'card-entries'],
-      text: [`Your card balance is $1,500.00. This month's interest of ${money(monthlyInterest(150000, APR))} is added, and you pay the minimum of ${money(minimumPayment(150000, monthlyInterest(150000, APR)))}. What do you owe after the payment?`],
-      answer: 150000 + monthlyInterest(150000, APR) - minimumPayment(150000, monthlyInterest(150000, APR)),
-      misconceptions: [{ cents: 150000 - minimumPayment(150000, monthlyInterest(150000, APR)), explanation: 'The interest is added to the balance before the payment comes off.' }],
-      explanation: `$1,500.00 + ${money(monthlyInterest(150000, APR))} − ${money(minimumPayment(150000, monthlyInterest(150000, APR)))} = $1,485.00. A payment of ${money(minimumPayment(150000, monthlyInterest(150000, APR)))} lowered the debt by only $15.00.`,
+      text: [`Your card balance is $1,500.00. This month's interest of ${money(i1500)} is added, and you pay the minimum of ${money(min1500)}. What do you owe after the payment?`],
+      answer: after1500,
+      misconceptions: [{ cents: 150000 - min1500, explanation: 'The interest is added to the balance before the payment comes off.' }],
+      explanation: `$1,500.00 + ${money(i1500)} − ${money(min1500)} = ${money(after1500)}. A payment of ${money(min1500)} lowered the debt by only ${money(150000 - after1500)}.`,
       sources: APR_SOURCES,
     },
     {
@@ -304,7 +328,7 @@ export const M08_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M08_GATE = { id: 'm08', kind: 'gate', title: 'Module 8 check', templates: [cardBalance, interest, recordCard, explainCard] };
+export const M08_GATE = { id: 'm08', kind: 'gate', title: 'Module 8 check', templates: [cardBalance, afterMinimum, recordCard, explainCard] };
 
 // Fluency drill on the core operation: a charge raises what is owed.
 const drill = [1, 2, 3].map((n) => num(`m08-drill-${n}`, 'interpreting', { a: { min: 2000, max: 60000, step: 1 }, b: { min: 300, max: 9000, step: 1 } }, (p) => ({
@@ -317,7 +341,7 @@ const recordPurchaseMixed = { ...M07_GATE.templates.find((t) => t.part === 'prod
 
 export const M08_PRACTICE = {
   id: 'm08-practice', kind: 'practice', module: 'm08', title: 'Module 8 practice set',
-  templates: [...drill, ...M07_LESSON.recallTemplates, ...M06_LESSON.recallTemplates, ...M04_LESSON.recallTemplates, cardBalance, interest, available, minimum, cardMonth, recordCard, recordPurchaseMixed, { ...explainCard, id: 'm08-explain-practice' }],
+  templates: [...M07_LESSON.recallTemplates, ...M06_LESSON.recallTemplates, ...M04_LESSON.recallTemplates, ...drill, cardBalance, interest, afterMinimum, available, minimum, cardMonth, recordCard, recordPurchaseMixed, { ...explainCard, id: 'm08-explain-practice' }],
 };
 
 export const M08_EXTRA = {
@@ -331,4 +355,4 @@ export const M08_REMEDIAL = {
 };
 
 // Questions Checkpoint B draws from this module.
-export const M08_CHECKPOINT = [cardBalance, interest, recordCard, explainCard];
+export const M08_CHECKPOINT = [cardBalance, afterMinimum, interest, recordCard, explainCard];

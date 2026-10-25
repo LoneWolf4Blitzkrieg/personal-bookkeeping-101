@@ -34,7 +34,7 @@ export function ledgerPanelHTML(step, { revealed = false } = {}) {
   return parts.join('');
 }
 
-function citationHTML(step) {
+export function citationHTML(step) {
   const ids = [step.source, ...(step.sources ?? [])].filter((id) => typeof id === 'string' && SOURCES[id]);
   if (ids.length === 0) return '';
   const items = ids.map((id) => {

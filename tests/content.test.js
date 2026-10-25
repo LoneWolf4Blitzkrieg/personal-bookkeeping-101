@@ -36,6 +36,7 @@ const expectations = {
   emptyActiveColumnsModule1: /activeColumns/,
   untaughtIdeaInPractice: /trial-balance.*not taught yet/,
   sourceDocNotCents: /cents/,
+  negativeAnswer: /below zero/,
 };
 
 for (const [name, pattern] of Object.entries(expectations)) {
@@ -111,12 +112,17 @@ test('the placement tests cover every module they skip', () => {
   assert.deepEqual([...new Set(b.templates.map((t) => t.module))], ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08']);
 });
 
-test('from Module 5, practice sets mix in recall and a production task from earlier modules', () => {
+// Proposal: recall plus mixed production make up 20–30% of a practice set.
+// Measured by points (the closest stand-in for time); one indivisible 4-point
+// task can take a set to a third.
+test('from Module 5, practice sets open with recall and draw 20% to 33% of their points from earlier modules', () => {
   for (const id of ['m05', 'm06', 'm07', 'm08']) {
     const set = ASSESSMENTS[`${id}-practice`].templates;
-    const earlier = set.filter((t) => t.module !== id);
-    assert.ok(earlier.length / set.length >= 0.2, `${id}: ${earlier.length} of ${set.length} from earlier modules`);
-    assert.ok(earlier.some((t) => t.part === 'producing'), `${id}: no earlier production task`);
+    const points = (list) => list.reduce((s, t) => s + t.points, 0);
+    const share = points(set.filter((t) => t.module !== id)) / points(set);
+    assert.ok(share >= 0.2 && share <= 1 / 3, `${id}: ${Math.round(share * 100)}% from earlier modules`);
+    assert.ok(set.some((t) => t.module !== id && t.part === 'producing'), `${id}: no earlier production task`);
+    assert.ok(set[0].id.endsWith('-recall'), `${id}: should open with recall`);
   }
 });
 
@@ -131,6 +137,41 @@ test('ledger pages in Modules 5–8 use the account numbers from the chart of ac
   for (const id of ['m02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08']) walk(MODULE_CONTENT[id]);
   for (const p of pages) {
     const a = byName.get(p.account);
-    if (a) assert.equal(p.accountNo, a.no, `${p.account} should be account ${a.no}`);
+    assert.ok(a, `${p.account} is not in the chart of accounts`);
+    assert.equal(p.accountNo, a.no, `${p.account} should be account ${a.no}`);
+  }
+});
+
+test('a check\'s numeric answers are never below zero, over many parameter values', async () => {
+  const { checkAssessment } = await import('../js/contentRules.js');
+  const t = { id: 'fx-negative', module: 'm03', kind: 'numeric', part: 'interpreting', points: 2, params: { a: { min: 100, max: 200, step: 1 } }, build: (p) => ({ prompt: `x ${p.a}`, answer: 150 - p.a, explanation: 'x' }) };
+  assert.ok(checkAssessment({ id: 'fx-practice', kind: 'practice', templates: [t] }).some((p) => /below zero/.test(p)));
+});
+
+test('the producing question of every gate from Module 5 asks for entries of the same size in all four versions, and covers every scenario', async () => {
+  const { gateVersions } = await import('../js/items.js');
+  for (const id of ['m05', 'm06', 'm07', 'm08']) {
+    const gate = ASSESSMENTS[id];
+    const producing = gate.templates.find((t) => t.part === 'producing');
+    const items = gateVersions(gate.templates, id).map((v) => v.find((i) => i.part === 'producing'));
+    assert.equal(new Set(items.map((i) => i.answer.length)).size, 1, `${id}: entries of different sizes`);
+    const scenarios = Object.values(producing.params).find((s) => Array.isArray(s.byVersion))?.byVersion ?? [];
+    assert.ok(scenarios.length >= 2, `${id}: the producing question should cycle scenarios by version`);
+    assert.deepEqual(new Set(items.map((i) => Object.values(i.params).find((v) => scenarios.includes(v)))), new Set(scenarios), `${id}: some scenarios never appear`);
+  }
+});
+
+test('credit card pages stay within their limit, and the card-balance question never lands on $0.00', async () => {
+  const { generateItem } = await import('../js/items.js');
+  const { runningBalances } = await import('../js/ledger.js');
+  const templates = [...new Map(Object.values(ASSESSMENTS).flatMap((a) => a.templates).filter((t) => t.module === 'm08').map((t) => [t.id, t])).values()];
+  for (const t of templates) {
+    for (let seed = 0; seed < 300; seed++) {
+      const item = generateItem(t, seed);
+      for (const page of [item.ledger, ...(item.ledgers ?? [])].filter((pg) => pg?.creditLimit)) {
+        assert.ok(Math.max(...runningBalances(page).map((b) => b.balance)) <= page.creditLimit, `${t.id} seed ${seed}: over the credit limit`);
+      }
+      if (t.id.startsWith('m08-card-balance')) assert.ok(item.answer > 0, `${t.id} seed ${seed}: the payment clears the whole balance`);
+    }
   }
 });

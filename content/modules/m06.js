@@ -12,12 +12,14 @@ const num = (id, part, params, build) => ({ id, module: 'm06', kind: 'numeric', 
 
 // --- Question templates -----------------------------------------------------
 
-// One posted entry and the ledger page it changed. The learner reads the
-// balance on the posted line.
+// One journal entry and the ledger page it goes to. The line is dated with
+// its folio, but its amount is left for the learner to post from the journal;
+// in the journal that line's folio is still empty (not yet posted).
+const TO_POST = ['debit', 'credit', 'balance', 'side'];
 const POST_EVENTS = {
-  groceries: { page: 'spending', explanation: 'Groceries', lines: (a) => [['groceries', a, 0, true], ['spending', 0, a, true]], debitPage: false },
-  share: { page: 'saving', explanation: 'Saving share of paycheck', lines: (a) => [['saving', a, 0, true], ['checking', 0, a, true]], debitPage: true },
-  lunch: { page: 'cash', explanation: 'Lunch', lines: (a) => [['eating-out', a, 0, true], ['cash', 0, a, true]], debitPage: false },
+  groceries: { page: 'spending', explanation: 'Groceries', lines: (a) => [['groceries', a, 0, true], ['spending', 0, a, false]], debitPage: false },
+  share: { page: 'saving', explanation: 'Saving share of paycheck', lines: (a) => [['saving', a, 0, false], ['checking', 0, a, true]], debitPage: true },
+  lunch: { page: 'cash', explanation: 'Lunch', lines: (a) => [['eating-out', a, 0, true], ['cash', 0, a, false]], debitPage: false },
 };
 const postBalance = num('m06-post-balance', 'interpreting', { start: { min: 9000, max: 60000, step: 1 }, amount: { min: 500, max: 8000, step: 1 }, event: { pick: Object.keys(POST_EVENTS) }, name: { pick: NAMES } }, (p) => {
   const e = POST_EVENTS[p.event];
@@ -25,12 +27,12 @@ const postBalance = num('m06-post-balance', 'interpreting', { start: { min: 9000
   const wrong = e.debitPage ? p.start - p.amount : p.start + p.amount;
   const pageName = CHART[e.page].name;
   return {
-    prompt: `This journal entry has been posted. What does the ${pageName} balance read on the posted line?`,
+    prompt: `Post this journal entry to the ${pageName} page. The line already has its date and folio. What will the ${pageName} balance be after it?`,
     journalPage: journal([['2026-06-10', 'J2', e.explanation, e.lines(p.amount)]], { sheetNo: 2, name: p.name }),
-    ledger: chartPage(e.page, [['2026-06-06', 'Brought forward', '', p.start, 0], ['2026-06-10', e.explanation, 'J2', e.debitPage ? p.amount : 0, e.debitPage ? 0 : p.amount, true]], { name: p.name, askFrom: 1 }),
+    ledger: chartPage(e.page, [['2026-06-06', 'Brought forward', '', p.start, 0], ['2026-06-10', e.explanation, 'J2', e.debitPage ? p.amount : 0, e.debitPage ? 0 : p.amount]], { name: p.name, askFrom: 1, askKeys: TO_POST }),
     highlightRow: 1,
     answer,
-    misconceptions: [{ cents: wrong, explanation: `In the journal, ${pageName} is ${e.debitPage ? 'debited' : 'credited'}, so the posted line is a ${e.debitPage ? 'debit: add' : 'credit: subtract'}.` }],
+    misconceptions: [{ cents: wrong, explanation: `In the journal, ${pageName} is ${e.debitPage ? 'debited' : 'credited'}, so it is posted as a ${e.debitPage ? 'debit: add' : 'credit: subtract'}.` }],
     explanation: `${money(p.start)} ${e.debitPage ? '+' : '−'} ${money(p.amount)} = ${money(answer)}.`,
   };
 });
@@ -52,7 +54,8 @@ const unposted = num('m06-unposted', 'interpreting', { start: { min: 20000, max:
   };
 });
 
-const JOURNAL_ACCOUNTS = accountOptions(['checking', 'spending', 'saving', 'investing', 'charity', 'owed-friend', 'groceries', 'household']);
+const JOURNAL_ACCOUNTS = accountOptions(['checking', 'spending', 'saving', 'investing', 'charity', 'blow', 'rent', 'phone', 'groceries', 'household']);
+// Every scenario is a three-line entry: two debits and one credit.
 const JOURNAL_EVENTS = {
   split: (p) => ({
     prompt: `Write the journal entry: one shopping trip, paid from the Spending bucket, was ${money(p.a)} of groceries and ${money(p.b)} of household supplies.`,
@@ -62,20 +65,28 @@ const JOURNAL_EVENTS = {
   shares: (p) => {
     const s = splitBuckets(p.take);
     return {
-      prompt: `Write the journal entry for moving three shares of a ${money(p.take)} paycheck out of Checking: Saving ${money(s.saving)}, Investing ${money(s.investing)}, Charity ${money(s.charity)}.`,
-      answer: [{ account: 'saving', debit: s.saving, credit: 0 }, { account: 'investing', debit: s.investing, credit: 0 }, { account: 'charity', debit: s.charity, credit: 0 }, { account: 'checking', debit: 0, credit: s.saving + s.investing + s.charity }],
-      explanation: `Each bucket (an asset) is debited. Checking is credited for all three: ${money(s.saving + s.investing + s.charity)}.`,
+      prompt: `Write the journal entry for moving two shares of a ${money(p.take)} paycheck out of Checking: Saving ${money(s.saving)} and Investing ${money(s.investing)}.`,
+      answer: [{ account: 'saving', debit: s.saving, credit: 0 }, { account: 'investing', debit: s.investing, credit: 0 }, { account: 'checking', debit: 0, credit: s.saving + s.investing }],
+      explanation: `Both buckets (assets) are debited. Checking is credited for both: ${money(s.saving + s.investing)}.`,
     };
   },
-  friend: (p) => ({
-    prompt: `Write the journal entry: you pay back ${money(p.a)} you owe a friend, from the Spending bucket.`,
-    answer: [{ account: 'owed-friend', debit: p.a, credit: 0 }, { account: 'spending', debit: 0, credit: p.a }],
-    explanation: 'Owed to a friend (a liability) goes down: debit. The Spending bucket (an asset) goes down: credit.',
+  bills: (p) => ({
+    prompt: `Write the journal entry: from the Spending bucket you pay ${money(p.rent)} rent and a ${money(p.b)} phone bill.`,
+    answer: [{ account: 'rent', debit: p.rent, credit: 0 }, { account: 'phone', debit: p.b, credit: 0 }, { account: 'spending', debit: 0, credit: p.rent + p.b }],
+    explanation: `Rent and Phone (expenses) are debited. The Spending bucket is credited for both: ${money(p.rent + p.b)}.`,
   }),
+  smallShares: (p) => {
+    const s = splitBuckets(p.take);
+    return {
+      prompt: `Write the journal entry for moving two shares of a ${money(p.take)} paycheck out of Checking: Charity ${money(s.charity)} and Blow money ${money(s.blow)}.`,
+      answer: [{ account: 'charity', debit: s.charity, credit: 0 }, { account: 'blow', debit: s.blow, credit: 0 }, { account: 'checking', debit: 0, credit: s.charity + s.blow }],
+      explanation: `Both buckets (assets) are debited. Checking is credited for both: ${money(s.charity + s.blow)}.`,
+    };
+  },
 };
 const recordJournal = {
   id: 'm06-record-journal', module: 'm06', kind: 'entry', part: 'producing', points: 4,
-  params: { a: { min: 1000, max: 9000, step: 1 }, b: { min: 300, max: 3000, step: 1 }, take: { min: 80000, max: 120000, step: 1 }, event: { pick: Object.keys(JOURNAL_EVENTS) } },
+  params: { a: { min: 1000, max: 9000, step: 1 }, b: { min: 300, max: 6000, step: 1 }, rent: { min: 30000, max: 60000, step: 500 }, take: { min: 80000, max: 120000, step: 1 }, event: { byVersion: Object.keys(JOURNAL_EVENTS) } },
   build: (p) => ({ accounts: JOURNAL_ACCOUNTS, ...JOURNAL_EVENTS[p.event](p) }),
 };
 
@@ -116,20 +127,20 @@ const postPage = {
     let b = p.start;
     const balances = moves.map(([dr, cr]) => (b += dr - cr));
     return {
-      prompt: `${p.name}'s journal page J3 has been posted to the Spending bucket page. Fill in the Balance column for lines 2 to 5.`,
+      prompt: `Post ${p.name}'s journal page J3 to the Spending bucket page. Each line already has its date and folio. Fill in the Balance column for lines 2 to 5.`,
       journalPage: journal([
-        ['2026-06-15', 'J3', 'Groceries', [['groceries', p.a, 0, true], ['spending', 0, p.a, true]]],
-        ['2026-06-16', 'J3', 'Phone bill', [['phone', p.b, 0, true], ['spending', 0, p.b, true]]],
-        ['2026-06-19', 'J3', 'Spending share of paycheck', [['spending', p.c, 0, true], ['checking', 0, p.c, true]]],
-        ['2026-06-20', 'J3', 'Bus fare', [['transport', p.d, 0, true], ['spending', 0, p.d, true]]],
+        ['2026-06-15', 'J3', 'Groceries', [['groceries', p.a, 0, true], ['spending', 0, p.a]]],
+        ['2026-06-16', 'J3', 'Phone bill', [['phone', p.b, 0, true], ['spending', 0, p.b]]],
+        ['2026-06-19', 'J3', 'Spending share of paycheck', [['spending', p.c, 0], ['checking', 0, p.c, true]]],
+        ['2026-06-20', 'J3', 'Bus fare', [['transport', p.d, 0, true], ['spending', 0, p.d]]],
       ], { sheetNo: 3, name: p.name }),
       ledger: chartPage('spending', [
         ['2026-06-13', 'Brought forward', '', p.start, 0],
-        ['2026-06-15', 'Groceries', 'J3', 0, p.a, true],
-        ['2026-06-16', 'Phone bill', 'J3', 0, p.b, true],
-        ['2026-06-19', 'From Checking', 'J3', p.c, 0, true],
-        ['2026-06-20', 'Bus fare', 'J3', 0, p.d, true],
-      ], { name: p.name, askFrom: 1 }),
+        ['2026-06-15', 'Groceries', 'J3', 0, p.a],
+        ['2026-06-16', 'Phone bill', 'J3', 0, p.b],
+        ['2026-06-19', 'From Checking', 'J3', p.c, 0],
+        ['2026-06-20', 'Bus fare', 'J3', 0, p.d],
+      ], { name: p.name, askFrom: 1, askKeys: TO_POST }),
       fields: balances.map((answer, i) => ({ label: `Balance after line ${i + 2}`, answer })),
       explanation: `Credits to the Spending bucket subtract and debits add. The four balances are ${balances.map(money).join(', ')}.`,
     };
@@ -193,8 +204,8 @@ export const M06_LESSON = {
     {
       id: 'predict-post', kind: 'predict', title: 'Predict: after posting', uses: ['posting', 'running-balance'],
       text: ['The entry for a $14.75 movie ticket, paid from Blow money, has been posted. What does the Blow money balance read on the highlighted line?'],
-      journalPage: journal([['2026-06-09', 'J1', 'Movie ticket', [['fun', 1475, 0, true], ['blow', 0, 1475, true]]]]),
-      ledger: chartPage('blow', [['2026-06-06', 'Paycheck share', 'J1', 10335, 0], ['2026-06-09', 'Movie ticket', 'J1', 0, 1475]], { askFrom: 1 }),
+      journalPage: journal([['2026-06-09', 'J2', 'Movie ticket', [['fun', 1475, 0, true], ['blow', 0, 1475, true]]]], { sheetNo: 2 }),
+      ledger: chartPage('blow', [['2026-06-06', 'Brought forward', '', 10335, 0], ['2026-06-09', 'Movie ticket', 'J2', 0, 1475]], { askFrom: 1 }),
       highlightRow: 1,
       answer: 8860,
       misconceptions: [{ cents: 11810, explanation: 'Blow money paid for the ticket: the posted line is a credit, so subtract.' }],
@@ -209,14 +220,15 @@ export const M06_LESSON = {
       ],
       prompt: 'You were interrupted halfway through posting a journal page. How do you find where you stopped?',
       promptAnswer: 'Look for the first journal line with an empty Folio column. Everything above it has been posted, so start again there.',
-      journalPage: journal([['2026-06-09', 'J1', 'Movie ticket', [['fun', 1475, 0, true], ['blow', 0, 1475, true]]]]),
-      ledger: chartPage('blow', [['2026-06-06', 'Paycheck share', 'J1', 10335, 0, true], ['2026-06-09', 'Movie ticket', 'J1', 0, 1475, true]]),
+      journalPage: journal([['2026-06-09', 'J2', 'Movie ticket', [['fun', 1475, 0, true], ['blow', 0, 1475, true]]]], { sheetNo: 2 }),
+      ledger: chartPage('blow', [['2026-06-06', 'Brought forward', '', 10335, 0], ['2026-06-09', 'Movie ticket', 'J2', 0, 1475, true]]),
       highlightRow: 1,
     },
     {
       id: 'predict-unposted', kind: 'predict', title: 'Predict: the missing line', uses: ['posted-marks', 'posting'],
       text: ['One line on this journal page has not been posted: its Folio column is empty. When it is posted, what will the Spending bucket balance be?'],
       journalPage: journal([
+        ['2026-06-09', 'J2', 'Movie ticket', [['fun', 1475, 0, true], ['blow', 0, 1475, true]]],
         ['2026-06-12', 'J2', 'Groceries', [['groceries', 3610, 0, true], ['spending', 0, 3610, true]]],
         ['2026-06-13', 'J2', 'Phone bill', [['phone', 4500, 0, true], ['spending', 0, 4500, false]]],
       ], { sheetNo: 2 }),
@@ -282,7 +294,7 @@ const recordNumbersMixed = { ...M05_GATE.templates.find((t) => t.part === 'produ
 
 export const M06_PRACTICE = {
   id: 'm06-practice', kind: 'practice', module: 'm06', title: 'Module 6 practice set',
-  templates: [...drill, ...M05_LESSON.recallTemplates, ...M04_LESSON.recallTemplates, ...M02_LESSON.recallTemplates, postBalance, unposted, journalCredit, postPage, recordJournal, recordNumbersMixed, { ...explainJournal, id: 'm06-explain-practice' }],
+  templates: [...M05_LESSON.recallTemplates, ...M04_LESSON.recallTemplates, ...M02_LESSON.recallTemplates, ...drill, postBalance, unposted, journalCredit, postPage, recordJournal, recordNumbersMixed, { ...explainJournal, id: 'm06-explain-practice' }],
 };
 
 export const M06_EXTRA = {
