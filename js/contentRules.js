@@ -66,9 +66,17 @@ function checkLedger(page, path, position, problems) {
 function checkCommon(node, path, position, problems) {
   const taught = ideasTaughtBy(position);
   walk(node, path, (o, p) => {
-    if (isLedgerPage(o)) checkLedger(o, p, position, problems);
+    if (isLedgerPage(o)) {
+      checkLedger(o, p, position, problems);
+      // Folio references (Module 5) and posted ticks (Module 6) stay blank until taught.
+      o.rows.forEach((r, i) => {
+        if (r.folio && !taught.has('folio-reference')) problems.push(`${p}.rows[${i}]: Folio references are taught in Module 5; leave the Folio column blank before then.`);
+        if ((r.posted ?? []).some(Boolean) && !taught.has('posted-marks')) problems.push(`${p}.rows[${i}]: posted ticks are taught in Module 6; leave them blank before then.`);
+      });
+    }
     if (isJournalPage(o)) {
       if (EARLY_MODULES.has(position)) problems.push(`${p}: journal pages use debit and credit columns, which modules 1 and 2 do not teach yet.`);
+      else if (!taught.has('journal-entry')) problems.push(`${p}: the journal is taught in Module 6; show the ledger pages instead before then.`);
       o.entries.forEach((e, i) => { if (!entryBalances(e)) problems.push(`${p}.entries[${i}]: this entry does not balance.`); });
     }
     if (o.journal && !entryBalances(o.journal)) problems.push(`${p}.journal: this entry does not balance.`);
@@ -98,6 +106,7 @@ function checkSteps(module, problems) {
     else if (seen.has(s.id)) problems.push(`steps[${i}]: duplicate step id "${s.id}".`);
     else seen.add(s.id);
     if (!Array.isArray(s.uses)) problems.push(`steps[${i}]: every step must list the ideas it uses ("uses").`);
+    if (s.prompt && !s.promptAnswer) problems.push(`steps[${i}]: a self-explanation prompt needs a model answer ("promptAnswer") to compare with.`);
     if (s.kind === 'predict') {
       if (!Number.isSafeInteger(s.answer)) { problems.push(`steps[${i}]: a predict step needs an answer in whole cents.`); return; }
       if (typeof s.explanation !== 'string' || !s.explanation) problems.push(`steps[${i}]: a predict step needs an explanation.`);

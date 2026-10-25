@@ -15,8 +15,8 @@ const savingShare = {
       ledger: {
         sheetNo: 1, accountNo: 3, name: p.name, account: 'Saving bucket', type: 'asset',
         rows: [
-          { date: '2026-06-01', items: 'Brought forward', folio: '', debit: p.opening, credit: 0, posted: [true, false] },
-          { date: '2026-06-06', items: 'From paycheck, 15%', folio: 'J1', debit: share, credit: 0, posted: [true, false], ask: ['balance', 'side'] },
+          { date: '2026-06-01', items: 'Brought forward', folio: '', debit: p.opening, credit: 0, posted: [false, false] },
+          { date: '2026-06-06', items: 'From paycheck, 15%', folio: '', debit: share, credit: 0, posted: [false, false], ask: ['balance', 'side'] },
         ],
       },
       answer: p.opening + share,

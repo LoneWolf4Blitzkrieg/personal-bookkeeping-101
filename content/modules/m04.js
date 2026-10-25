@@ -3,10 +3,15 @@
 // employer on every pay stub is fictional.
 
 import { percentOf } from '../../js/money.js';
-import { money, NAMES, standardPaycheck, payStub, explainTemplate, PAYCHECK_SOURCES } from '../helpers.js';
+import { money, NAMES, standardPaycheck, payStub, explainTemplate, exactPercent, PAYCHECK_SOURCES } from '../helpers.js';
+import { M01_LESSON } from './m01.js';
+import { M02_LESSON } from './m02.js';
+import { M03_LESSON } from './m03.js';
 
 const num = (id, part, params, build) => ({ id, module: 'm04', kind: 'numeric', part, points: part === 'interpreting' ? 2 : 1, params, build });
-const HOURS = { min: 40, max: 90, step: 1 };
+// Two weeks of straight-time pay: at most 40 hours a week. Over 40 hours a
+// week, federal law requires overtime at 1.5 times the hourly wage.
+const HOURS = { min: 40, max: 80, step: 1 };
 const ACCOUNTS = [
   { id: 'checking', label: 'Checking (asset)' },
   { id: 'taxes', label: 'Taxes withheld (expense)' },
@@ -30,7 +35,7 @@ const medicare = num('m04-medicare', 'interpreting', { hours: HOURS }, (p) => {
     prompt: `Gross pay is ${money(pay.gross)}. Medicare takes 1.45%. How much is withheld for Medicare, rounded to the cent?`,
     answer: pay.medicare,
     misconceptions: [{ cents: percentOf(pay.gross, 0.145), explanation: 'That is 14.5%. Medicare is 1.45%.' }],
-    explanation: `1.45% of ${money(pay.gross)} rounds to ${money(pay.medicare)} (4 and below, keep it below; 5 and above, give it a shove).`,
+    explanation: `1.45% is 0.0145, and 0.0145 × ${money(pay.gross)} = ${exactPercent(pay.gross, 0.0145)}, which rounds to ${money(pay.medicare)} (4 and below, keep it below; 5 and above, give it a shove).`,
     sources: ['ssa-cola-2026'],
   };
 });
@@ -52,7 +57,7 @@ const socialSecurity = num('m04-social-security', 'interpreting', { hours: HOURS
     prompt: `Gross pay is ${money(pay.gross)}. Social Security takes 6.2%. How much is withheld, rounded to the cent?`,
     answer: pay.socialSecurity,
     misconceptions: [{ cents: percentOf(pay.gross, 0.62), explanation: 'That is 62%. Social Security is 6.2%.' }],
-    explanation: `6.2% of ${money(pay.gross)} rounds to ${money(pay.socialSecurity)}.`,
+    explanation: `6.2% is 0.062, and 0.062 × ${money(pay.gross)} = ${exactPercent(pay.gross, 0.062)}, which rounds to ${money(pay.socialSecurity)}.`,
     sources: ['ssa-cola-2026'],
   };
 });
@@ -129,8 +134,10 @@ export const M04_LESSON = {
       text: [
         'Gross pay is what you earn before anything is taken out. It is hours × hourly wage. Working 80 hours in two weeks at Arizona\'s 2026 minimum wage of $15.15 an hour gives 80 × $15.15 = $1,212.00.',
         'Take-home pay (also called net pay) is what reaches your account after taxes are withheld. For this paycheck it is $1,033.46. Your five buckets are split from that amount.',
+        'This course uses at most 40 hours a week. Hours over 40 in one week earn overtime, which by federal law is paid at 1.5 times the hourly wage.',
       ],
       prompt: 'Why is take-home pay smaller than gross pay?',
+      promptAnswer: 'Taxes are taken out (withheld) before the pay reaches your account, so you receive less than you earned.',
       sourceDoc: payStub(80, { detail: false }),
       sources: ['azica-min-wage-2026'],
     },
@@ -140,8 +147,10 @@ export const M04_LESSON = {
         `Four amounts are withheld. Social Security is 6.2% of gross pay: $75.144, which rounds to ${money(std.socialSecurity)}. Medicare is 1.45% of gross pay: $17.574, which rounds to ${money(std.medicare)}.`,
         `Federal income tax is worked out from the IRS tables for 2026. For this paycheck it is ${money(std.federal)}. Arizona income tax is 2.0% unless you choose another rate on Form A-4. For this paycheck it is ${money(std.arizona)}.`,
         `Total withheld: ${money(deductions(std))}. $1,212.00 − ${money(deductions(std))} = $1,033.46. Remember the rounding rhyme. Look at the thousandths digit: 4 and below, keep it below; 5 and above, give it a shove.`,
+        'The federal figure assumes a single filer who left Steps 2 to 4 of Form W-4 blank. Your own may differ. Many pay stubs also show other deductions, such as health insurance or a retirement plan; they come out before take-home pay in the same way.',
       ],
       prompt: 'Which of the four deductions is worked out from a table instead of a single percentage?',
+      promptAnswer: 'Federal income tax. It comes from the IRS tables for the year; the other three are each one percentage of gross pay.',
       sourceDoc: payStub(80),
       sources: PAYCHECK_SOURCES,
     },
@@ -165,23 +174,29 @@ export const M04_LESSON = {
     {
       id: 'record', kind: 'explain', title: 'Recording the paycheck', uses: ['recording-paycheck', 'debit-credit-rules', 'equal-sides'],
       text: [
-        'One journal entry records the whole paycheck. Checking goes up by the take-home pay: debit. Taxes withheld is an expense: debit. Wages, the income you earned, goes up by the full gross pay: credit.',
-        `Debits: $1,033.46 + ${money(deductions(std))} = $1,212.00. Credit: $1,212.00. The two sides are equal.`,
-        'Then post each line to its ledger page. Here is the Checking page after posting.',
+        'One paycheck changes three accounts. Checking goes up by the take-home pay: debit. Taxes withheld is an expense: debit. Wages, the income you earned, goes up by the full gross pay: credit.',
+        `Debits: $1,033.46 + ${money(deductions(std))} = $1,212.00. Credit: $1,212.00. The two sides are equal. The three pages show each change.`,
       ],
       prompt: 'Why is Wages credited for $1,212.00 and not $1,033.46?',
-      journalPage: {
-        sheetNo: 1, name: 'Jordan (example)',
-        entries: [{ date: '2026-06-05', folio: 'J1', explanation: 'Paycheck, two weeks', lines: [
-          { account: 'checking', label: 'Checking', debit: std.net, credit: 0, folio: 1 },
-          { account: 'taxes', label: 'Taxes withheld', debit: deductions(std), credit: 0, folio: 50 },
-          { account: 'wages', label: 'Wages', debit: 0, credit: std.gross, folio: 40 },
-        ] }],
-      },
-      ledger: { sheetNo: 1, accountNo: 1, name: 'Jordan (example)', account: 'Checking', type: 'asset',
-        rows: [{ date: '2026-06-05', items: 'Paycheck', folio: 'J1', debit: std.net, credit: 0, posted: [true, false] }] },
+      promptAnswer: 'You earned the whole $1,212.00. Part of it was paid as taxes for you, and that part is recorded as the Taxes withheld expense.',
+      ledgers: [
+        { sheetNo: 1, accountNo: 1, name: 'Jordan (example)', account: 'Checking', type: 'asset',
+          rows: [{ date: '2026-06-05', items: 'Paycheck', folio: '', debit: std.net, credit: 0, posted: [false, false] }] },
+        { sheetNo: 1, accountNo: 50, name: 'Jordan (example)', account: 'Taxes withheld', type: 'expense',
+          rows: [{ date: '2026-06-05', items: 'Paycheck', folio: '', debit: deductions(std), credit: 0, posted: [false, false] }] },
+        { sheetNo: 1, accountNo: 40, name: 'Jordan (example)', account: 'Wages', type: 'income',
+          rows: [{ date: '2026-06-05', items: 'Paycheck', folio: '', debit: 0, credit: std.gross, posted: [false, false] }] },
+      ],
       highlightRow: 0,
       sources: PAYCHECK_SOURCES,
+    },
+    {
+      id: 'guided', kind: 'predict', title: 'Finish the worked steps', uses: ['paycheck-deductions', 'percentages'],
+      text: [`Kai's pay stub is almost done: gross pay $1,090.80, Social Security ${money(p72.socialSecurity)}, Medicare ${money(p72.medicare)}, federal income tax ${money(p72.federal)}. Finish the last line: Arizona income tax at 2.0%.`],
+      answer: p72.arizona,
+      misconceptions: [{ cents: percentOf(p72.gross, 0.2), explanation: 'That is 20%. 2.0% is 0.02 as a decimal.' }],
+      explanation: `2.0% is 0.02, and 0.02 × $1,090.80 = ${exactPercent(p72.gross, 0.02)}, which rounds to ${money(p72.arizona)}.`,
+      sources: ['azdor-a4-2026'],
     },
     {
       id: 'predict-taxes', kind: 'predict', title: 'Predict: the tax line', uses: ['recording-paycheck', 'paycheck-deductions'],
@@ -192,18 +207,33 @@ export const M04_LESSON = {
       sources: PAYCHECK_SOURCES,
     },
     {
-      id: 'independent', kind: 'predict', title: 'On your own', uses: ['gross-vs-net'],
-      text: ['Ana works 64 hours at $15.15 an hour. What is her gross pay?'],
+      id: 'independent', kind: 'predict', title: 'On your own', uses: ['gross-vs-net', 'recording-paycheck'],
+      text: ['Ana works 64 hours at $15.15 an hour. When her paycheck is recorded, how much is credited to Wages?'],
       answer: standardPaycheck(64).gross,
-      explanation: `64 × $15.15 = ${money(standardPaycheck(64).gross)}.`,
+      misconceptions: [{ cents: standardPaycheck(64).net, explanation: 'Wages is credited with the gross pay, before any taxes are taken out.' }],
+      explanation: `Wages gets the gross pay: 64 × $15.15 = ${money(standardPaycheck(64).gross)}.`,
       sources: ['azica-min-wage-2026'],
     },
     {
-      id: 'exit-check', kind: 'predict', title: 'Exit check', uses: ['paycheck-deductions', 'percentages'],
+      id: 'exit-check', kind: 'predict', title: 'Exit check 1 of 3', uses: ['paycheck-deductions', 'percentages'],
       text: [`Ana's gross pay is ${money(standardPaycheck(64).gross)}. How much is withheld for Arizona income tax at 2.0%?`],
       answer: standardPaycheck(64).arizona,
       explanation: `2.0% of ${money(standardPaycheck(64).gross)} is ${money(standardPaycheck(64).arizona)}.`,
       sources: ['azdor-a4-2026'],
+    },
+    {
+      id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['paycheck-deductions', 'percentages'],
+      text: [`From the same gross pay of ${money(standardPaycheck(64).gross)}, how much is withheld for Social Security at 6.2%?`],
+      answer: standardPaycheck(64).socialSecurity,
+      explanation: `0.062 × ${money(standardPaycheck(64).gross)} = ${exactPercent(standardPaycheck(64).gross, 0.062)}, which rounds to ${money(standardPaycheck(64).socialSecurity)}.`,
+      sources: ['ssa-cola-2026'],
+    },
+    {
+      id: 'exit-check-3', kind: 'predict', title: 'Exit check 3 of 3', uses: ['gross-vs-net', 'paycheck-deductions'],
+      text: [`Ana's four deductions add up to ${money(deductions(standardPaycheck(64)))}. What is her take-home pay from ${money(standardPaycheck(64).gross)}?`],
+      answer: standardPaycheck(64).net,
+      explanation: `${money(standardPaycheck(64).gross)} − ${money(deductions(standardPaycheck(64)))} = ${money(standardPaycheck(64).net)}.`,
+      sources: PAYCHECK_SOURCES,
     },
   ],
   resources: ['irs-understanding-withholding', 'azica-min-wage', 'cfpb-budget'],
@@ -214,9 +244,15 @@ export const M04_LESSON = {
 
 export const M04_GATE = { id: 'm04', kind: 'gate', title: 'Module 4 check', templates: [grossPay, medicare, recordPaycheck, explainPay] };
 
+// Fluency drill on the core operation.
+const drill = [1, 2, 3].map((n) => num(`m04-drill-${n}`, 'interpreting', { hours: HOURS }, (p) => ({
+  prompt: `Drill ${n} of 3: ${p.hours} hours at $15.15. Gross pay?`, answer: standardPaycheck(p.hours).gross,
+  explanation: `${p.hours} × $15.15 = ${money(standardPaycheck(p.hours).gross)}.`, sources: ['azica-min-wage-2026'],
+})));
+
 export const M04_PRACTICE = {
   id: 'm04-practice', kind: 'practice', module: 'm04', title: 'Module 4 practice set',
-  templates: [recallEquation, grossPay, socialSecurity, taxesTotal, netFromStub, recordPaycheck, { ...explainPay, id: 'm04-explain-practice' }],
+  templates: [...drill, recallEquation, ...M01_LESSON.recallTemplates, ...M02_LESSON.recallTemplates, ...M03_LESSON.recallTemplates, socialSecurity, taxesTotal, netFromStub, recordPaycheck, { ...explainPay, id: 'm04-explain-practice' }],
 };
 
 export const M04_EXTRA = {

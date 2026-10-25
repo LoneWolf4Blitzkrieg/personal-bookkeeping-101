@@ -1,8 +1,8 @@
 // Module data used to prove each content rule catches what it should.
 
 export const goodModule = {
-  id: 'm03', title: 'Debit and credit', coreIdea: 'Every entry has a debit side and a credit side that are equal.',
-  ideas: ['accounting-equation', 'debit-credit-rules', 'equal-sides'],
+  id: 'm06', title: 'The journal and posting', coreIdea: 'Every entry has a debit side and a credit side that are equal.',
+  ideas: ['journal-entry', 'posting', 'posted-marks'],
   steps: [
     { id: 'intro', kind: 'explain', text: ['Assets increase on the debit side.'], uses: ['debit-credit-rules', 'ledger-columns'],
       ledger: { id: 'saving', sheetNo: 1, accountNo: 3, name: 'Jordan', account: 'Saving bucket', type: 'asset',
@@ -21,6 +21,10 @@ export const badModules = {
   wrongStoredBalance: (() => { const m = clone(goodModule); step(m).ledger.rows[0].balance = 999; return m; })(),
   wrongStoredSide: (() => { const m = clone(goodModule); step(m).ledger.rows[0].side = 'Cr'; return m; })(),
   untaughtIdea: (() => { const m = clone(goodModule); step(m).uses.push('trial-balance'); return m; })(),
+  folioTooEarly: (() => { const m = clone(goodModule); m.id = 'm03'; delete step(m).journalPage; step(m).ledger.rows[0].posted = [false, false]; return m; })(),
+  ticksTooEarly: (() => { const m = clone(goodModule); m.id = 'm05'; delete step(m).journalPage; return m; })(),
+  journalTooEarly: (() => { const m = clone(goodModule); m.id = 'm04'; step(m).ledger.rows[0].folio = ''; step(m).ledger.rows[0].posted = [false, false]; return m; })(),
+  promptWithoutAnswer: (() => { const m = clone(goodModule); step(m).prompt = 'Why?'; return m; })(),
   unknownIdea: (() => { const m = clone(goodModule); step(m).uses.push('made-up-idea'); return m; })(),
   missingSource: (() => { const m = clone(goodModule); step(m).source = 'no-such-source'; return m; })(),
   unofficialResource: (() => { const m = clone(goodModule); m.resources = ['https://example.com/money-tips']; return m; })(),

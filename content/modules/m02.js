@@ -3,6 +3,7 @@
 // written beside the sheet. Amounts are illustrative.
 
 import { money, NAMES, splitBuckets, explainTemplate } from '../helpers.js';
+import { M01_LESSON } from './m01.js';
 
 const EARLY = ['date', 'items', 'balance'];
 const num = (id, part, params, build) => ({ id, module: 'm02', kind: 'numeric', part, points: part === 'interpreting' ? 2 : 1, params, build });
@@ -28,6 +29,8 @@ const afterSpending = num('m02-after-spending', 'interpreting', { start: { min: 
   answer: p.start - p.cost,
   misconceptions: [{ cents: p.start + p.cost, explanation: 'Money out makes the balance go down, so subtract.' }],
   explanation: `${money(p.start)} − ${money(p.cost)} = ${money(p.start - p.cost)}.`,
+  ledger: page('Spending bucket', [['2026-06-06', 'Brought forward', p.start, 0], ['2026-06-09', p.item, 0, p.cost]], { askFrom: 1, broughtForward: true }),
+  highlightRow: 1,
 }));
 
 const broughtForwardThenIn = num('m02-brought-forward', 'interpreting', { carried: { min: 50000, max: 250000, step: 1 }, take: { min: 80000, max: 130000, step: 1 } }, (p) => {
@@ -124,6 +127,7 @@ export const M02_LESSON = {
         'The header tells you whose page this is (Name), which bucket it is (Account), and which sheet of that account you are on (Sheet No.).',
       ],
       prompt: 'On the highlighted line, what happened and how much was left after it?',
+      promptAnswer: 'Groceries cost $48.26 on June 7, and $571.81 was left in the Spending bucket after that line.',
       ledger: page('Spending bucket', spendingRows.slice(0, 2)),
       highlightRow: 1,
     },
@@ -132,9 +136,10 @@ export const M02_LESSON = {
       text: [
         'Worked example. Step 1: start from the balance on the line above. Step 2: money in adds to it. Money out subtracts from it. Step 3: write the new balance on this line.',
         'Groceries: $620.07 − $48.26 = $571.81. Bus pass: $571.81 − $64.00 = $507.81. Phone bill: $507.81 − $45.00 = $462.81.',
-        'Because every line has its own balance, you always know what is in the bucket right now.',
+        'Because every line has its own balance, you always know what is in the bucket right now. And if a balance ever looks wrong, you can find the exact line where the mistake happened.',
       ],
       prompt: 'Why do we start from the balance on the line above, not from the first line?',
+      promptAnswer: 'The line above already includes everything that happened before. Starting there means each line only adds or subtracts one new amount.',
       ledger: page('Spending bucket', spendingRows),
       highlightRow: 3,
     },
@@ -163,6 +168,7 @@ export const M02_LESSON = {
         'Its first line says "Brought forward". It carries the last balance from Sheet 1, so the account continues where it left off. Here, Sheet 1 of the Saving bucket ended at $1,240.16.',
       ],
       prompt: 'What would go wrong if Sheet 2 started from zero?',
+      promptAnswer: 'The money from Sheet 1 would disappear from your books, and every balance on Sheet 2 would be too low.',
       ledger: page('Saving bucket', [['2026-08-01', 'Brought forward', 124016, 0]], { sheetNo: 2, accountNo: 3, broughtForward: true }),
       highlightRow: 0,
     },
@@ -176,6 +182,13 @@ export const M02_LESSON = {
       explanation: '$1,240.16 + $155.02 = $1,395.18.',
     },
     {
+      id: 'guided', kind: 'predict', title: 'Finish the worked lines', uses: ['running-balance'],
+      text: ['Two lines are done for you. After the paycheck the Spending balance was $500.00. After groceries of $38.80 it was $461.20. Finish the next line: a phone bill of $45.00 goes out. What is the balance?'],
+      answer: 41620,
+      misconceptions: [{ cents: 50620, explanation: 'Money out makes the balance go down. Subtract $45.00 from $461.20.' }],
+      explanation: '$461.20 − $45.00 = $416.20.',
+    },
+    {
       id: 'independent', kind: 'predict', title: 'On your own', uses: ['running-balance'],
       text: ['A Charity bucket page shows $50.00 in, then $35.40 out, then $12.99 out, then $51.67 in. What is the balance after the last line?'],
       ledger: page('Charity bucket', [['2026-06-06', 'From paycheck', 5000, 0], ['2026-06-09', 'Food bank', 0, 3540], ['2026-06-14', 'Fundraiser', 0, 1299], ['2026-06-20', 'From paycheck', 5167, 0]], { askFrom: 0, accountNo: 4 }),
@@ -184,10 +197,23 @@ export const M02_LESSON = {
       explanation: '$50.00 − $35.40 = $14.60; − $12.99 = $1.61; + $51.67 = $53.28.',
     },
     {
-      id: 'exit-check', kind: 'predict', title: 'Exit check', uses: ['running-balance'],
+      id: 'exit-check', kind: 'predict', title: 'Exit check 1 of 3', uses: ['running-balance'],
       text: ['A bucket shows $210.00. Then there is money out of $47.50. What is the new balance?'],
       answer: 16250,
       explanation: '$210.00 − $47.50 = $162.50.',
+    },
+    {
+      id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['running-balance'],
+      text: ['The same bucket then gets money in of $103.35. What is the new balance?'],
+      answer: 26585,
+      misconceptions: [{ cents: 31335, explanation: 'Start from the balance after the money out, not from $210.00.' }],
+      explanation: '$162.50 + $103.35 = $265.85.',
+    },
+    {
+      id: 'exit-check-3', kind: 'predict', title: 'Exit check 3 of 3', uses: ['carry-forward', 'running-balance'],
+      text: ['That sheet is now full. Sheet 2 starts with a "Brought forward" line, then money out of $19.99. What is the balance after the money out?'],
+      answer: 24586,
+      explanation: 'Brought forward $265.85, then $265.85 − $19.99 = $245.86.',
     },
   ],
   resources: ['cfpb-budget'],
@@ -198,9 +224,15 @@ export const M02_LESSON = {
 
 export const M02_GATE = { id: 'm02', kind: 'gate', title: 'Module 2 check', templates: [afterSpending, broughtForwardThenIn, fourBalances, explainLedger] };
 
+// Fluency drill on the core operation.
+const drill = [1, 2, 3].map((n) => num(`m02-drill-${n}`, 'interpreting', { a: { min: 5000, max: 50000, step: 1 }, b: { min: 100, max: 4999, step: 1 } }, (p) => ({
+  prompt: `Drill ${n} of 3: balance ${money(p.a)}, money out ${money(p.b)}. New balance?`, answer: p.a - p.b,
+  explanation: `${money(p.a)} − ${money(p.b)} = ${money(p.a - p.b)}.`,
+})));
+
 export const M02_PRACTICE = {
   id: 'm02-practice', kind: 'practice', module: 'm02', title: 'Module 2 practice set',
-  templates: [recallSplit, afterIncome, afterSpending, twoLines, broughtForwardThenIn, fourBalances, { ...explainLedger, id: 'm02-explain-practice' }],
+  templates: [...drill, recallSplit, ...M01_LESSON.recallTemplates, afterIncome, afterSpending, twoLines, broughtForwardThenIn, fourBalances, { ...explainLedger, id: 'm02-explain-practice' }],
 };
 
 export const M02_EXTRA = {
@@ -214,4 +246,4 @@ export const M02_REMEDIAL = {
 };
 
 // Questions Checkpoint A draws from this module.
-export const M02_CHECKPOINT = [afterSpending, broughtForwardThenIn];
+export const M02_CHECKPOINT = [afterSpending, broughtForwardThenIn, fourBalances];

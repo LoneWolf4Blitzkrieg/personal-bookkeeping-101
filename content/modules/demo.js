@@ -1,10 +1,9 @@
-// A sample lesson for checking the lesson page before the real modules exist.
-// Positioned at Module 3 so its ideas are checked against what is taught by
-// then. Amounts are illustrative.
+// A sample lesson for checking the lesson page. Positioned at Module 6 (it
+// shows a journal page, folios and posted ticks). Amounts are illustrative.
 
 export const DEMO_LESSON = {
   id: 'demo',
-  position: 'm03',
+  position: 'm06',
   checkId: 'demo',
   title: 'Sample lesson: debits raise an asset',
   coreIdea: 'An asset, such as a bucket of money, goes up on the debit side.',
@@ -16,6 +15,7 @@ export const DEMO_LESSON = {
         'When money goes into an asset, you write the amount in the Debits column. The balance goes up.',
       ],
       prompt: 'Why does the balance go up on this line?',
+      promptAnswer: 'Money came into the bucket, and an asset goes up on the debit side.',
       ledger: {
         sheetNo: 1, accountNo: 3, name: 'Jordan (example)', account: 'Saving bucket', type: 'asset',
         rows: [{ date: '2026-06-06', items: 'From paycheck, 15%', folio: 'J1', debit: 18180, credit: 0, posted: [true, false] }],

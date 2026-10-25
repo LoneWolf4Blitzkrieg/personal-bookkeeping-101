@@ -17,3 +17,12 @@ test('the standard paycheck is 80 hours at the 2026 Arizona minimum wage', () =>
 test('money() writes cents as dollars', () => {
   assert.equal(money(103346), '$1,033.46');
 });
+
+test('exactPercent shows the unrounded amount, so learners round only at the end', async () => {
+  const { exactPercent } = await import('../content/helpers.js');
+  assert.equal(exactPercent(125366, 0.1), '$125.366');
+  assert.equal(exactPercent(125366, 0.05), '$62.6830'.replace(/0$/, ''));
+  assert.equal(exactPercent(121200, 0.062), '$75.144');
+  assert.equal(exactPercent(121200, 0.0145), '$17.574');
+  assert.equal(exactPercent(100000, 0.1), '$100.00');
+});

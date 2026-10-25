@@ -53,8 +53,8 @@ test('a step can show several ledger pages', () => {
 
 test('the lesson end links the practice set, the module check and official help', () => {
   const html = lessonEndHTML(goodModule);
-  assert.match(html, /href="assess.html\?id=m03-practice"/);
-  assert.match(html, /href="assess.html\?id=m03"/);
+  assert.match(html, /href="assess.html\?id=m06-practice"/);
+  assert.match(html, /href="assess.html\?id=m06"/);
   assert.match(html, /consumerfinance\.gov/);
 });
 
@@ -64,6 +64,11 @@ test('a prediction is checked like a numeric question', () => {
   assert.equal(gradePrediction(predict.steps[1], 'abc').invalid, true);
 });
 
+test('a self-explanation prompt offers a model answer to compare with', () => {
+  const html = stepHTML({ ...goodModule, steps: [{ ...goodModule.steps[0], prompt: 'Why?', promptAnswer: 'Because assets rise with debits.' }] }, 0);
+  assert.match(html, /<details class="model-answer"><summary>Compare with a model answer<\/summary><p>Because assets rise with debits\.<\/p><\/details>/);
+});
+
 test('step text is escaped', () => {
   const html = stepHTML({ ...goodModule, steps: [{ kind: 'explain', text: ['<b>hi</b> & bye'], uses: [] }] }, 0);
   assert.ok(html.includes('&lt;b&gt;hi&lt;/b&gt; &amp; bye'));
@@ -71,6 +76,6 @@ test('step text is escaped', () => {
 
 test('the last step leads to the practice set and the module check', () => {
   const html = stepHTML(predict, 1, { revealed: true });
-  assert.match(html, /href="assess.html\?id=m03"/);
-  assert.match(html, /href="assess.html\?id=m03-practice"/);
+  assert.match(html, /href="assess.html\?id=m06"/);
+  assert.match(html, /href="assess.html\?id=m06-practice"/);
 });

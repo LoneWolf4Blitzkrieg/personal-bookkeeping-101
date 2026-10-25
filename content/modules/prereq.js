@@ -20,7 +20,7 @@ export const PREREQ_LESSON = {
       id: 'predict-cents', kind: 'predict', title: 'Try it', uses: ['decimals'],
       text: ['You have $3.50. Then you find 25 cents. Write how much you have now.'],
       answer: 375,
-      misconceptions: [{ cents: 352, explanation: '25 cents is .25, so add 25 to the 50 cents you already have: 50 + 25 = 75.' }],
+      misconceptions: [{ cents: 2850, explanation: '25 cents is $0.25, not $25.00. Add it to the cents: 50 + 25 = 75 cents.' }],
       explanation: '$3.50 + $0.25 = $3.75.',
     },
     {
@@ -31,12 +31,13 @@ export const PREREQ_LESSON = {
         'Taking away works the same way: $20.00 − $13.47 = $6.53. That is your change when you pay $13.47 with a twenty-dollar bill.',
       ],
       prompt: 'Why do the points need to line up?',
+      promptAnswer: 'So that dollars are added to dollars and cents to cents. If the points do not line up, a cent can be added as if it were a dollar.',
     },
     {
       id: 'predict-change', kind: 'predict', title: 'Your change', uses: ['adding-money', 'decimals'],
       text: ['A meal costs $8.65. You pay with a $10 bill. How much change do you get?'],
       answer: 135,
-      misconceptions: [{ cents: 245, explanation: 'Line up the points: $10.00 − $8.65. Take 65 cents from 100 cents to get 35 cents. Then take 8 dollars from 9 dollars to get 1 dollar.' }],
+      misconceptions: [{ cents: 235, explanation: 'You need to borrow a dollar for the cents. Line up the points: $10.00 − $8.65. Take 65 cents from 100 cents to get 35 cents. Then take 8 dollars from the 9 dollars left to get 1 dollar.' }],
       explanation: '$10.00 − $8.65 = $1.35.',
     },
     {
@@ -47,6 +48,7 @@ export const PREREQ_LESSON = {
         'To find 15% of $250.00, work in steps. 10% is $25.00. 5% is $12.50. So 15% is $37.50.',
       ],
       prompt: 'How would you find 5% of an amount using 10%?',
+      promptAnswer: 'Find 10% by moving the point one place left, then take half of it. 5% is half of 10%.',
     },
     {
       id: 'predict-percent', kind: 'predict', title: 'Find 15%', uses: ['percentages', 'decimals'],
@@ -56,13 +58,31 @@ export const PREREQ_LESSON = {
       explanation: '10% is $8.00. 5% is $4.00. So 15% is $12.00.',
     },
     {
+      id: 'decimal-percent', kind: 'explain', title: 'Any percentage', uses: ['percentages', 'decimals'],
+      text: [
+        'Some percentages are not tens and fives, like 6.2% or 1.45%. For these, write the percent as a decimal by moving the point two places left: 6.2% is 0.062 and 1.45% is 0.0145.',
+        'Then multiply: 0.062 × $1,212.00 = $75.144. A calculator is fine for this. Next you will see how to round an answer like $75.144 to the cent.',
+      ],
+      prompt: 'How would you write 7.5% as a decimal?',
+      promptAnswer: 'Move the point two places left: 7.5% is 0.075.',
+    },
+    {
+      id: 'predict-decimal-percent', kind: 'predict', title: 'Try it', uses: ['percentages', 'decimals'],
+      text: ['What is 1.45% of $1,000.00?'],
+      answer: 1450,
+      misconceptions: [{ cents: 14500, explanation: 'That is 14.5%. 1.45% is 0.0145 as a decimal.' }],
+      explanation: '1.45% is 0.0145, and 0.0145 × $1,000.00 = $14.50.',
+    },
+    {
       id: 'rounding', kind: 'explain', title: 'Rounding to the cent', uses: ['percentages', 'decimals'],
       text: [
         'Sometimes a percentage gives more than two digits after the point. For example, 6.2% of $1,212.00 is $75.144. Money stops at the cent, so we round.',
         'Look at the third digit after the point. This is the thousandths digit. Remember the rhyme: "4 and below, keep it below; 5 and above, give it a shove."',
         'First, $75.144. The third digit is 4, so keep it below: $75.14. Next, $1.005. The third digit is 5, so give it a shove: $1.01. Digits after the third digit never matter.',
+        'Round only once, at the end. Work with the exact amounts, such as $125.366 and $62.683, and round the final answer. If you round the pieces first and then add them, you can end up a cent off.',
       ],
       prompt: 'Say the rhyme in your own words. Which digit does it look at?',
+      promptAnswer: 'It looks at the third digit after the point. If that digit is 4 or less, the cents stay the same. If it is 5 or more, the cents go up by one.',
     },
     {
       id: 'predict-round', kind: 'predict', title: 'Round it', uses: ['percentages', 'decimals'],

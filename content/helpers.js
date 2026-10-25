@@ -50,3 +50,14 @@ export function explainTemplate({ id, module, part = 'explaining', points = 2, v
     build: (p) => ({ ...variants[p.variant] }),
   };
 }
+
+// The exact, unrounded percentage of an amount, written as dollars (at least
+// two decimal places): exactPercent(121200, 0.062) -> "$75.144". Explanations
+// show this so learners round once, at the end.
+export function exactPercent(cents, rate) {
+  const scaled = BigInt(Math.round(rate * 1e6)) * BigInt(cents); // dollars × 10^8
+  const whole = scaled / 100000000n;
+  let frac = (scaled % 100000000n).toString().padStart(8, '0').replace(/0+$/, '');
+  if (frac.length < 2) frac = frac.padEnd(2, '0');
+  return `$${whole.toLocaleString('en-US')}.${frac}`;
+}

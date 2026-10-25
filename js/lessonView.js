@@ -63,7 +63,8 @@ export function stepHTML(module, index, { revealed = false, feedback = null } = 
   const title = step.title ? `<h2 class="step-title" id="step-title" tabindex="-1">${escapeHTML(step.title)}</h2>` : `<h2 class="visually-hidden" id="step-title" tabindex="-1">Step ${index + 1}</h2>`;
   let body = core + text + citationHTML(step);
   if (step.prompt) {
-    body += `<div class="self-explain"><label for="self-explain">${escapeHTML(step.prompt)}</label><textarea id="self-explain" rows="3" placeholder="Say it in your own words before you go on."></textarea></div>`;
+    const model = step.promptAnswer ? `<details class="model-answer"><summary>Compare with a model answer</summary><p>${escapeHTML(step.promptAnswer)}</p></details>` : '';
+    body += `<div class="self-explain"><label for="self-explain">${escapeHTML(step.prompt)}</label><textarea id="self-explain" rows="3" placeholder="Say it in your own words before you go on."></textarea>${model}</div>`;
   }
   const waiting = step.kind === 'predict' && !revealed;
   if (waiting) {
