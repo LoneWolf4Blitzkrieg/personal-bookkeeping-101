@@ -25,16 +25,16 @@ function ledger(account, type, rows, { accountNo = 1, name = 'Jordan (example)',
 // --- Question templates -----------------------------------------------------
 
 const netWorth = num('m03-net-worth', 'interpreting', { own: { min: 80000, max: 400000, step: 1 }, owe: { min: 5000, max: 70000, step: 1 }, name: { pick: NAMES } }, (p) => ({
-  prompt: `${p.name} owns ${money(p.own)} (cash, checking and buckets) and owes ${money(p.owe)}. Using what you own = what you owe + what you are worth, what is ${p.name}'s net worth?`,
+  prompt: `${p.name} owns ${money(p.own)} (cash, checking and buckets) and owes ${money(p.owe)}. Use what you own = what you owe + what you are worth. What is ${p.name}'s net worth?`,
   answer: p.own - p.owe,
   misconceptions: [{ cents: p.own + p.owe, explanation: 'What you owe is not yours. Net worth is what you own minus what you owe.' }],
   explanation: `${money(p.own)} − ${money(p.owe)} = ${money(p.own - p.owe)}.`,
 }));
 
 const liabilityBalance = num('m03-liability-balance', 'interpreting', { start: { min: 2000, max: 20000, step: 1 }, borrow: { min: 1000, max: 8000, step: 1 }, repay: { min: 500, max: 3000, step: 1 } }, (p) => ({
-  prompt: `An "Owed to a friend" page (a liability) has a credit balance of ${money(p.start)}. You borrow another ${money(p.borrow)} (a credit), then pay back ${money(p.repay)} (a debit). What is the balance now?`,
+  prompt: `An "Owed to a friend" page (a liability) has a credit balance of ${money(p.start)}. You borrow another ${money(p.borrow)} (a credit). Then you pay back ${money(p.repay)} (a debit). What is the balance now?`,
   answer: p.start + p.borrow - p.repay,
-  misconceptions: [{ cents: p.start - p.borrow + p.repay, explanation: 'A liability goes up with a credit and down with a debit, the opposite of an asset.' }],
+  misconceptions: [{ cents: p.start - p.borrow + p.repay, explanation: 'A liability goes up with a credit and down with a debit. That is the opposite of an asset.' }],
   explanation: `${money(p.start)} + ${money(p.borrow)} − ${money(p.repay)} = ${money(p.start + p.borrow - p.repay)} (a credit balance).`,
 }));
 
@@ -63,19 +63,19 @@ const explainRules = explainTemplate({
       modelAnswer: 'Because liabilities sit on the other side of the equation from assets. Assets increase with debits, so liabilities and net worth increase with credits.',
       rubric: ['Says liabilities are on the other side from assets', 'Says that is why they increase with a credit'] },
     { prompt: 'In one or two sentences: why must the debit side and the credit side of every entry be equal?',
-      modelAnswer: 'Every event changes at least two accounts by the same amount, so the equation what you own = what you owe + what you are worth stays balanced.',
+      modelAnswer: 'Every event changes at least two accounts by the same amount. So the equation, what you own = what you owe + what you are worth, stays balanced.',
       rubric: ['Says every entry changes two (or more) accounts by the same amount', 'Says this keeps the equation (or the books) balanced'] },
     { prompt: 'In one or two sentences: why does paying back a debt not change your net worth?',
       modelAnswer: 'You own less (the cash leaves) and you owe less by the same amount, so what you own minus what you owe stays the same.',
       rubric: ['Says what you own and what you owe both fall', 'Says they fall by the same amount, so net worth is unchanged'] },
     { prompt: 'In one or two sentences: when wages arrive in Checking, which account is debited and which is credited, and why?',
-      modelAnswer: 'Checking is debited because an asset goes up; Wages is credited because income goes up on the credit side.',
+      modelAnswer: 'Checking is debited because an asset goes up. Wages is credited because income goes up with a credit.',
       rubric: ['Debits Checking because an asset increases', 'Credits Wages because income increases with a credit'] },
   ],
 });
 
 const recallBalance = num('m03-recall-balance', 'interpreting', { start: { min: 20000, max: 60000, step: 1 }, out: { min: 500, max: 8000, step: 1 } }, (p) => ({
-  prompt: `Recall: a bucket shows ${money(p.start)}; money out ${money(p.out)}. New balance?`, answer: p.start - p.out,
+  prompt: `Recall: a bucket shows ${money(p.start)}. Then ${money(p.out)} goes out. What is the new balance?`, answer: p.start - p.out,
   explanation: `${money(p.start)} − ${money(p.out)} = ${money(p.start - p.out)}.`,
 }));
 
@@ -97,11 +97,11 @@ const otherSide = num('m03-other-side', 'interpreting', { a: { min: 5000, max: 2
 export const M03_LESSON = {
   id: 'm03',
   title: 'Debit and credit',
-  coreIdea: 'What you own equals what you owe plus what you are worth, and every entry has a debit side and a credit side that are equal.',
+  coreIdea: 'What you own equals what you owe plus what you are worth. Every entry has a debit side and a credit side, and the two sides are equal.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['running-balance'],
-      text: ['From Module 2: a bucket shows $300.00. Money out $45.25, then money in $20.00. What is the balance?'],
+      text: ['From Module 2: a bucket shows $300.00. Then $45.25 goes out and $20.00 comes in. What is the balance?'],
       answer: 27475,
       explanation: '$300.00 − $45.25 = $254.75, then + $20.00 = $274.75.',
     },
@@ -109,7 +109,7 @@ export const M03_LESSON = {
       id: 'equation', kind: 'explain', title: 'Own, owe, worth', uses: ['accounting-equation'],
       text: [
         'Everything in your books fits one sentence: what you own = what you owe + what you are worth.',
-        'What you own (assets): cash, checking, your buckets. What you owe (liabilities): money borrowed, a card balance. What you are worth (net worth) is what would be left if you paid back everything you owe.',
+        'What you own (assets) is cash, checking and your buckets. What you owe (liabilities) is money you borrowed or a card balance. What you are worth (net worth) is what would be left if you paid back everything you owe.',
         'Example: you own $1,500.00 and owe $400.00, so you are worth $1,100.00. Check: $1,500.00 = $400.00 + $1,100.00.',
       ],
       prompt: 'If you owe nothing, how does your net worth compare with what you own?',
@@ -124,9 +124,9 @@ export const M03_LESSON = {
     {
       id: 'rules', kind: 'explain', title: 'The debit and credit rules', uses: ['debit-credit-rules', 'accounting-equation', 'ledger-columns'],
       text: [
-        'Now the greyed columns open up. Debits is the left money column, Credits the right. Every account goes up on one side and down on the other.',
-        'Assets (what you own) and expenses go up with a debit. Liabilities (what you owe), income and net worth go up with a credit. That is the whole code.',
-        'Look at the two pages: a debit raises the Saving bucket (an asset), and a credit raises "Owed to a friend" (a liability). The Dr/Cr column says which side the balance is on.',
+        'Now the grayed-out columns open up. Debits is the left money column. Credits is the right money column. Every account goes up on one side and down on the other.',
+        'Assets (what you own) and expenses go up with a debit. Liabilities (what you owe), income and net worth go up with a credit. That is the whole set of rules.',
+        'Look at the two pages. A debit raises the Saving bucket (an asset). A credit raises "Owed to a friend" (a liability). The Dr/Cr column shows which side the balance is on.',
       ],
       prompt: 'Why do you think liabilities go up on the opposite side from assets?',
       ledgers: [
@@ -137,18 +137,18 @@ export const M03_LESSON = {
     },
     {
       id: 'predict-liability', kind: 'predict', title: 'Predict: a liability page', uses: ['debit-credit-rules'],
-      text: ['You owed a friend $60.00. You pay back $25.00 (a debit). What does the balance read now?'],
+      text: ['You owe a friend $60.00. You pay back $25.00 (a debit). What is the balance now?'],
       ledger: ledger('Owed to a friend', 'liability', [['2026-06-09', 'Borrowed for a phone repair', 'J2', 0, 6000], ['2026-06-20', 'Paid back part', 'J3', 2500, 0]], { accountNo: 20, askFrom: 1 }),
       highlightRow: 1,
       answer: 3500,
       misconceptions: [{ cents: 8500, explanation: 'A debit makes a liability go down: you owe less after paying back.' }],
-      explanation: 'A liability goes down with a debit: $60.00 − $25.00 = $35.00, still a credit balance.',
+      explanation: 'A liability goes down with a debit: $60.00 − $25.00 = $35.00. It is still a credit balance.',
     },
     {
       id: 'equal', kind: 'explain', title: 'Two equal sides', uses: ['equal-sides', 'debit-credit-rules'],
       text: [
-        'Every event changes at least two accounts. Moving $155.02 from Checking into Saving raises Saving (debit) and lowers Checking (credit) by the same amount.',
-        'An entry like this is written in the journal: accounts debited first, accounts credited underneath and indented, then a short explanation. The debit total must equal the credit total, so the equation always balances.',
+        'Every event changes at least two accounts. Moving $155.02 from Checking into Saving raises Saving (debit) and lowers Checking (credit). Both change by the same amount.',
+        'An entry like this is written in the journal. List the accounts debited first. List the accounts credited underneath, indented. Then add a short explanation. The debit total must equal the credit total, so the equation always balances.',
       ],
       prompt: 'What would happen to the equation if an entry had only a debit?',
       journalPage: {
@@ -161,16 +161,16 @@ export const M03_LESSON = {
     },
     {
       id: 'predict-credit', kind: 'predict', title: 'Predict: the other side', uses: ['equal-sides'],
-      text: ['An entry debits the Saving bucket $155.02 and the Investing bucket $103.35, and credits Checking for the whole amount. How much is the credit?'],
+      text: ['An entry debits the Saving bucket $155.02 and the Investing bucket $103.35. It credits Checking for the whole amount. How much is the credit?'],
       answer: 25837,
       misconceptions: [{ cents: 15502, explanation: 'Checking pays for both buckets, so the credit is the total of both debits.' }],
-      explanation: '$155.02 + $103.35 = $258.37, equal to the two debits.',
+      explanation: '$155.02 + $103.35 = $258.37. The credit equals the two debits added together.',
     },
     {
       id: 'independent', kind: 'predict', title: 'On your own', uses: ['accounting-equation', 'equal-sides'],
-      text: ['Eli owns $1,800.00 and owes $300.00. He uses $100.00 from Checking to pay back part of the debt. What is his net worth afterwards?'],
+      text: ['Eli owns $1,800.00 and owes $300.00. He uses $100.00 from Checking to pay back part of the debt. What is his net worth afterward?'],
       answer: 150000,
-      misconceptions: [{ cents: 140000, explanation: 'Paying a debt lowers what you own and what you owe by the same amount, so net worth does not change.' }],
+      misconceptions: [{ cents: 140000, explanation: 'Paying a debt lowers what you own and what you owe by the same amount. So net worth does not change.' }],
       explanation: 'Before: $1,800.00 − $300.00 = $1,500.00. After: $1,700.00 − $200.00 = $1,500.00. Net worth is unchanged.',
     },
     {

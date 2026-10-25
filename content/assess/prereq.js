@@ -14,7 +14,7 @@ export const PREREQ_CHECK = {
   templates: [
     t('pre-add', { a: { min: 1050, max: 9999, step: 1 }, b: { min: 125, max: 4999, step: 1 } }, (p) => ({
       prompt: `Add ${money(p.a)} and ${money(p.b)}.`, answer: p.a + p.b,
-      explanation: `Line up the points: ${money(p.a)} + ${money(p.b)} = ${money(p.a + p.b)}.`,
+      explanation: `Line up the decimal points: ${money(p.a)} + ${money(p.b)} = ${money(p.a + p.b)}.`,
     })),
     t('pre-subtract', { a: { min: 5000, max: 20000, step: 1 }, b: { min: 101, max: 4999, step: 1 } }, (p) => ({
       prompt: `You have ${money(p.a)} and spend ${money(p.b)}. How much is left?`, answer: p.a - p.b,
@@ -27,7 +27,7 @@ export const PREREQ_CHECK = {
     })),
     t('pre-ten-percent', { a: { min: 10000, max: 99900, step: 10 } }, (p) => ({
       prompt: `What is 10% of ${money(p.a)}?`, answer: percentOf(p.a, 0.1),
-      misconceptions: [{ cents: percentOf(p.a, 0.01), explanation: 'That is 1%. For 10%, move the point one place left.' }],
+      misconceptions: [{ cents: percentOf(p.a, 0.01), explanation: 'That is 1%. For 10%, move the decimal point one place left.' }],
       explanation: `10% is one tenth: ${money(percentOf(p.a, 0.1))}.`,
     })),
     t('pre-fifteen-percent', { a: { min: 2000, max: 40000, step: 100 } }, (p) => ({

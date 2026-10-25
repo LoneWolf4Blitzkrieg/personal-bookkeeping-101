@@ -38,7 +38,7 @@ const medicare = num('m04-medicare', 'interpreting', { hours: HOURS }, (p) => {
 const netFromStub = num('m04-net', 'interpreting', { hours: HOURS }, (p) => {
   const pay = standardPaycheck(p.hours);
   return {
-    prompt: `A pay stub shows gross pay ${money(pay.gross)}, Social Security ${money(pay.socialSecurity)}, Medicare ${money(pay.medicare)}, federal income tax ${money(pay.federal)} and Arizona income tax ${money(pay.arizona)}. What is the take-home pay?`,
+    prompt: `A pay stub shows gross pay of ${money(pay.gross)}. It shows these taxes withheld: Social Security ${money(pay.socialSecurity)}, Medicare ${money(pay.medicare)}, federal income tax ${money(pay.federal)} and Arizona income tax ${money(pay.arizona)}. What is the take-home pay?`,
     answer: pay.net,
     misconceptions: [{ cents: pay.gross - pay.federal, explanation: 'Take away all four deductions, not just federal income tax.' }],
     explanation: `${money(pay.gross)} − ${money(deductions(pay))} = ${money(pay.net)}.`,
@@ -63,14 +63,14 @@ const recordPaycheck = {
   build: (p) => {
     const pay = standardPaycheck(p.hours);
     return {
-      prompt: `Record this paycheck: gross pay ${money(pay.gross)}, total taxes withheld ${money(deductions(pay))}, take-home pay ${money(pay.net)} deposited in Checking.`,
+      prompt: `Record this paycheck. Gross pay: ${money(pay.gross)}. Total taxes withheld: ${money(deductions(pay))}. Take-home pay: ${money(pay.net)}, deposited in Checking.`,
       accounts: ACCOUNTS,
       answer: [
         { account: 'checking', debit: pay.net, credit: 0 },
         { account: 'taxes', debit: deductions(pay), credit: 0 },
         { account: 'wages', debit: 0, credit: pay.gross },
       ],
-      explanation: 'Checking (asset) and Taxes withheld (expense) are debited; Wages (income) is credited for the full gross pay. The two sides are equal.',
+      explanation: 'Checking (asset) and Taxes withheld (expense) are debited. Wages (income) is credited for the full gross pay. The two sides are equal.',
       sourceDoc: payStub(p.hours),
       sources: PAYCHECK_SOURCES,
     };
@@ -81,16 +81,16 @@ const explainPay = explainTemplate({
   id: 'm04-explain', module: 'm04',
   variants: [
     { prompt: 'In one or two sentences: why is Wages credited with the gross pay, not the take-home pay?',
-      modelAnswer: 'You earned the whole gross amount; part of it was paid to the government for you as taxes. So Wages records all of it, and the taxes are recorded as an expense.',
+      modelAnswer: 'You earned the whole gross amount. Part of it was paid to the government for you as taxes. So Wages records all of it, and the taxes are recorded as an expense.',
       rubric: ['Says the whole gross amount was earned', 'Says the withheld part is recorded separately (as a tax expense)'] },
     { prompt: 'In one or two sentences: what is the difference between gross pay and take-home pay?',
-      modelAnswer: 'Gross pay is what you earned before anything is taken out. Take-home pay is what is left after taxes are withheld, the amount that reaches your account.',
+      modelAnswer: 'Gross pay is what you earned before anything is taken out. Take-home pay is what is left after taxes are withheld. It is the amount that reaches your account.',
       rubric: ['Gross is before deductions', 'Take-home is what is left after deductions (what you actually receive)'] },
     { prompt: 'In one or two sentences: why should a budget start from take-home pay rather than gross pay?',
-      modelAnswer: 'Because take-home pay is the money you actually get to use; the withheld taxes never reach your account.',
+      modelAnswer: 'Take-home pay is the money you actually get to use. The withheld taxes never reach your account.',
       rubric: ['Says take-home is the money you actually receive', 'Says withheld taxes cannot be spent or saved'] },
     { prompt: 'In one or two sentences: why does the paycheck entry debit two accounts?',
-      modelAnswer: 'Part of the pay goes to Checking and part goes to taxes, so both are debited; together they equal the gross pay credited to Wages.',
+      modelAnswer: 'Part of the pay goes to Checking and part goes to taxes, so both are debited. Together they equal the gross pay credited to Wages.',
       rubric: ['Names Checking and Taxes withheld (or taxes) as the two debits', 'Says the two debits together equal the gross pay credited'] },
   ],
 });
@@ -104,7 +104,7 @@ const taxesTotal = num('m04-taxes-total', 'interpreting', { hours: HOURS }, (p) 
   const pay = standardPaycheck(p.hours);
   return {
     prompt: `Add up the taxes withheld: Social Security ${money(pay.socialSecurity)}, Medicare ${money(pay.medicare)}, federal ${money(pay.federal)}, Arizona ${money(pay.arizona)}.`,
-    answer: deductions(pay), explanation: `Together: ${money(deductions(pay))}.`, sources: PAYCHECK_SOURCES,
+    answer: deductions(pay), explanation: `Together they total ${money(deductions(pay))}.`, sources: PAYCHECK_SOURCES,
   };
 });
 
@@ -116,7 +116,7 @@ const p72 = standardPaycheck(72);
 export const M04_LESSON = {
   id: 'm04',
   title: 'Your paycheck',
-  coreIdea: 'Gross pay minus the taxes withheld is take-home pay, and one entry records all of it: Checking and taxes debited, Wages credited.',
+  coreIdea: 'Gross pay minus the taxes withheld is take-home pay. One entry records all of it: Checking and Taxes withheld are debited, and Wages is credited.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['accounting-equation'],
@@ -127,8 +127,8 @@ export const M04_LESSON = {
     {
       id: 'gross-net', kind: 'explain', title: 'Gross pay and take-home pay', uses: ['gross-vs-net'],
       text: [
-        'Gross pay is what you earn before anything is taken out: hours × hourly wage. Two weeks of 80 hours at Arizona\'s 2026 minimum wage of $15.15 is 80 × $15.15 = $1,212.00.',
-        'Take-home pay (also called net pay) is what reaches your account after taxes are withheld. For this paycheck it is $1,033.46. That is the number your five buckets are split from.',
+        'Gross pay is what you earn before anything is taken out. It is hours × hourly wage. Working 80 hours in two weeks at Arizona\'s 2026 minimum wage of $15.15 an hour gives 80 × $15.15 = $1,212.00.',
+        'Take-home pay (also called net pay) is what reaches your account after taxes are withheld. For this paycheck it is $1,033.46. Your five buckets are split from that amount.',
       ],
       prompt: 'Why is take-home pay smaller than gross pay?',
       sourceDoc: payStub(80, { detail: false }),
@@ -137,9 +137,9 @@ export const M04_LESSON = {
     {
       id: 'deductions', kind: 'explain', title: 'Where the difference goes', uses: ['paycheck-deductions', 'percentages'],
       text: [
-        `Four amounts are withheld. Social Security: 6.2% of gross, $75.144, which rounds to ${money(std.socialSecurity)}. Medicare: 1.45%, $17.574, which rounds to ${money(std.medicare)}.`,
-        `Federal income tax: worked out from the IRS tables for 2026, ${money(std.federal)} for this paycheck. Arizona income tax: 2.0% unless you choose another rate on Form A-4, so ${money(std.arizona)}.`,
-        `Total withheld: ${money(deductions(std))}. $1,212.00 − ${money(deductions(std))} = $1,033.46. Remember the rounding rhyme: look at the thousandths digit; 4 and below, keep it below; 5 and above, give it a shove.`,
+        `Four amounts are withheld. Social Security is 6.2% of gross pay: $75.144, which rounds to ${money(std.socialSecurity)}. Medicare is 1.45% of gross pay: $17.574, which rounds to ${money(std.medicare)}.`,
+        `Federal income tax is worked out from the IRS tables for 2026. For this paycheck it is ${money(std.federal)}. Arizona income tax is 2.0% unless you choose another rate on Form A-4. For this paycheck it is ${money(std.arizona)}.`,
+        `Total withheld: ${money(deductions(std))}. $1,212.00 − ${money(deductions(std))} = $1,033.46. Remember the rounding rhyme. Look at the thousandths digit: 4 and below, keep it below; 5 and above, give it a shove.`,
       ],
       prompt: 'Which of the four deductions is worked out from a table instead of a single percentage?',
       sourceDoc: payStub(80),
@@ -156,7 +156,7 @@ export const M04_LESSON = {
     },
     {
       id: 'predict-net', kind: 'predict', title: 'Predict: take-home pay', uses: ['gross-vs-net', 'paycheck-deductions'],
-      text: [`Kai's deductions are Social Security ${money(p72.socialSecurity)}, Medicare ${money(p72.medicare)}, federal income tax ${money(p72.federal)} and Arizona income tax ${money(p72.arizona)}. What is the take-home pay from $1,090.80?`],
+      text: [`Kai's gross pay is $1,090.80. The deductions are Social Security ${money(p72.socialSecurity)}, Medicare ${money(p72.medicare)}, federal income tax ${money(p72.federal)} and Arizona income tax ${money(p72.arizona)}. What is the take-home pay?`],
       answer: p72.net,
       misconceptions: [{ cents: p72.gross - p72.federal, explanation: 'Take away all four deductions, not just federal income tax.' }],
       explanation: `The four deductions total ${money(deductions(p72))}. $1,090.80 − ${money(deductions(p72))} = ${money(p72.net)}.`,
