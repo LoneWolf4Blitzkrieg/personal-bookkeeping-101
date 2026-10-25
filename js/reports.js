@@ -151,15 +151,16 @@ const longDate = (d) => {
 };
 
 // Draws a report on ledger paper. Rows whose key is in report.ask show
-// blank boxes until showAnswers is true.
-export function reportHTML(report, { showAnswers = false, highlightRow = null } = {}) {
+// blank boxes until showAnswers is true. Each row's label is its row header,
+// so a screen reader names the line a blank box belongs to.
+export function reportHTML(report, { showAnswers = false } = {}) {
   const { columns, rows } = reportRows(report);
   const ask = new Set(report.ask ?? []);
   const title = reportTitle(report);
   const when = report.period ?? longDate(report.date);
   const head = `<tr><th scope="col" class="col-folio">No.</th><th scope="col" class="col-items">Items</th>${columns.map((c) => `<th scope="col" class="col-money">${escapeHTML(c)}</th>`).join('')}</tr>`;
-  const body = rows.map((row, i) => {
-    const cls = [row.total ? 'total' : '', row.heading ? 'heading' : '', i === highlightRow ? 'highlight' : ''].filter(Boolean).join(' ');
+  const body = rows.map((row) => {
+    const cls = [row.total ? 'total' : '', row.heading ? 'heading' : ''].filter(Boolean).join(' ');
     const cells = columns.map((_, c) => {
       const v = row.values?.[c];
       if (v == null) return '<td class="money col-money"></td>';
@@ -169,7 +170,7 @@ export function reportHTML(report, { showAnswers = false, highlightRow = null } 
       }
       return `<td class="money col-money">${formatCents(v)}</td>`;
     }).join('');
-    return `<tr${cls ? ` class="${cls}"` : ''}><td class="col-folio">${escapeHTML(row.no ?? '')}</td><td class="col-items">${escapeHTML(row.label)}</td>${cells}</tr>`;
+    return `<tr${cls ? ` class="${cls}"` : ''}><td class="col-folio">${escapeHTML(row.no ?? '')}</td><th scope="row" class="col-items">${escapeHTML(row.label)}</th>${cells}</tr>`;
   }).join('\n');
   return `<div class="ledger-sheet report-sheet">
 <div class="ledger-head"><div class="ledger-head-row"><div class="ledger-field"><span class="ledger-field-label">${escapeHTML(title)}</span><span class="ledger-field-value">${escapeHTML(when)}</span></div><div class="ledger-field"><span class="ledger-field-label">Name</span><span class="ledger-field-value">${escapeHTML(report.name ?? '')}</span></div></div></div>

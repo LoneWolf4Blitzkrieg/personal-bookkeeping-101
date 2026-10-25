@@ -52,20 +52,26 @@ const leftToPlan = num('m11-left-to-plan', 'interpreting', {
   };
 });
 
-// Production: the budget is given as a plan; the actual amounts are on the
-// expense pages. The learner writes each line's difference.
+// Production: the budget is given as a plan and the month's spending is on
+// the expense pages. The learner works out the Actual column and the Under
+// and Over totals, which only come out right if each line's direction is.
+// Groceries always come in under and transportation always goes over; the
+// other two lines can go either way.
 const bvaFromPages = {
   id: 'm11-bva-from-pages', module: 'm11', kind: 'amounts', part: 'producing', points: 4,
   params: {
-    g1: { min: 6000, max: 12000, step: 1 }, g2: { min: 6000, max: 12000, step: 1 }, g3: { min: 6000, max: 12000, step: 1 }, e1: { min: 1000, max: 4000, step: 1 }, e2: { min: 1000, max: 4000, step: 1 },
+    g1: { min: 5000, max: 9500, step: 1 }, g2: { min: 5000, max: 9500, step: 1 }, g3: { min: 5000, max: 9500, step: 1 }, e1: { min: 1000, max: 4000, step: 1 }, e2: { min: 1000, max: 4000, step: 1 },
     fares: { min: 150, max: 900, step: 25 }, h1: { min: 800, max: 2500, step: 1 }, h2: { min: 800, max: 2500, step: 1 }, name: { pick: NAMES },
   },
   build: (p) => {
     const plan = [bline('groceries', 30000), bline('eating-out', 6000), bline('transport', 6400), bline('household', 4000)];
-    const actual = { groceries: p.g1 + p.g2 + p.g3, 'eating-out': p.e1 + p.e2, transport: 6400 + p.fares, household: p.h1 + p.h2 };
-    const ids = ['groceries', 'eating-out', 'transport', 'household'];
+    const actual = [p.g1 + p.g2 + p.g3, p.e1 + p.e2, 6400 + p.fares, p.h1 + p.h2];
+    const under = plan.reduce((s, l, i) => s + Math.max(0, l.budget - actual[i]), 0);
+    const over = plan.reduce((s, l, i) => s + Math.max(0, actual[i] - l.budget), 0);
+    const actualTotal = actual.reduce((s, x) => s + x, 0);
+    const word = (l, i) => (actual[i] > l.budget ? `over by ${money(actual[i] - l.budget)}` : actual[i] < l.budget ? `under by ${money(l.budget - actual[i])}` : 'exactly on budget');
     return {
-      prompt: `${p.name}'s budget for June is on the report, and the month's spending is on the expense pages. For each line, how far apart are the budget and the actual amount?`,
+      prompt: `${p.name}'s budget for June is on the report, and the month's spending is on the expense pages. Work out each line's actual amount and whether it is under or over, then give the totals.`,
       report: budget(p.name, plan),
       ledgers: [
         chartPage('groceries', [['2026-06-06', 'Desert Mart', 'J1', p.g1, 0, true], ['2026-06-14', 'Saguaro Grocery', 'J2', p.g2, 0, true], ['2026-06-24', 'Desert Mart', 'J3', p.g3, 0, true]], { name: p.name }),
@@ -73,11 +79,26 @@ const bvaFromPages = {
         chartPage('transport', [['2026-06-01', 'Bus pass', 'J1', 6400, 0, true], ['2026-06-27', 'Extra bus fares', 'J3', p.fares, 0, true]], { name: p.name }),
         chartPage('household', [['2026-06-06', 'Desert Mart', 'J1', p.h1, 0, true], ['2026-06-24', 'Desert Mart', 'J3', p.h2, 0, true]], { name: p.name }),
       ],
-      fields: plan.map((l, i) => ({ label: `${l.name}: difference`, answer: Math.abs(l.budget - actual[ids[i]]) })),
-      explanation: plan.map((l, i) => `${l.name}: budget ${money(l.budget)}, actual ${money(actual[ids[i]])} → ${actual[ids[i]] > l.budget ? 'over' : actual[ids[i]] < l.budget ? 'under' : 'on budget,'} ${money(Math.abs(l.budget - actual[ids[i]]))}`).join('; ') + '.',
+      fields: [['Total of the Actual column', actualTotal], ['Total of the Under column', under], ['Total of the Over column', over], ['Groceries: amount under budget', 30000 - actual[0]]].map(([label, answer]) => ({ label, answer })),
+      explanation: `${plan.map((l, i) => `${l.name} ${money(actual[i])}, ${word(l, i)}`).join('; ')}. Actual total ${money(actualTotal)}; Under ${money(under)}; Over ${money(over)}.`,
     };
   },
 };
+
+// Needs first: plan the needs, then see what is left for wants.
+const needsFirst = num('m11-needs-first', 'interpreting', {
+  take: { min: 90000, max: 110000, step: 1 }, rent: { min: 40000, max: 60000, step: 500 }, groceries: { min: 15000, max: 35000, step: 1 }, bus: { min: 4000, max: 6400, step: 100 },
+  concert: { min: 3500, max: 9000, step: 1 }, takeout: { min: 1500, max: 4000, step: 1 }, name: { pick: NAMES },
+}, (p) => {
+  const share = 2 * splitBuckets(p.take).spending;
+  const needs = p.rent + p.groceries + p.bus;
+  return {
+    prompt: `${p.name}'s rule is "needs first". This month the Spending bucket holds ${money(share)}. The list: rent ${money(p.rent)}; a concert ticket ${money(p.concert)}; groceries ${money(p.groceries)}; takeout ${money(p.takeout)}; a bus pass to get to work ${money(p.bus)}. After the needs are planned, how much is left for wants?`,
+    answer: share - needs,
+    misconceptions: [{ cents: share - needs - p.concert - p.takeout, explanation: 'The concert and the takeout are wants. Plan only the needs first; the wants come out of what is left.' }],
+    explanation: `Needs: rent ${money(p.rent)} + groceries ${money(p.groceries)} + bus pass ${money(p.bus)} = ${money(needs)}. ${money(share)} − ${money(needs)} = ${money(share - needs)} left for wants.`,
+  };
+});
 
 const explainBudget = explainTemplate({
   id: 'm11-explain', module: 'm11',
@@ -91,9 +112,9 @@ const explainBudget = explainTemplate({
     { prompt: 'In one or two sentences: why pay the needs in the budget before the wants?',
       modelAnswer: 'Needs, such as rent and groceries, must be paid to live and work. If wants come first, there may be nothing left for them.',
       rubric: ['Says needs are what you must pay to live or work', 'Says paying wants first can leave too little for needs'] },
-    { prompt: 'In one or two sentences: how does a waiting period help with something you did not plan to buy?',
-      modelAnswer: 'Waiting lets the urge pass, so you can decide with logic whether you still want it and whether there is money for it.',
-      rubric: ['Says the wait lets the urge (or emotion) pass', 'Says you then decide with logic, checking the money is there'] },
+    { prompt: 'In one or two sentences: what is a waiting-period rule for?',
+      modelAnswer: 'It puts time between wanting something and buying it, so you decide with the budget in front of you whether you still want it and whether the money is there.',
+      rubric: ['Says it puts time between wanting something and buying it', 'Says you then decide with the budget (whether you still want it and the money is there)'] },
   ],
 });
 
@@ -123,6 +144,22 @@ const lineOver = num('m11-line-over', 'interpreting', { budget: { min: 4000, max
   };
 });
 
+// Completion: a budget report with each line worked out; the learner writes
+// the Under and Over totals.
+const underOverTotals = {
+  id: 'm11-under-over-totals', module: 'm11', kind: 'amounts', part: 'producing', points: 2,
+  params: { gUnder: { min: 500, max: 4000, step: 1 }, eOver: { min: 200, max: 2500, step: 1 }, hUnder: { min: 300, max: 1500, step: 1 }, fares: { min: 150, max: 900, step: 25 }, name: { pick: NAMES } },
+  build: (p) => {
+    const lines = [bline('groceries', 30000, 30000 - p.gUnder), bline('eating-out', 6000, 6000 + p.eOver), bline('transport', 6400, 6400 + p.fares), bline('household', 4000, 4000 - p.hUnder)];
+    return {
+      prompt: `Finish ${p.name}'s budget report: write the totals of the Under and Over columns.`,
+      report: budget(p.name, lines, { ask: ['total'] }),
+      fields: [{ label: 'Total of the Under column', answer: p.gUnder + p.hUnder }, { label: 'Total of the Over column', answer: p.eOver + p.fares }],
+      explanation: `Under: ${money(p.gUnder)} + ${money(p.hUnder)} = ${money(p.gUnder + p.hUnder)}. Over: ${money(p.eOver)} + ${money(p.fares)} = ${money(p.eOver + p.fares)}.`,
+    };
+  },
+};
+
 // --- Lesson -------------------------------------------------------------------
 
 const PLAN = [bline('rent', 55000), bline('groceries', 32000), bline('phone', 4500), bline('transport', 6400), bline('eating-out', 8000), bline('household', 4000)];
@@ -132,7 +169,7 @@ const planned = sum(PLAN, 'budget');
 export const M11_LESSON = {
   id: 'm11',
   title: 'Budgeting with logic',
-  coreIdea: 'A budget is your ledger written in advance: every dollar of the Spending bucket gets a job before the month starts. At month-end, compare each line with what you actually spent.',
+  coreIdea: 'A budget is your ledger written in advance: the Spending bucket\'s money is given its jobs before the month starts. At month-end, compare each line with what you actually spent.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['outstanding-items'],
@@ -144,19 +181,19 @@ export const M11_LESSON = {
     {
       id: 'budget', kind: 'explain', title: 'A ledger written in advance', uses: ['budget-as-ledger', 'five-buckets'],
       text: [
-        `A budget is a plan written before the month starts. The five buckets come first. From each paycheck, the Spending bucket gets ${money(SPENDING_SHARE / 2)}, so Jordan's two June paychecks put ${money(SPENDING_SHARE)} in it.`,
+        `A budget is a plan written before the month starts. The five buckets come first. From each paycheck, the Spending bucket gets ${money(SPENDING_SHARE / 2)}, so Rosa's two June paychecks put ${money(SPENDING_SHARE)} in it.`,
         'The budget gives that money its jobs: one line for each expense page, with the amount you plan to spend. Anything not planned stays in the Spending bucket for surprises.',
-        'This is Jordan\'s plan for June. The Actual column stays empty until the month is over.',
+        'This is Rosa\'s plan for June. The Actual column stays empty until the month is over.',
       ],
       prompt: 'Why plan the spending before the month starts, instead of looking back at the end?',
       promptAnswer: 'Deciding in advance lets logic set the plan. During the month you follow it instead of deciding on impulse.',
-      report: budget('Jordan (example)', PLAN),
+      report: budget('Rosa (example)', PLAN),
       sources: PAYCHECK_SOURCES,
     },
     {
       id: 'predict-left', kind: 'predict', title: 'Predict: what is not planned', uses: ['budget-as-ledger'],
-      text: [`Jordan's Spending bucket holds ${money(SPENDING_SHARE)} for June. How much of it does this plan leave unplanned?`],
-      report: budget('Jordan (example)', PLAN),
+      text: [`Rosa's Spending bucket holds ${money(SPENDING_SHARE)} for June. How much of it does this plan leave unplanned?`],
+      report: budget('Rosa (example)', PLAN),
       answer: SPENDING_SHARE - planned,
       misconceptions: [{ cents: planned, explanation: 'That is the planned total. Subtract it from what the bucket holds.' }],
       explanation: `${money(SPENDING_SHARE)} − ${money(planned)} = ${money(SPENDING_SHARE - planned)}, kept for surprises.`,
@@ -165,12 +202,12 @@ export const M11_LESSON = {
       id: 'actual', kind: 'explain', title: 'Budget and actual', uses: ['budget-vs-actual', 'personal-accounts'],
       text: [
         'At month-end, write the actual amount from each expense page beside its budget. Under means you spent less than planned. Over means you spent more.',
-        'Look at each line, then at the totals. Jordan came in under on groceries and household supplies, but over on eating out.',
+        'Look at each line, then at the totals. Rosa came in under on groceries and household supplies, but over on eating out.',
         'A line that is often over tells you something: either the plan did not fit real life, or the spending needs a rule. That is how next month\'s plan gets better.',
       ],
       prompt: 'Eating out went over, but the month as a whole came in under. Why still look at the line?',
       promptAnswer: 'The total can hide a problem: one line over is covered by another under. The line shows where the plan and the spending differ.',
-      report: budget('Jordan (example)', ACTUAL),
+      report: budget('Rosa (example)', ACTUAL),
     },
     {
       id: 'predict-over', kind: 'predict', title: 'Predict: one line', uses: ['budget-vs-actual'],
@@ -182,14 +219,14 @@ export const M11_LESSON = {
     {
       id: 'rules', kind: 'explain', title: 'Rules decided in advance', uses: ['spending-rules', 'five-buckets'],
       text: [
-        'Logic works best when the rule is set before the moment you want something. Two rules many people use:',
+        'A rule set before the moment you want something lets you decide calmly. Two rules many people use:',
         'Needs come first. A need is something you must pay to live and work, such as rent, groceries or a bus pass to get to work. A want is something nice to have, such as takeout or a concert. The budget pays the needs before the wants.',
         'A waiting period for anything not in the budget. For example, wait a day for a small purchase and a week for a large one. If you still want it after the wait, and the money is there, buy it with Blow money.',
         'You choose your own rules. Write them down at the start of the month, next to the budget.',
       ],
       prompt: 'Why decide the rule before you see the thing you want?',
       promptAnswer: 'In the moment, wanting it makes the decision for you. A rule made calmly in advance lets logic decide.',
-      ledger: chartPage('blow', [['2026-06-06', 'From paycheck', 'J1', 10335, 0, true], ['2026-06-17', 'Jacket (waited two days)', 'J3', 0, 5999, true]]),
+      ledger: chartPage('blow', [['2026-06-06', 'From paycheck', 'J1', 10335, 0, true], ['2026-06-17', 'Jacket (waited two days)', 'J3', 0, 5999, true]], { name: 'Rosa (example)' }),
       highlightRow: 1,
     },
     {
@@ -207,10 +244,10 @@ export const M11_LESSON = {
     },
     {
       id: 'independent', kind: 'predict', title: 'On your own', uses: ['spending-rules', 'five-buckets'],
-      text: ['Your rule: anything not in the budget waits two days, and if you still want it, it comes out of Blow money. Blow money holds $103.35. After two days you still want a $59.99 jacket. What does Blow money hold after you buy it?'],
-      answer: 4336,
-      misconceptions: [{ cents: 16334, explanation: 'Buying the jacket takes money out of Blow money: subtract.' }],
-      explanation: '$103.35 − $59.99 = $43.36.',
+      text: ['Your rule: anything not in the budget waits two days, and if you still want it, it comes out of Blow money. Blow money holds $86.20. After two days you still want a $47.95 pair of shoes. What does Blow money hold after you buy it?'],
+      answer: 3825,
+      misconceptions: [{ cents: 13415, explanation: 'Buying the shoes takes money out of Blow money: subtract.' }],
+      explanation: '$86.20 − $47.95 = $38.25.',
     },
     {
       id: 'exit-check', kind: 'predict', title: 'Exit check 1 of 3', uses: ['budget-vs-actual'],
@@ -238,7 +275,7 @@ export const M11_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M11_GATE = { id: 'm11', kind: 'gate', title: 'Module 11 check', templates: [netUnder, leftToPlan, bvaFromPages, explainBudget] };
+export const M11_GATE = { id: 'm11', kind: 'gate', title: 'Module 11 check', templates: [netUnder, needsFirst, bvaFromPages, explainBudget] };
 
 // Fluency drill on the core operation: one budget line against its actual.
 const drill = [1, 2, 3].map((n) => num(`m11-drill-${n}`, 'interpreting', { budget: { min: 3000, max: 40000, step: 500 }, gap: { min: 100, max: 2900, step: 1 } }, (p) => ({
@@ -250,7 +287,7 @@ const bankMixed = { ...M10_GATE.templates.find((t) => t.part === 'producing'), i
 
 export const M11_PRACTICE = {
   id: 'm11-practice', kind: 'practice', module: 'm11', title: 'Module 11 practice set',
-  templates: [...M10_LESSON.recallTemplates, ...M09_LESSON.recallTemplates, ...M07_LESSON.recallTemplates, ...drill, netUnder, leftToPlan, needsTotal, lineOver, bvaFromPages, bankMixed, { ...explainBudget, id: 'm11-explain-practice' }],
+  templates: [...M10_LESSON.recallTemplates, ...M09_LESSON.recallTemplates, ...M07_LESSON.recallTemplates, ...drill, netUnder, needsFirst, leftToPlan, needsTotal, lineOver, underOverTotals, bvaFromPages, bankMixed, { ...explainBudget, id: 'm11-explain-practice' }],
 };
 
 export const M11_EXTRA = {
@@ -264,4 +301,4 @@ export const M11_REMEDIAL = {
 };
 
 // Questions Checkpoint C draws from this module.
-export const M11_CHECKPOINT = [netUnder, leftToPlan, bvaFromPages];
+export const M11_CHECKPOINT = [netUnder, needsFirst, bvaFromPages];

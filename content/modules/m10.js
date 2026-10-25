@@ -42,7 +42,8 @@ const adjustedBank = num('m10-adjusted-bank', 'interpreting', {
 
 const adjustedBook = num('m10-adjusted-book', 'interpreting', {
   spending: { min: 20000, max: 70000, step: 1 }, saving: { min: 30000, max: 150000, step: 1 }, cash: { min: 1000, max: 6000, step: 1 },
-  interest: { min: 20, max: 300, step: 1 }, fee: { min: 300, max: 1200, step: 100 }, name: { pick: NAMES },
+  // Interest always stays below the smallest fee, so the two never cancel out.
+  interest: { min: 20, max: 290, step: 1 }, fee: { min: 300, max: 1200, step: 100 }, name: { pick: NAMES },
 }, (p) => {
   const book = p.spending + p.saving;
   const answer = book + p.interest - p.fee;
@@ -91,8 +92,8 @@ const explainBank = explainTemplate({
       modelAnswer: 'The bank took the fee itself, so the statement is the source document that tells you about it. Recording it makes your books match the bank.',
       rubric: ['Says the statement is where you learn of the fee (its source document)', 'Says recording it makes the books match the bank'] },
     { prompt: 'In one or two sentences: what does it mean when the adjusted bank balance and the adjusted book balance agree?',
-      modelAnswer: 'Your books and the bank agree once you allow for timing differences, so the money pages at that bank are right.',
-      rubric: ['Says the books and the bank agree after the timing differences', 'Says this proves the pages for that bank are right'] },
+      modelAnswer: 'Your books and the bank agree once you allow for timing differences: the pages for that bank, taken together, hold the same money the bank does. (It cannot show an amount put on the wrong bucket page.)',
+      rubric: ['Says the books and the bank agree after the timing differences', 'Says the pages for that bank, taken together, match what the bank holds'] },
   ],
 });
 
@@ -113,7 +114,9 @@ const statementClosing = num('m10-statement-closing', 'interpreting', { opening:
   };
 });
 
-// Completion: a reconciliation with its totals blank.
+// Completion: a reconciliation with the statement balance and the totals
+// blank. The statement balance can only be found by working the bank side
+// back from the adjusted balance.
 const recBlanks = {
   id: 'm10-rec-blanks', module: 'm10', kind: 'amounts', part: 'producing', points: 4,
   params: { spending: { min: 20000, max: 60000, step: 1 }, saving: { min: 30000, max: 90000, step: 1 }, dep: { min: 2000, max: 8000, step: 100 }, c1: { min: 1000, max: 6000, step: 1 }, fee: { min: 300, max: 900, step: 100 }, name: { pick: NAMES } },
@@ -122,23 +125,27 @@ const recBlanks = {
     const adjusted = book - p.fee;
     const statementBalance = adjusted - p.dep + p.c1;
     return {
-      prompt: `Finish ${p.name}'s bank reconciliation: fill in the four totals left blank.`,
+      prompt: `Finish ${p.name}'s bank reconciliation. The statement's closing balance is torn off, so work out the book side first, then the bank side back to the statement.`,
       report: rec(p.name, {
         statement: statementBalance, deposits: [{ label: 'Jun 30 deposit', amount: p.dep }], payments: [{ label: 'Check 104', amount: p.c1 }],
         pages: [page('spending', p.spending), page('saving', p.saving)], fees: [{ label: 'Monthly service fee', amount: p.fee }],
-        ask: ['adjusted-bank', 'book', 'adjusted-book'],
+        ask: ['statement', 'adjusted-bank', 'book', 'adjusted-book'],
       }),
-      fields: [['Adjusted bank balance', adjusted], ['Book balance', book], ['Adjusted book balance', adjusted], ['Difference between the two adjusted balances', 0]]
+      fields: [['Book balance', book], ['Adjusted book balance', adjusted], ['Adjusted bank balance', adjusted], ['Bank statement: closing balance', statementBalance]]
         .map(([label, answer]) => ({ label, answer })),
-      explanation: `Bank: ${money(statementBalance)} + ${money(p.dep)} − ${money(p.c1)} = ${money(adjusted)}. Books: ${money(book)} − ${money(p.fee)} = ${money(adjusted)}. They agree, so the difference is $0.00.`,
+      explanation: `Books: ${money(book)} − ${money(p.fee)} = ${money(adjusted)}. The adjusted bank balance must agree: ${money(adjusted)}. Working back, the statement shows ${money(adjusted)} − ${money(p.dep)} + ${money(p.c1)} = ${money(statementBalance)}.`,
     };
   },
 };
 
 // --- Lesson -------------------------------------------------------------------
 
-const JUNE = statement('June 2026', 80000, [['Jun 5 Paycheck deposit', 103346, 'in'], ['Jun 9 Debit card: Desert Mart', 1341, 'out'], ['Jun 12 Check 101: rent', 45000, 'out']]);
-const JULY = statement('July 2026', 137005, [['Jul 3 Paycheck deposit', 103346, 'in'], ['Jul 31 Monthly service fee', 500, 'out'], ['Jul 31 Interest paid', 85, 'in']]);
+// Devon keeps the Spending and Saving buckets at this bank, so each payday
+// deposit there is those two shares of a standard paycheck: $620.07 + $155.02.
+// June's closing balances carry into July. Kai is a second, separate example.
+const JUNE = statement('June 2026', 80000, [['Jun 5 Deposit: Spending and Saving shares', 77509, 'in'], ['Jun 9 Debit card: Desert Mart', 1341, 'out'], ['Jun 12 Check 101: rent', 45000, 'out']]);
+const KAI_JUNE = statement('June 2026', 52000, [['Jun 5 Deposit: Spending and Saving shares', 77509, 'in'], ['Jun 10 Debit card: Saguaro Grocery', 2865, 'out'], ['Jun 12 Check 101: rent', 40000, 'out']]);
+const JULY = statement('July 2026', closingOf(JUNE), [['Jul 3 Deposit: Spending and Saving shares', 77509, 'in'], ['Jul 31 Monthly service fee', 500, 'out'], ['Jul 31 Interest paid', 85, 'in']]);
 
 export const M10_LESSON = {
   id: 'm10',
@@ -147,22 +154,22 @@ export const M10_LESSON = {
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['error-by-size'],
-      text: ['From Module 9: a trial balance is off by $45.00 because one amount was posted on the wrong side. What amount do you look for?'],
-      answer: 2250,
+      text: ['From Module 9: a trial balance is off by $45.50 because one amount was posted on the wrong side. What amount do you look for?'],
+      answer: 2275,
       misconceptions: [{ cents: 4500, explanation: 'Halve the difference for a wrong-side posting.' }],
-      explanation: 'Half of $45.00 is $22.50.',
+      explanation: 'Half of $45.50 is $22.75.',
     },
     {
       id: 'reconcile', kind: 'explain', title: 'Checking against the bank', uses: ['bank-reconciliation', 'source-documents'],
       text: [
         'Each month your bank sends a statement: the money in and out of your account, and the balance. It is a source document.',
         'A bank reconciliation checks your books against it. Add up your pages for money held at that bank: Checking and the buckets kept there. That is your book balance. Cash in your wallet is left out, because it is not at the bank.',
-        'This month, Jordan\'s Spending bucket ($615.03) and Saving bucket ($755.02) add up exactly to the statement\'s closing balance.',
+        'Devon keeps the Spending and Saving buckets at this bank, so each payday only those two shares are deposited there. At the end of June, the Spending bucket ($356.66) and the Saving bucket ($755.02) add up exactly to the statement\'s closing balance.',
       ],
       prompt: 'Why is Cash left out of the bank reconciliation?',
       promptAnswer: 'Cash is in your wallet, not at the bank, so it can never be on the bank\'s statement.',
       sourceDoc: JUNE,
-      report: rec('Jordan (example)', { statement: closingOf(JUNE), pages: [page('spending', 61503), page('saving', 75502)] }),
+      report: rec('Devon (example)', { statement: closingOf(JUNE), pages: [page('spending', 35666), page('saving', 75502)] }),
     },
     {
       id: 'predict-book', kind: 'predict', title: 'Predict: the book balance', uses: ['bank-reconciliation', 'account-numbers'],
@@ -176,14 +183,14 @@ export const M10_LESSON = {
       text: [
         'The statement and your books are rarely the same on any given day. A deposit you have recorded may not have reached the bank yet. A check you wrote may not have been cashed yet. These are outstanding items.',
         'Start from the statement\'s closing balance. Add deposits not yet on it, and subtract payments not yet on it. That gives the adjusted bank balance, which should equal your book balance.',
-        'On Jun 30 Jordan deposited $40.00 of birthday cash, and wrote check 102 for $60.00 to pay back a friend. Neither is on the statement yet.',
+        'Here is Kai\'s June. On Jun 30 Kai deposited $40.00 of birthday cash and wrote check 102 for $60.00 to pay back a friend. Neither is on the statement yet.',
       ],
       prompt: 'You wrote a $60.00 check yesterday, and your books show it. Why is it not on the statement yet?',
       promptAnswer: 'The person has not cashed it yet, so the bank has not paid it. It is an outstanding payment.',
-      sourceDoc: JUNE,
-      report: rec('Jordan (example)', {
-        statement: closingOf(JUNE), deposits: [{ label: 'Jun 30 deposit: birthday cash', amount: 4000 }], payments: [{ label: 'Check 102: paying back a friend', amount: 6000 }],
-        pages: [page('spending', 59503), page('saving', 75502)],
+      sourceDoc: KAI_JUNE,
+      report: rec('Kai (example)', {
+        statement: closingOf(KAI_JUNE), deposits: [{ label: 'Jun 30 deposit: birthday cash', amount: 4000 }], payments: [{ label: 'Check 102: paying back a friend', amount: 6000 }],
+        pages: [page('spending', 44644), page('saving', 40000)],
       }),
     },
     {
@@ -210,20 +217,20 @@ export const M10_LESSON = {
       journalPage: journal([
         ['2026-07-31', 'J7', 'Monthly service fee (statement)', [['bank-fees', 500, 0], ['spending', 0, 500]]],
         ['2026-07-31', 'J7', 'Interest paid (statement)', [['saving', 85, 0], ['interest-earned', 0, 85]]],
-      ], { sheetNo: 7 }),
-      report: rec('Jordan (example)', {
-        date: '2026-07-31', statement: closingOf(JULY), pages: [page('spending', 164849), page('saving', 75502)],
+      ], { sheetNo: 7, name: 'Devon (example)' }),
+      report: rec('Devon (example)', {
+        date: '2026-07-31', statement: closingOf(JULY), pages: [page('spending', 97673), page('saving', 91004)],
         interest: [{ label: 'Interest paid by the bank', amount: 85 }], fees: [{ label: 'Monthly service fee', amount: 500 }],
       }),
     },
     {
       id: 'predict-fee', kind: 'predict', title: 'Predict: posting the fee', uses: ['bank-fee-interest-entries', 'posting'],
       text: ['The $5.00 service fee is posted to the Spending bucket. What is the balance on that line?'],
-      ledger: chartPage('spending', [['2026-07-30', 'Brought forward', '', 31240, 0], ['2026-07-31', 'Service fee', 'J7', 0, 500]], { askFrom: 1 }),
+      ledger: chartPage('spending', [['2026-07-30', 'Brought forward', '', 97673, 0], ['2026-07-31', 'Service fee', 'J7', 0, 500]], { name: 'Devon (example)', askFrom: 1 }),
       highlightRow: 1,
-      answer: 30740,
-      misconceptions: [{ cents: 31740, explanation: 'The fee comes out of the Spending bucket. That is a credit, so subtract.' }],
-      explanation: '$312.40 − $5.00 = $307.40.',
+      answer: 97173,
+      misconceptions: [{ cents: 98173, explanation: 'The fee comes out of the Spending bucket. That is a credit, so subtract.' }],
+      explanation: '$976.73 − $5.00 = $971.73.',
     },
     {
       id: 'guided', kind: 'predict', title: 'Finish the worked steps', uses: ['bank-reconciliation', 'bank-fee-interest-entries'],
@@ -249,11 +256,11 @@ export const M10_LESSON = {
     {
       id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['bank-fee-interest-entries', 'posting'],
       text: ['The statement shows $0.85 of interest paid into savings. After the entry is posted, what does the Saving bucket show?'],
-      ledger: chartPage('saving', [['2026-07-30', 'Brought forward', '', 75502, 0], ['2026-07-31', 'Interest', 'J7', 85, 0]], { askFrom: 1 }),
+      ledger: chartPage('saving', [['2026-07-30', 'Brought forward', '', 91004, 0], ['2026-07-31', 'Interest', 'J7', 85, 0]], { name: 'Devon (example)', askFrom: 1 }),
       highlightRow: 1,
-      answer: 75587,
-      misconceptions: [{ cents: 75417, explanation: 'Interest paid to you raises the Saving bucket. That is a debit, so add.' }],
-      explanation: '$755.02 + $0.85 = $755.87.',
+      answer: 91089,
+      misconceptions: [{ cents: 90919, explanation: 'Interest paid to you raises the Saving bucket. That is a debit, so add.' }],
+      explanation: '$910.04 + $0.85 = $910.89.',
     },
     {
       id: 'exit-check-3', kind: 'predict', title: 'Exit check 3 of 3', uses: ['bank-reconciliation'],

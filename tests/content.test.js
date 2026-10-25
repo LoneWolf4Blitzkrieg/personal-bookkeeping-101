@@ -188,7 +188,7 @@ test('Checkpoint C covers every module from 9 to 12 and has two versions', async
   assert.equal(assessmentVersions(cc.templates, 'cc', { count: 2 }).length, 2);
 });
 
-test('Jordan\'s June books agree from the trial balance (Module 9) to the statements (Module 12)', async () => {
+test('Sam\'s June books agree from the trial balance (Module 9) to the statements (Module 12)', async () => {
   const { reportRows } = await import('../js/reports.js');
   const { runningBalances } = await import('../js/ledger.js');
   const m09 = MODULE_CONTENT.m09.steps.find((s) => s.id === 'trial-balance').report;
@@ -205,4 +205,25 @@ test('Jordan\'s June books agree from the trial balance (Module 9) to the statem
   const page = runningBalances(nwStep.ledger).at(-1).balance;
   assert.equal(opening + value(is, 'net'), page);
   assert.equal(value(nwStep.report, 'net'), page);
+});
+
+test('every question from Modules 9–12 stays sound over many parameter values', async () => {
+  const { generateItem } = await import('../js/items.js');
+  const { checkReport } = await import('../js/reports.js');
+  const { runningBalances } = await import('../js/ledger.js');
+  const late = new Set(['m09', 'm10', 'm11', 'm12']);
+  const templates = [...new Map(Object.values(ASSESSMENTS).flatMap((a) => a.templates).filter((t) => late.has(t.module)).map((t) => [t.id, t])).values()];
+  for (const t of templates) {
+    for (let seed = 0; seed < 400; seed++) {
+      const item = generateItem(t, seed);
+      const where = `${t.id} seed ${seed}`;
+      if (item.kind === 'numeric') assert.ok(item.answer >= 0, `${where}: answer below zero`);
+      for (const f of item.fields ?? []) assert.ok(f.answer >= 0, `${where}: "${f.label}" below zero`);
+      for (const m of item.misconceptions ?? []) assert.notEqual(m.cents, item.answer, `${where}: a misconception equals the answer`);
+      for (const r of [item.report, ...(item.reports ?? [])].filter(Boolean)) assert.deepEqual(checkReport(r), [], where);
+      for (const page of [item.ledger, ...(item.ledgers ?? [])].filter(Boolean)) {
+        assert.ok(runningBalances(page).every((b, i) => b.side === (page.type === 'asset' || page.type === 'expense' ? 'Dr' : 'Cr') || b.balance === 0 || !(page.rows[i].debit || page.rows[i].credit)), `${where}: ${page.account} crosses to the wrong side`);
+      }
+    }
+  }
 });

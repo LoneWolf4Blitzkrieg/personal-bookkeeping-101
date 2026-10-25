@@ -102,3 +102,9 @@ test('a reconciliation leaves out headings with nothing under them', () => {
   assert.ok(!labels.some((l) => /^(Add|Less):/.test(l)), labels.join(' / '));
   assert.ok(labels.includes('Your pages at this bank'));
 });
+
+test('each report row is named for screen readers, so a blank box says which line it belongs to', () => {
+  const html = reportHTML({ ...tb, ask: ['total'] });
+  assert.match(html, /<th scope="row" class="col-items">Totals<\/th>/);
+  assert.match(html, /<th scope="row" class="col-items">Spending bucket<\/th>/);
+});

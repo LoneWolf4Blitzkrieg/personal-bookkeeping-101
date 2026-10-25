@@ -1,6 +1,6 @@
 // Module 12: Month-end. Ideas: closing-entries, income-statement,
 // net-worth-statement. Income and expense pages are closed straight into Net
-// worth (30). The worked example finishes Jordan's June books from Module 9.
+// worth (30). The worked example finishes Sam's June books from Module 9.
 // Amounts are illustrative.
 
 import { money, NAMES, explainTemplate, accountOptions, chartPage, journal, CHART } from '../helpers.js';
@@ -91,8 +91,8 @@ const explainMonthEnd = explainTemplate({
       modelAnswer: 'The month\'s income and expenses, and the difference: what the month added to, or took from, your net worth.',
       rubric: ['Says it lists the month\'s income and expenses', 'Says the difference is what the month added to (or took from) net worth'] },
     { prompt: 'In one or two sentences: why must the net-worth statement agree with the Net worth page after closing?',
-      modelAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so if the books are right, the two match.',
-      rubric: ['Says both measure what you own minus what you owe', 'Says closing brings the month into the Net worth page, so a match proves the books'] },
+      modelAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so the two must match.',
+      rubric: ['Says both measure what you own minus what you owe', 'Says closing brings the month into the Net worth page, so the two must match'] },
     { prompt: 'In one or two sentences: why is an expense page credited when it is closed?',
       modelAnswer: 'An expense page has a debit balance. A credit of the same amount brings it to zero, and the matching debit goes to Net worth.',
       rubric: ['Says the expense page has a debit balance', 'Says a credit of the same amount brings it to zero (and Net worth is debited)'] },
@@ -131,18 +131,18 @@ const monthEndFigures = {
 
 // --- Lesson -------------------------------------------------------------------
 
-// Jordan's June (trial balance in Module 9).
+// Sam's June (trial balance in Module 9).
 const EXPENSES = [item('taxes', 17854), item('rent', 45000), item('groceries', 9640), item('eating-out', 3175)];
 const INCOME = [item('wages', 121200)];
 const closingJournal = journal([
   ['2026-06-30', 'J6', 'Close income to net worth', [['wages', 121200, 0, true], ['net-worth', 0, 121200, true]]],
   ['2026-06-30', 'J6', 'Close expenses to net worth', [['net-worth', 75669, 0, true], ['taxes', 0, 17854, true], ['rent', 0, 45000, true], ['groceries', 0, 9640, true], ['eating-out', 0, 3175, true]]],
-], { sheetNo: 6 });
+], { sheetNo: 6, name: 'Sam (example)' });
 const netWorthPage = (askFrom = null) => chartPage('net-worth', [
   ['2026-06-01', 'Opening net worth', '', 0, 30000],
   ['2026-06-30', 'Closing: income', 'J6', 0, 121200, true],
   ['2026-06-30', 'Closing: expenses', 'J6', 75669, 0, true],
-], { askFrom });
+], { name: 'Sam (example)', askFrom });
 const JUNE_ASSETS = [item('spending', 62694), item('saving', 15502), item('cash', 2240)];
 const JUNE_LIABILITIES = [item('card', 4905)];
 const OTHER_INCOME = [item('wages', 98000), item('gifts', 4000)];
@@ -165,18 +165,18 @@ export const M12_LESSON = {
       text: [
         'Income and expense pages measure one month. At month-end, close them: move each balance into Net worth (30), so each page starts the next month at zero.',
         'An income page has a credit balance, so it is closed with a debit: debit Wages and credit Net worth. An expense page has a debit balance, so it is closed with a credit: credit each expense and debit Net worth for the total.',
-        'These are Jordan\'s closing entries for June, from the trial balance in Module 9. Afterward, Net worth has grown by the month\'s income minus its expenses.',
+        'These are Sam\'s closing entries for June, from the trial balance in Module 9. Afterward, Net worth has grown by the month\'s income minus its expenses.',
       ],
       prompt: 'Why is Wages debited to close it?',
       promptAnswer: 'Wages has a credit balance. A debit of the same amount brings it to zero and moves the amount into Net worth.',
       journalPage: closingJournal,
       highlightEntry: 0,
-      ledger: chartPage('wages', [['2026-06-19', 'Paycheck', 'J3', 0, 121200, true], ['2026-06-30', 'Closing to net worth', 'J6', 121200, 0, true]]),
+      ledger: chartPage('wages', [['2026-06-19', 'Paycheck', 'J3', 0, 121200, true], ['2026-06-30', 'Closing to net worth', 'J6', 121200, 0, true]], { name: 'Sam (example)' }),
       highlightRow: 1,
     },
     {
       id: 'predict-close', kind: 'predict', title: 'Predict: Net worth after closing', uses: ['closing-entries'],
-      text: ['Jordan\'s two closing entries are posted to the Net worth page. What does it show after the last line?'],
+      text: ['Sam\'s two closing entries are posted to the Net worth page. What does it show after the last line?'],
       journalPage: closingJournal,
       ledger: netWorthPage(2),
       highlightRow: 2,
@@ -193,7 +193,7 @@ export const M12_LESSON = {
       ],
       prompt: 'Where do the figures on the income statement come from?',
       promptAnswer: 'From the income and expense balances at month-end, before closing: the trial balance lists them.',
-      report: incomeStatement('Jordan (example)', INCOME, EXPENSES),
+      report: incomeStatement('Sam (example)', INCOME, EXPENSES),
     },
     {
       id: 'predict-added', kind: 'predict', title: 'Predict: what the month added', uses: ['income-statement'],
@@ -207,12 +207,12 @@ export const M12_LESSON = {
       id: 'net-worth-statement', kind: 'explain', title: 'The net-worth statement', uses: ['net-worth-statement', 'accounting-equation', 'closing-entries'],
       text: [
         'The net-worth statement lists, on one date, everything you own and everything you owe. What you own minus what you owe is your net worth.',
-        'It must equal the Net worth page after closing. That is the final proof that the month\'s books are right.',
-        'Jordan: $804.36 owned − $49.05 owed = $755.31, the same as the Net worth page.',
+        'It must equal the Net worth page after closing. A match is the last check that the month\'s books add up. Like the trial balance, it cannot catch an amount posted to the wrong page.',
+        'Sam: $804.36 owned − $49.05 owed = $755.31, the same as the Net worth page.',
       ],
       prompt: 'Why should the net-worth statement agree with the Net worth page after closing?',
-      promptAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so if the books are right, they match.',
-      report: netWorthStatement('Jordan (example)', JUNE_ASSETS, JUNE_LIABILITIES),
+      promptAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so the two must match.',
+      report: netWorthStatement('Sam (example)', JUNE_ASSETS, JUNE_LIABILITIES),
       ledger: netWorthPage(),
       highlightRow: 2,
     },
@@ -290,4 +290,4 @@ export const M12_REMEDIAL = {
 };
 
 // Questions Checkpoint C draws from this module.
-export const M12_CHECKPOINT = [added, nwStatement, recordClosing];
+export const M12_CHECKPOINT = [added, nwStatement, recordClosing, explainMonthEnd];

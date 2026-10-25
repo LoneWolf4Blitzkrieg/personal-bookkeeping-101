@@ -92,6 +92,10 @@
 .ledger.report .col-money { width: 21%; border-left: 3px double var(--rule-strong); }
 .ledger.report-budget { min-width: 30rem; }
 .ledger.report-budget .col-money { width: 14%; }
-.ledger.report tr.heading td { font-style: italic; }
-.ledger.report tr.total td { font-weight: 700; border-top: 2px solid var(--rule-strong); }
+.ledger.report th[scope="row"] {
+  font: inherit; font-weight: 400; letter-spacing: 0; text-transform: none; text-align: left;
+  border-top: none; border-bottom: 1px solid var(--rule); padding: .16rem .3rem; white-space: normal;
+}
+.ledger.report tr.heading th, .ledger.report tr.heading td { font-style: italic; }
+.ledger.report tr.total th, .ledger.report tr.total td { font-weight: 700; border-top: 2px solid var(--rule-strong); }
 .report-sheet + .report-sheet, .report-sheet + .ledger-sheet { margin-top: .6rem; }

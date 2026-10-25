@@ -52,36 +52,88 @@ const wrongSide = num('m09-wrong-side', 'interpreting', { ...MONTH, groceries: {
   };
 });
 
-// Production: the learner writes each page's closing balance into the trial
-// balance. Net worth's line is given and makes the trial balance balance.
+// Production: the learner writes the trial balance from four pages. Every
+// entry on the pages moves money between pages that are shown, and Net worth
+// is the opening balance brought forward, so the trial balance balances by
+// itself. The card payment is never more than the card balance brought forward.
 const tbFromPages = {
   id: 'm09-tb-from-pages', module: 'm09', kind: 'amounts', part: 'producing', points: 4,
   params: {
-    start: { min: 20000, max: 50000, step: 1 }, a: { min: 1000, max: 8000, step: 1 }, c: { min: 30000, max: 60000, step: 1 }, s: { min: 20000, max: 90000, step: 1 },
-    d: { min: 5000, max: 15000, step: 1 }, k: { min: 2000, max: 9000, step: 1 }, e: { min: 1000, max: 6000, step: 1 }, f: { min: 1000, max: 4000, step: 1 },
-    g: { min: 1000, max: 7000, step: 1 }, name: { pick: NAMES },
+    s0: { min: 40000, max: 70000, step: 1 }, v0: { min: 20000, max: 90000, step: 1 }, k0: { min: 3000, max: 9000, step: 1 },
+    a: { min: 1000, max: 6000, step: 1 }, g: { min: 1000, max: 8000, step: 1 }, m: { min: 2000, max: 10000, step: 100 }, f: { min: 1000, max: 3000, step: 100 }, name: { pick: NAMES },
   },
   build: (p) => {
+    const opts = { name: p.name, askFrom: 1 };
     const pages = [
-      chartPage('spending', [['2026-06-01', 'Brought forward', '', p.start, 0], ['2026-06-08', 'Groceries', 'J1', 0, p.a, true], ['2026-06-19', 'From Checking', 'J2', p.c, 0, true]], { name: p.name, askFrom: 1 }),
-      chartPage('saving', [['2026-06-01', 'Brought forward', '', p.s, 0], ['2026-06-19', 'Paycheck share', 'J2', p.d, 0, true]], { name: p.name, askFrom: 1 }),
-      chartPage('card', [['2026-06-01', 'Brought forward', '', 0, p.k], ['2026-06-12', 'Gas', 'J1', 0, p.e, true], ['2026-06-25', 'Payment', 'J2', p.f, 0, true]], { name: p.name, askFrom: 1 }),
-      chartPage('groceries', [['2026-06-08', 'Desert Mart', 'J1', p.a, 0, true], ['2026-06-22', 'Saguaro Grocery', 'J2', p.g, 0, true]], { name: p.name, askFrom: 1 }),
+      chartPage('spending', [['2026-06-01', 'Brought forward', '', p.s0, 0], ['2026-06-08', 'Groceries (debit card)', 'J1', 0, p.g, true], ['2026-06-19', 'To Saving bucket', 'J2', 0, p.m, true], ['2026-06-25', 'Card payment', 'J2', 0, p.f, true]], opts),
+      chartPage('saving', [['2026-06-01', 'Brought forward', '', p.v0, 0], ['2026-06-19', 'From Spending bucket', 'J2', p.m, 0, true]], opts),
+      chartPage('card', [['2026-06-01', 'Brought forward', '', 0, p.k0], ['2026-06-12', 'Groceries', 'J1', 0, p.a, true], ['2026-06-25', 'Payment', 'J2', p.f, 0, true]], opts),
+      chartPage('groceries', [['2026-06-08', 'Saguaro Grocery (debit card)', 'J1', p.g, 0, true], ['2026-06-12', 'Desert Mart (card)', 'J1', p.a, 0, true]], opts),
     ];
-    const spending = p.start - p.a + p.c;
-    const saving = p.s + p.d;
-    const card = p.k + p.e - p.f;
-    const groceries = p.a + p.g;
-    const accounts = [acct('spending', 'debit', spending), acct('saving', 'debit', saving), acct('card', 'credit', card), acct('net-worth', 'credit', spending + saving + groceries - card), acct('groceries', 'debit', groceries)];
+    const spending = p.s0 - p.g - p.m - p.f;
+    const saving = p.v0 + p.m;
+    const card = p.k0 + p.a - p.f;
+    const groceries = p.g + p.a;
+    const worth = p.s0 + p.v0 - p.k0;
+    const accounts = [acct('spending', 'debit', spending), acct('saving', 'debit', saving), acct('card', 'credit', card), acct('net-worth', 'credit', worth), acct('groceries', 'debit', groceries)];
+    const debits = spending + saving + groceries;
     return {
-      prompt: `Write ${p.name}'s trial balance: each page's closing balance goes on its line. The Net worth line is done for you.`,
+      prompt: `Write ${p.name}'s trial balance from these pages: put each page's closing balance on its line, in the right column, then total the columns. The Net worth line, brought forward from last month, is given.`,
       ledgers: pages,
       report: tb(p.name, accounts, { ask: ['line-0', 'line-1', 'line-2', 'line-4', 'total'] }),
-      fields: [['Spending bucket', spending], ['Saving bucket', saving], ['Credit card', card], ['Groceries', groceries]].map(([label, answer]) => ({ label: `${label} (closing balance)`, answer })),
-      explanation: `Spending bucket ${money(spending)} (debit), Saving bucket ${money(saving)} (debit), Credit card ${money(card)} (credit), Groceries ${money(groceries)} (debit).`,
+      fields: [['Spending bucket (closing balance)', spending], ['Credit card (closing balance)', card], ['Groceries (closing balance)', groceries], ['Total of each column', debits]].map(([label, answer]) => ({ label, answer })),
+      explanation: `Debits: Spending bucket ${money(spending)} + Saving bucket ${money(saving)} + Groceries ${money(groceries)} = ${money(debits)}. Credits: Credit card ${money(card)} + Net worth ${money(worth)} = ${money(card + worth)}.`,
     };
   },
 };
+
+// Diagnosis: the difference is given and three amounts are suspects. The
+// learner tries the size tests (÷ 9, equal to an amount, half) to find the one
+// that explains it. Each version has a different kind of error, and no other
+// suspect passes any test.
+// The amount with the last two digits of its dollars swapped ($47.15 →
+// $74.15), or null when there are no two different digits to swap.
+function swapped(c) {
+  const d = Math.floor(c / 100);
+  const tens = Math.floor(d / 10) % 10;
+  const ones = d % 10;
+  if (d < 10 || tens === ones) return null;
+  return c + (ones - tens) * 900;
+}
+const swapDiff = (c) => (swapped(c) === null ? null : Math.abs(swapped(c) - c));
+const explainsBy = (c, d) => c === d || 2 * c === d || 9 * c === d || swapDiff(c) === d;
+const ERRORS = {
+  transposition: (w) => ({ d: swapDiff(w), why: `${money(swapDiff(w))} ÷ 9 = ${money(swapDiff(w) / 9)}, so look for swapped digits: ${money(w)} was written for ${money(swapped(w))}, which is off by exactly ${money(swapDiff(w))}.` }),
+  slide: (w) => ({ d: 9 * w, why: `${money(9 * w)} ÷ 9 = ${money(w)}, an amount on the list: the decimal point slid, and ${money(w)} was written for ${money(10 * w)}.` }),
+  'one-sided': (w) => ({ d: w, why: `The difference does not divide evenly by 9, but ${money(w)} equals it: that entry had only one side posted.` }),
+  'wrong-side': (w) => ({ d: 2 * w, why: `The difference does not divide evenly by 9, and no amount equals it, but half of it is ${money(w)}: that amount was posted on the wrong side.` }),
+};
+const diagnose = num('m09-diagnose', 'interpreting', {
+  c0: { min: 1200, max: 9800, step: 1 }, c1: { min: 1200, max: 9800, step: 1 }, c2: { min: 1200, max: 9800, step: 1 }, which: { pick: [0, 1, 2] },
+  error: { byVersion: ['transposition', 'one-sided', 'wrong-side', 'slide'] }, name: { pick: NAMES },
+}, (p) => {
+  const c = [p.c0, p.c1, p.c2];
+  let w = c[p.which];
+  // A transposition needs two different digits to swap; a one-sided or
+  // wrong-side difference must not divide evenly by 9 (a slide always does).
+  // Each loop moves at most a few steps; the caps only guard against a hang.
+  for (let n = 0; n < 20 && p.error === 'transposition' && !swapDiff(w); n++) w += 100;
+  for (let n = 0; n < 20 && (p.error === 'one-sided' || p.error === 'wrong-side') && ERRORS[p.error](w).d % 9 === 0; n++) w += 1;
+  c[p.which] = w;
+  const { d, why } = ERRORS[p.error](w);
+  c.forEach((x, i) => {
+    if (i === p.which) return;
+    let y = x;
+    for (let n = 0; n < 200 && (explainsBy(y, d) || c.some((z, k) => k !== i && z === y)); n++) y += 7;
+    c[i] = y;
+  });
+  return {
+    prompt: `${p.name}'s trial balance totals are ${money(d)} apart. Three amounts on the pages are worth a second look: ${c.map(money).join(', ')}. Use the size of the difference to decide which one explains it. Which amount is it?`,
+    answer: w,
+    misconceptions: d === w ? [] : [{ cents: d, explanation: 'That is the difference itself. Use it to test each amount: does it divide by 9, equal an amount, or equal twice an amount?' }],
+    explanation: why,
+  };
+});
 
 const explainProof = explainTemplate({
   id: 'm09-explain', module: 'm09',
@@ -91,7 +143,7 @@ const explainProof = explainTemplate({
       rubric: ['Says every entry has equal debits and credits', 'Says so the debit balances together equal the credit balances together'] },
     { prompt: 'In one or two sentences: name one error a trial balance cannot catch, and say why.',
       modelAnswer: 'An entry left out completely, or posted to the wrong account on the right side. Debits still equal credits, so the totals still agree.',
-      rubric: ['Names an error that keeps debits equal to credits (left out, wrong account, wrong amount on both sides)', 'Says the totals still agree, so the trial balance cannot show it'] },
+      rubric: ['Names an error that keeps debits equal to credits (an entry left out, or posted to the wrong account)', 'Says the totals still agree, so the trial balance cannot show it'] },
     { prompt: 'In one or two sentences: the trial balance is off by $45.00. Why check for swapped digits or a moved decimal point?',
       modelAnswer: '$45.00 divides evenly by 9, and a transposition or a slide always makes a difference that divides evenly by 9.',
       rubric: ['Says the difference divides evenly by 9', 'Says transpositions and slides always give differences that divide by 9'] },
@@ -118,9 +170,25 @@ const slide = num('m09-slide', 'interpreting', { whole: { min: 1000, max: 9999, 
   };
 });
 
+// Completion: a trial balance with only its totals left to write.
+const tbBlanks = {
+  id: 'm09-tb-blanks', module: 'm09', kind: 'amounts', part: 'producing', points: 2,
+  params: MONTH,
+  build: (p) => {
+    const accounts = monthBalances(p);
+    const debits = total(accounts, 'debit');
+    return {
+      prompt: `Finish ${p.name}'s trial balance: write the total of each column.`,
+      report: tb(p.name, accounts, { ask: ['total'] }),
+      fields: [{ label: 'Debits total', answer: debits }, { label: 'Credits total', answer: total(accounts, 'credit') }],
+      explanation: `Both columns total ${money(debits)}, so the trial balance balances.`,
+    };
+  },
+};
+
 // --- Lesson -------------------------------------------------------------------
 
-// Jordan's June: the same books are closed and reported in Module 12.
+// Sam's June: the same books are closed and reported in Module 12.
 const JUNE = [
   acct('spending', 'debit', 62694), acct('saving', 'debit', 15502), acct('cash', 'debit', 2240), acct('card', 'credit', 4905), acct('net-worth', 'credit', 30000),
   acct('wages', 'credit', 121200), acct('taxes', 'debit', 17854), acct('rent', 'debit', 45000), acct('groceries', 'debit', 9640), acct('eating-out', 'debit', 3175),
@@ -145,12 +213,12 @@ export const M09_LESSON = {
       text: [
         'At the end of the month, list every page\'s balance in account-number order: debit balances in one column, credit balances in the other. This list is a trial balance.',
         'Every entry you posted had equal debits and credits, so the two columns must add up to the same total. When they do, your posting is very likely right. When they do not, there is an error to find.',
-        'Here is Jordan\'s trial balance for June. Both columns total the same.',
+        'Here is Sam\'s trial balance for June. Both columns total the same.',
         'From this module on, you may use a calculator or a spreadsheet in practice sets. In the checks, you still work on your own.',
       ],
       prompt: 'Why must the two columns add up to the same total?',
       promptAnswer: 'Every entry posted equal debits and credits, so all the debit balances together equal all the credit balances together.',
-      report: tb('Jordan (example)', JUNE),
+      report: tb('Sam (example)', JUNE),
     },
     {
       id: 'predict-total', kind: 'predict', title: 'Predict: the totals', uses: ['trial-balance'],
@@ -209,9 +277,9 @@ export const M09_LESSON = {
     },
     {
       id: 'exit-check', kind: 'predict', title: 'Exit check 1 of 3', uses: ['trial-balance'],
-      text: ['A trial balance has credit balances of $49.05, $300.00 and $1,212.00. What is the Credits total?'],
-      answer: 156105,
-      explanation: '$49.05 + $300.00 + $1,212.00 = $1,561.05.',
+      text: ['A trial balance has credit balances of $62.40, $450.00 and $980.00. What is the Credits total?'],
+      answer: 149240,
+      explanation: '$62.40 + $450.00 + $980.00 = $1,492.40.',
     },
     {
       id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['common-errors', 'error-by-size'],
@@ -233,7 +301,7 @@ export const M09_LESSON = {
 
 // --- Checks ---------------------------------------------------------------------
 
-export const M09_GATE = { id: 'm09', kind: 'gate', title: 'Module 9 check', templates: [tbTotal, wrongSide, tbFromPages, explainProof] };
+export const M09_GATE = { id: 'm09', kind: 'gate', title: 'Module 9 check', templates: [tbTotal, diagnose, tbFromPages, explainProof] };
 
 // Fluency drill on the core operation: halving a wrong-side difference.
 const drill = [1, 2, 3].map((n) => num(`m09-drill-${n}`, 'interpreting', { half: { min: 100, max: 9000, step: 1 } }, (p) => ({
@@ -245,7 +313,7 @@ const cardMixed = { ...M08_GATE.templates.find((t) => t.part === 'producing'), i
 
 export const M09_PRACTICE = {
   id: 'm09-practice', kind: 'practice', module: 'm09', title: 'Module 9 practice set',
-  templates: [...M08_LESSON.recallTemplates, ...M07_LESSON.recallTemplates, ...M05_LESSON.recallTemplates, ...drill, tbTotal, wrongSide, oneSided, slide, tbFromPages, cardMixed, { ...explainProof, id: 'm09-explain-practice' }],
+  templates: [...M08_LESSON.recallTemplates, ...M07_LESSON.recallTemplates, ...M05_LESSON.recallTemplates, ...drill, tbTotal, diagnose, wrongSide, oneSided, slide, tbBlanks, tbFromPages, cardMixed, { ...explainProof, id: 'm09-explain-practice' }],
 };
 
 export const M09_EXTRA = {
@@ -255,8 +323,8 @@ export const M09_EXTRA = {
 
 export const M09_REMEDIAL = {
   id: 'm09-remedial', kind: 'practice', module: 'm09', title: 'Module 9: common mistakes',
-  templates: [wrongSide, slide, tbFromPages].map((t) => ({ ...t, id: `${t.id}-remedial` })),
+  templates: [diagnose, wrongSide, slide].map((t) => ({ ...t, id: `${t.id}-remedial` })),
 };
 
 // Questions Checkpoint C draws from this module.
-export const M09_CHECKPOINT = [tbTotal, wrongSide, tbFromPages];
+export const M09_CHECKPOINT = [tbTotal, diagnose, tbFromPages];
