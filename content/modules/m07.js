@@ -188,14 +188,14 @@ const weekBalances = {
 const worthAfterWeek = num('m07-worth-after-week', 'interpreting', { ...WEEK, worth: { min: 50000, max: 200000, step: 1 } }, (p) => ({
   prompt: `${p.name}'s net worth is ${money(p.worth)}. In one week, ${week(p)} What is ${p.name}'s net worth now?`,
   answer: p.worth - p.groc - p.lunch,
-  misconceptions: [{ cents: p.worth - p.atm - p.groc - p.save - p.lunch, explanation: 'The ATM withdrawal and the move to Saving are transfers between your own pages: they do not change net worth.' }],
+  misconceptions: [{ cents: p.worth - p.atm - p.groc - p.save - p.lunch, explanation: 'That also subtracts the ATM withdrawal and the move to Saving. Those are transfers between your own pages, so they do not change net worth.' }],
   explanation: `Only the purchases are expenses: ${money(p.worth)} − ${money(p.groc)} − ${money(p.lunch)} = ${money(p.worth - p.groc - p.lunch)}.`,
 }));
 
 const donation = num('m07-donation', 'interpreting', { charity: { min: 3000, max: 20000, step: 1 }, gift: { min: 500, max: 2900, step: 1 }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name}'s Charity bucket shows ${money(p.charity)}. ${p.name} gives ${money(p.gift)} to a food bank by debit card, from the Charity bucket, and keeps the receipt. What does the Charity bucket show after the entry is posted?`,
   answer: p.charity - p.gift,
-  misconceptions: [{ cents: p.charity + p.gift, explanation: 'Donations (the expense) is debited; the Charity bucket gave the money, so it is credited: subtract.' }],
+  misconceptions: [{ cents: p.charity + p.gift, explanation: 'Donations (the expense) is debited. The Charity bucket gave the money, so it is credited: subtract.' }],
   explanation: `Debit Donations, credit the Charity bucket: ${money(p.charity)} − ${money(p.gift)} = ${money(p.charity - p.gift)}.`,
 }));
 

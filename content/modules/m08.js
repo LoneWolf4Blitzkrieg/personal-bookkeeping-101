@@ -167,7 +167,7 @@ const afterInterest = num('m08-after-interest', 'interpreting', { balance: { min
   return {
     prompt: `${p.name}'s card page shows a credit balance of ${money(p.balance)}. This month's interest at ${APR_TEXT} APR (balance × APR ÷ 12, rounded to the cent) is posted. What does the card page show now?`,
     answer: p.balance + i,
-    misconceptions: [{ cents: p.balance - i, explanation: 'Interest adds to what you owe: Card interest is debited and the card is credited, so add.' }],
+    misconceptions: [{ cents: p.balance - i, explanation: 'Interest adds to what you owe. Card interest is debited and the card is credited, so add.' }],
     explanation: `Interest: ${exactMonthlyInterest(p.balance, APR)}, which rounds to ${money(i)}. ${money(p.balance)} + ${money(i)} = ${money(p.balance + i)}.`,
     sources: APR_SOURCES,
   };

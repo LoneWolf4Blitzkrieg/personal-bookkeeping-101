@@ -149,9 +149,9 @@ const bookBalance = num('m10-book-balance', 'interpreting', { spending: { min: 1
 });
 
 const savingAfterInterest = num('m10-saving-after-interest', 'interpreting', { saving: { min: 20000, max: 150000, step: 1 }, interest: { min: 20, max: 400, step: 1 }, name: { pick: NAMES } }, (p) => ({
-  prompt: `${p.name}'s statement shows ${money(p.interest)} of interest paid into savings. The Saving bucket shows ${money(p.saving)}. After the entry is posted, what does it show?`,
+  prompt: `${p.name}'s statement shows ${money(p.interest)} of interest paid into savings. The Saving bucket shows ${money(p.saving)}. After the entry is posted, what does the Saving bucket show?`,
   answer: p.saving + p.interest,
-  misconceptions: [{ cents: p.saving - p.interest, explanation: 'Interest paid to you raises the Saving bucket: it is debited, so add.' }],
+  misconceptions: [{ cents: p.saving - p.interest, explanation: 'Interest paid to you raises the Saving bucket. It is debited, so add.' }],
   explanation: `Debit the Saving bucket, credit Interest earned: ${money(p.saving)} + ${money(p.interest)} = ${money(p.saving + p.interest)}.`,
 }));
 
@@ -161,7 +161,7 @@ const savingAfterInterest = num('m10-saving-after-interest', 'interpreting', { s
 const statementFromBooks = num('m10-statement-from-books', 'interpreting', { book: { min: 40000, max: 160000, step: 1 }, dep: { min: 2000, max: 9000, step: 100 }, chk: { min: 1001, max: 7999, step: 2 }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name}'s pages at the bank add up to ${money(p.book)}, with no fees or interest to record. A ${money(p.dep)} deposit has not reached the bank yet, and a ${money(p.chk)} check has not been cashed. What should the bank statement's closing balance be?`,
   answer: p.book - p.dep + p.chk,
-  misconceptions: [{ cents: p.book + p.dep - p.chk, explanation: 'The statement does not have the deposit yet (so it shows less) and still has the check money (so it shows more).' }],
+  misconceptions: [{ cents: p.book + p.dep - p.chk, explanation: 'The statement does not have the deposit yet, so it shows less. It still has the check money, so it shows more.' }],
   explanation: `The adjusted bank balance must equal the books. Working back: ${money(p.book)} − ${money(p.dep)} + ${money(p.chk)} = ${money(p.book - p.dep + p.chk)}.`,
 }));
 

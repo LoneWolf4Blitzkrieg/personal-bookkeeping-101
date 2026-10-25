@@ -137,7 +137,7 @@ const takenFrom = num('m12-taken-from', 'interpreting', { wages: { min: 45000, m
     prompt: `${p.name} worked fewer hours this month. The income statement has its totals left blank. How much did the month take from ${p.name}'s net worth?`,
     report: incomeStatement(p.name, [item('wages', p.wages)], [item('rent', p.rent), item('groceries', p.groceries), item('phone', p.phone)], { ask: ['total-income', 'total-expenses', 'net'] }),
     answer: expenses - p.wages,
-    misconceptions: [{ cents: expenses + p.wages, explanation: 'Compare the two totals: expenses minus income is what the month took from net worth.' }],
+    misconceptions: [{ cents: expenses + p.wages, explanation: 'That adds the two totals. Compare them instead: expenses minus income is what the month took from net worth.' }],
     explanation: `Expenses ${money(expenses)} were more than income ${money(p.wages)}: ${money(expenses)} − ${money(p.wages)} = ${money(expenses - p.wages)} taken from net worth.`,
   };
 });
@@ -145,7 +145,7 @@ const takenFrom = num('m12-taken-from', 'interpreting', { wages: { min: 45000, m
 const closeIncomeCredit = num('m12-close-income-credit', 'interpreting', { wages: { min: 90000, max: 130000, step: 1 }, interest: { min: 20, max: 400, step: 1 }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name} closes Wages (${money(p.wages)}) and Interest earned (${money(p.interest)}) in one entry. How much is credited to Net worth?`,
   answer: p.wages + p.interest,
-  misconceptions: [{ cents: p.wages, explanation: 'One credit to Net worth covers both income pages.' }],
+  misconceptions: [{ cents: p.wages, explanation: 'That counts Wages only. One credit to Net worth covers both income pages.' }],
   explanation: `${money(p.wages)} + ${money(p.interest)} = ${money(p.wages + p.interest)}.`,
 }));
 
@@ -154,7 +154,7 @@ const nwPageAfterClose = num('m12-nw-page-after-close', 'interpreting', { openin
   ledger: chartPage('net-worth', [['2026-06-01', 'Opening net worth', '', 0, p.opening], ['2026-06-30', 'Closing: income', 'J6', 0, p.income, true], ['2026-06-30', 'Closing: expenses', 'J6', p.expenses, 0, true]], { name: p.name, askFrom: 2 }),
   highlightRow: 2,
   answer: p.opening + p.income - p.expenses,
-  misconceptions: [{ cents: p.opening + p.income + p.expenses, explanation: 'Closing the expenses is a debit to Net worth: subtract.' }],
+  misconceptions: [{ cents: p.opening + p.income + p.expenses, explanation: 'Closing the expenses is a debit to Net worth, so subtract.' }],
   explanation: `${money(p.opening)} + ${money(p.income)} − ${money(p.expenses)} = ${money(p.opening + p.income - p.expenses)}.`,
 }));
 

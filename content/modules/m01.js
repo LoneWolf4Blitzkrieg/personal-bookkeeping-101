@@ -116,7 +116,7 @@ const bucketPages = {
     const b = splitBuckets(p.take);
     const pages = [['Saving', p.sv, b.saving], ['Investing', p.inv, b.investing], ['Charity', p.ch, b.charity], ['Blow money', p.bl, b.blow]];
     return {
-      prompt: `Before payday, ${p.name}'s bucket pages show Saving ${money(p.sv)}, Investing ${money(p.inv)}, Charity ${money(p.ch)} and Blow money ${money(p.bl)}. A take-home pay of ${money(p.take)} is split into the buckets. Write each page's new balance.`,
+      prompt: `Before payday, ${p.name}'s bucket pages show Saving ${money(p.sv)}, Investing ${money(p.inv)}, Charity ${money(p.ch)} and Blow money ${money(p.bl)}. Then ${money(p.take)} of take-home pay is split into the buckets. Write each page's new balance.`,
       fields: pages.map(([label, before, share]) => ({ label: `${label} page after payday`, answer: before + share })),
       explanation: pages.map(([label, before, share]) => `${label}: ${money(before)} + ${money(share)} = ${money(before + share)}`).join('; ') + '.',
     };

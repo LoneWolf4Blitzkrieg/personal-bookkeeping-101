@@ -112,9 +112,9 @@ const otherSide = num('m03-other-side', 'interpreting', { a: { min: 5000, max: 2
 
 // The equation worked for what is owed.
 const oweFromWorth = num('m03-owe-from-worth', 'interpreting', { own: { min: 80000, max: 400000, step: 1 }, owe: { min: 5000, max: 70000, step: 1 }, name: { pick: NAMES } }, (p) => ({
-  prompt: `${p.name} owns ${money(p.own)} and is worth ${money(p.own - p.owe)}. Use what you own = what you owe + what you are worth. How much does ${p.name} owe?`,
+  prompt: `${p.name} owns ${money(p.own)} and is worth ${money(p.own - p.owe)}. Use the equation: what you own = what you owe + what you are worth. How much does ${p.name} owe?`,
   answer: p.owe,
-  misconceptions: [{ cents: 2 * p.own - p.owe, explanation: 'What you owe is what you own minus what you are worth, so subtract.' }],
+  misconceptions: [{ cents: 2 * p.own - p.owe, explanation: 'That adds. What you owe is what you own minus what you are worth, so subtract.' }],
   explanation: `${money(p.own)} − ${money(p.own - p.owe)} = ${money(p.owe)}.`,
 }));
 
@@ -122,7 +122,7 @@ const oweFromWorth = num('m03-owe-from-worth', 'interpreting', { own: { min: 800
 const ownAfterBorrow = num('m03-own-after-borrow', 'interpreting', { own: { min: 50000, max: 300000, step: 1 }, borrow: { min: 2000, max: 30000, step: 1 }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name} owns ${money(p.own)}. ${p.name} borrows ${money(p.borrow)} from a friend, and it goes into Checking. How much does ${p.name} own now?`,
   answer: p.own + p.borrow,
-  misconceptions: [{ cents: p.own - p.borrow, explanation: 'The borrowed money is in Checking now, so what you own goes up. What you owe goes up by the same amount.' }],
+  misconceptions: [{ cents: p.own - p.borrow, explanation: 'That subtracts the loan. The borrowed money is in Checking now, so what you own goes up. What you owe goes up by the same amount.' }],
   explanation: `Checking (an asset) is debited ${money(p.borrow)}: ${money(p.own)} + ${money(p.borrow)} = ${money(p.own + p.borrow)}. "Owed to a friend" is credited the same amount, so net worth does not change.`,
 }));
 
@@ -137,13 +137,13 @@ const recordBorrow = {
       prompt: `Write the debits and credits: you borrow ${money(p.amount)} from a friend, and it goes into Checking.`,
       accounts: BORROW_ACCOUNTS,
       answer: [{ account: 'checking', debit: p.amount, credit: 0 }, { account: 'owed-friend', debit: 0, credit: p.amount }],
-      explanation: 'Checking (an asset) goes up: debit. Owed to a friend (a liability) goes up: credit.',
+      explanation: 'Checking (an asset) goes up, so it is a debit. Owed to a friend (a liability) goes up, so it is a credit.',
     }
     : {
       prompt: `Write the debits and credits: you pay a friend back ${money(p.amount)} from Checking.`,
       accounts: BORROW_ACCOUNTS,
       answer: [{ account: 'owed-friend', debit: p.amount, credit: 0 }, { account: 'checking', debit: 0, credit: p.amount }],
-      explanation: 'Owed to a friend (a liability) goes down: debit. Checking (an asset) goes down: credit.',
+      explanation: 'Owed to a friend (a liability) goes down, so it is a debit. Checking (an asset) goes down, so it is a credit.',
     }),
 };
 

@@ -149,12 +149,12 @@ const postPage = {
 
 // Posting a two-debit entry: the Spending bucket's one credit covers both.
 const postSplit = num('m06-post-split', 'interpreting', { start: { min: 20000, max: 60000, step: 1 }, a: { min: 1000, max: 6000, step: 1 }, b: { min: 300, max: 2500, step: 1 }, name: { pick: NAMES } }, (p) => ({
-  prompt: `Post this journal entry to the Spending bucket page. The line already has its date and folio. What will the balance be after it?`,
+  prompt: `Post this journal entry to the Spending bucket page. The line already has its date and folio. What will the balance be after posting it?`,
   journalPage: journal([['2026-06-11', 'J2', 'Desert Mart receipt', [['groceries', p.a, 0, true], ['household', p.b, 0, true], ['spending', 0, p.a + p.b]]]], { sheetNo: 2, name: p.name }),
   ledger: chartPage('spending', [['2026-06-06', 'Brought forward', '', p.start, 0], ['2026-06-11', 'Desert Mart receipt', 'J2', 0, p.a + p.b]], { name: p.name, askFrom: 1, askKeys: TO_POST }),
   highlightRow: 1,
   answer: p.start - p.a - p.b,
-  misconceptions: [{ cents: p.start - p.a, explanation: 'The Spending bucket is credited once, for both debits together.' }],
+  misconceptions: [{ cents: p.start - p.a, explanation: 'That posts only one of the two debits. The Spending bucket is credited once, for both debits together.' }],
   explanation: `The Spending credit is ${money(p.a)} + ${money(p.b)} = ${money(p.a + p.b)}. ${money(p.start)} − ${money(p.a + p.b)} = ${money(p.start - p.a - p.b)}.`,
 }));
 
@@ -166,7 +166,7 @@ const journalDebits = num('m06-journal-debits', 'interpreting', { a: { min: 1000
     ['2026-06-19', 'J3', 'Spending share of paycheck', [['spending', p.c, 0, true], ['checking', 0, p.c, true]]],
   ], { sheetNo: 3, name: p.name }),
   answer: p.a + p.b + p.c,
-  misconceptions: [{ cents: 2 * (p.a + p.b + p.c), explanation: 'Add the Debits column only. (The Credits column gives the same total, because every entry balances.)' }],
+  misconceptions: [{ cents: 2 * (p.a + p.b + p.c), explanation: 'That adds both columns. Add the Debits column only. The Credits column gives the same total, because every entry balances.' }],
   explanation: `${money(p.a)} + ${money(p.b)} + ${money(p.c)} = ${money(p.a + p.b + p.c)}. The Credits column adds to the same.`,
 }));
 
@@ -174,7 +174,7 @@ const journalDebits = num('m06-journal-debits', 'interpreting', { a: { min: 1000
 const postOneLine = num('m06-post-one-line', 'interpreting', { before: { min: 20000, max: 150000, step: 1 }, take: { min: 80000, max: 120000, step: 1 }, name: { pick: NAMES } }, (p) => {
   const sh = splitBuckets(p.take);
   return {
-    prompt: `This journal entry moves two paycheck shares out of Checking. Post its Saving bucket line. The Saving page showed ${money(p.before)} before. What does it show after?`,
+    prompt: `This journal entry moves two paycheck shares out of Checking. Post its Saving bucket line. The Saving page showed ${money(p.before)} before posting. What does it show after?`,
     journalPage: journal([['2026-06-19', 'J3', 'Saving and Investing shares of paycheck', [['saving', sh.saving, 0], ['investing', sh.investing, 0], ['checking', 0, sh.saving + sh.investing]]]], { sheetNo: 3, name: p.name }),
     answer: p.before + sh.saving,
     misconceptions: [{ cents: p.before + sh.saving + sh.investing, explanation: 'Only the Saving line goes on the Saving page. The Investing line is posted to its own page.' }],

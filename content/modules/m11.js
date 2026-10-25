@@ -167,9 +167,9 @@ const underOverTotals = {
 
 // Applying a stated waiting-period rule (the rule is given; only its use is graded).
 const waitRule = num('m11-wait-rule', 'interpreting', { blow: { min: 6000, max: 15000, step: 1 }, small: { min: 800, max: 4900, step: 1 }, big: { min: 5100, max: 12000, step: 1 }, name: { pick: NAMES } }, (p) => ({
-  prompt: `${p.name}'s rule: anything not in the budget comes out of Blow money; under $50.00 it can be bought right away, and $50.00 or more waits a week. Blow money holds ${money(p.blow)}. This week ${p.name} buys a ${money(p.small)} item and decides to wait on a ${money(p.big)} item. What does Blow money hold at the end of the week?`,
+  prompt: `${p.name}'s rule: anything not in the budget comes out of Blow money. Under $50.00, it can be bought right away. $50.00 or more waits a week. Blow money holds ${money(p.blow)}. This week ${p.name} buys a ${money(p.small)} item and decides to wait on a ${money(p.big)} item. What does Blow money hold at the end of the week?`,
   answer: p.blow - p.small,
-  misconceptions: [{ cents: p.blow - p.small - p.big, explanation: 'The second item is $50.00 or more, so under the rule it waits a week: it is not bought yet.' }],
+  misconceptions: [{ cents: p.blow - p.small - p.big, explanation: 'The second item is $50.00 or more, so under the rule it waits a week. It is not bought yet.' }],
   explanation: `Only the item under $50.00 is bought this week: ${money(p.blow)} − ${money(p.small)} = ${money(p.blow - p.small)}.`,
 }));
 

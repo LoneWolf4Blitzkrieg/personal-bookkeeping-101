@@ -114,8 +114,8 @@ const pageEnd = num('m02-page-end', 'interpreting', { start: { min: 10000, max: 
 const findStart = num('m02-find-start', 'interpreting', { before: { min: 10000, max: 60000, step: 1 }, cost: { min: 500, max: 9000, step: 1 }, item: { pick: ['Groceries', 'Bus pass', 'Phone bill', 'Laundry'] } }, (p) => ({
   prompt: `On a Spending page, the line "${p.item}" has money out of ${money(p.cost)}, and its balance reads ${money(p.before - p.cost)}. What did the balance read on the line above it?`,
   answer: p.before,
-  misconceptions: [{ cents: p.before - 2 * p.cost, explanation: 'Money out made the balance smaller, so the line above was larger: add it back.' }],
-  explanation: `Going back up the page, add the money out back: ${money(p.before - p.cost)} + ${money(p.cost)} = ${money(p.before)}.`,
+  misconceptions: [{ cents: p.before - 2 * p.cost, explanation: 'That subtracts the money out a second time. Money out made the balance smaller, so the line above was larger: add it back.' }],
+  explanation: `Going back up the page, add the money out back to the balance: ${money(p.before - p.cost)} + ${money(p.cost)} = ${money(p.before)}.`,
 }));
 
 // Production: carry a full sheet forward and keep the new sheet going.
@@ -134,7 +134,7 @@ const newSheet = {
         { label: 'Sheet 2: balance after payday', answer: last + share },
         { label: 'Sheet 2: balance after the bus pass', answer: last + share - p.bus },
       ],
-      explanation: `Sheet 1 ends at ${money(last)}, and Sheet 2 starts with that same amount brought forward. Then + ${money(share)} = ${money(last + share)}, and − ${money(p.bus)} = ${money(last + share - p.bus)}.`,
+      explanation: `Sheet 1 ends at ${money(last)}, and Sheet 2 starts with that same amount brought forward. Adding ${money(share)} gives ${money(last + share)}. Taking out ${money(p.bus)} leaves ${money(last + share - p.bus)}.`,
     };
   },
 };
