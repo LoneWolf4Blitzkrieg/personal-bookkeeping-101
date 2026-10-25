@@ -11,8 +11,13 @@ import { M05_GATE, M05_PRACTICE, M05_EXTRA, M05_REMEDIAL } from '../modules/m05.
 import { M06_GATE, M06_PRACTICE, M06_EXTRA, M06_REMEDIAL } from '../modules/m06.js';
 import { M07_GATE, M07_PRACTICE, M07_EXTRA, M07_REMEDIAL } from '../modules/m07.js';
 import { M08_GATE, M08_PRACTICE, M08_EXTRA, M08_REMEDIAL } from '../modules/m08.js';
+import { M09_GATE, M09_PRACTICE, M09_EXTRA, M09_REMEDIAL } from '../modules/m09.js';
+import { M10_GATE, M10_PRACTICE, M10_EXTRA, M10_REMEDIAL } from '../modules/m10.js';
+import { M11_GATE, M11_PRACTICE, M11_EXTRA, M11_REMEDIAL } from '../modules/m11.js';
+import { M12_GATE, M12_PRACTICE, M12_EXTRA, M12_REMEDIAL } from '../modules/m12.js';
 import { CHECKPOINT_A } from './ca.js';
 import { CHECKPOINT_B } from './cb.js';
+import { CHECKPOINT_C } from './cc.js';
 import { PLACEMENT_A, PLACEMENT_B } from './placement.js';
 
 const byId = (...list) => Object.fromEntries(list.map((a) => [a.id, a]));
@@ -29,4 +34,9 @@ export const ASSESSMENTS = byId(
   M07_GATE, M07_PRACTICE, M07_EXTRA, M07_REMEDIAL,
   M08_GATE, M08_PRACTICE, M08_EXTRA, M08_REMEDIAL,
   CHECKPOINT_B, PLACEMENT_A, PLACEMENT_B,
+  M09_GATE, M09_PRACTICE, M09_EXTRA, M09_REMEDIAL,
+  M10_GATE, M10_PRACTICE, M10_EXTRA, M10_REMEDIAL,
+  M11_GATE, M11_PRACTICE, M11_EXTRA, M11_REMEDIAL,
+  M12_GATE, M12_PRACTICE, M12_EXTRA, M12_REMEDIAL,
+  CHECKPOINT_C,
 );

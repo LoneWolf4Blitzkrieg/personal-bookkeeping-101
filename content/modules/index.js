@@ -9,6 +9,10 @@ import { M05_LESSON } from './m05.js';
 import { M06_LESSON } from './m06.js';
 import { M07_LESSON } from './m07.js';
 import { M08_LESSON } from './m08.js';
+import { M09_LESSON } from './m09.js';
+import { M10_LESSON } from './m10.js';
+import { M11_LESSON } from './m11.js';
+import { M12_LESSON } from './m12.js';
 
 export const MODULE_CONTENT = {
   prereq: PREREQ_LESSON,
@@ -20,4 +24,8 @@ export const MODULE_CONTENT = {
   m06: M06_LESSON,
   m07: M07_LESSON,
   m08: M08_LESSON,
+  m09: M09_LESSON,
+  m10: M10_LESSON,
+  m11: M11_LESSON,
+  m12: M12_LESSON,
 };

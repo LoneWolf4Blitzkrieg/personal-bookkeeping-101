@@ -37,6 +37,9 @@ const expectations = {
   untaughtIdeaInPractice: /trial-balance.*not taught yet/,
   sourceDocNotCents: /cents/,
   negativeAnswer: /below zero/,
+  reportTooEarly: /trial balance is taught in Module 9/,
+  badReport: /does not balance/,
+  statementNotAddingUp: /statement.*does not add up/,
 };
 
 for (const [name, pattern] of Object.entries(expectations)) {
@@ -81,8 +84,8 @@ test('the sample lesson passes the content rules', async () => {
   assert.deepEqual(checkModule(DEMO_LESSON), []);
 });
 
-test('Modules 1–8 each have a lesson, a gate, a practice set, extra and remedial practice, and recall questions', async () => {
-  for (const id of ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08']) {
+test('Modules 1–12 each have a lesson, a gate, a practice set, extra and remedial practice, and recall questions', async () => {
+  for (const id of ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12']) {
     assert.ok(MODULE_CONTENT[id], `${id} lesson`);
     assert.ok(MODULE_CONTENT[id].recallTemplates?.length >= 1, `${id} recall`);
     for (const suffix of ['', '-practice', '-extra', '-remedial']) assert.ok(ASSESSMENTS[id + suffix], `${id}${suffix}`);
@@ -116,7 +119,7 @@ test('the placement tests cover every module they skip', () => {
 // Measured by points (the closest stand-in for time); one indivisible 4-point
 // task can take a set to a third.
 test('from Module 5, practice sets open with recall and draw 20% to 33% of their points from earlier modules', () => {
-  for (const id of ['m05', 'm06', 'm07', 'm08']) {
+  for (const id of ['m05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12']) {
     const set = ASSESSMENTS[`${id}-practice`].templates;
     const points = (list) => list.reduce((s, t) => s + t.points, 0);
     const share = points(set.filter((t) => t.module !== id)) / points(set);
@@ -148,15 +151,16 @@ test('a check\'s numeric answers are never below zero, over many parameter value
   assert.ok(checkAssessment({ id: 'fx-practice', kind: 'practice', templates: [t] }).some((p) => /below zero/.test(p)));
 });
 
-test('the producing question of every gate from Module 5 asks for entries of the same size in all four versions, and covers every scenario', async () => {
+test('the producing question of every gate from Module 5 is the same size in all four versions, and entries cover every scenario', async () => {
   const { gateVersions } = await import('../js/items.js');
-  for (const id of ['m05', 'm06', 'm07', 'm08']) {
+  for (const id of ['m05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12']) {
     const gate = ASSESSMENTS[id];
     const producing = gate.templates.find((t) => t.part === 'producing');
     const items = gateVersions(gate.templates, id).map((v) => v.find((i) => i.part === 'producing'));
-    assert.equal(new Set(items.map((i) => i.answer.length)).size, 1, `${id}: entries of different sizes`);
+    assert.equal(new Set(items.map((i) => (i.answer ?? i.fields).length)).size, 1, `${id}: versions of different sizes`);
+    if (producing.kind !== 'entry') continue;
     const scenarios = Object.values(producing.params).find((s) => Array.isArray(s.byVersion))?.byVersion ?? [];
-    assert.ok(scenarios.length >= 2, `${id}: the producing question should cycle scenarios by version`);
+    assert.ok(scenarios.length >= 2, `${id}: the producing entry should cycle scenarios by version`);
     assert.deepEqual(new Set(items.map((i) => Object.values(i.params).find((v) => scenarios.includes(v)))), new Set(scenarios), `${id}: some scenarios never appear`);
   }
 });
@@ -174,4 +178,31 @@ test('credit card pages stay within their limit, and the card-balance question n
       if (t.id.startsWith('m08-card-balance')) assert.ok(item.answer > 0, `${t.id} seed ${seed}: the payment clears the whole balance`);
     }
   }
+});
+
+test('Checkpoint C covers every module from 9 to 12 and has two versions', async () => {
+  const { assessmentVersions } = await import('../js/items.js');
+  const cc = ASSESSMENTS.cc;
+  assert.equal(cc.kind, 'checkpoint');
+  assert.deepEqual([...new Set(cc.templates.map((t) => t.module))], ['m09', 'm10', 'm11', 'm12']);
+  assert.equal(assessmentVersions(cc.templates, 'cc', { count: 2 }).length, 2);
+});
+
+test('Jordan\'s June books agree from the trial balance (Module 9) to the statements (Module 12)', async () => {
+  const { reportRows } = await import('../js/reports.js');
+  const { runningBalances } = await import('../js/ledger.js');
+  const m09 = MODULE_CONTENT.m09.steps.find((s) => s.id === 'trial-balance').report;
+  const m12 = MODULE_CONTENT.m12.steps;
+  const value = (report, key) => reportRows(report).rows.find((r) => r.key === key).values[0];
+  const is = m12.find((s) => s.id === 'income-statement').report;
+  const nwStep = m12.find((s) => s.id === 'net-worth-statement');
+  // Every income and expense line of the trial balance is on the income statement.
+  const lines = [...is.income, ...is.expenses].map((x) => [x.no, x.amount]).sort((a, b) => a[0] - b[0]);
+  const fromTb = m09.accounts.filter((a) => a.no >= 40).map((a) => [a.no, a.debit ?? a.credit]);
+  assert.deepEqual(lines, fromTb);
+  // Opening net worth + what June added = the net-worth statement = the Net worth page.
+  const opening = m09.accounts.find((a) => a.no === 30).credit;
+  const page = runningBalances(nwStep.ledger).at(-1).balance;
+  assert.equal(opening + value(is, 'net'), page);
+  assert.equal(value(nwStep.report, 'net'), page);
 });

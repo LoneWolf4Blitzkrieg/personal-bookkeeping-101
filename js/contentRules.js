@@ -8,6 +8,7 @@ import { entryBalances, runningBalances } from './ledger.js';
 import { assessmentVersions, generateItem } from './items.js';
 import { formatCents } from './money.js';
 import { ledgerPanelHTML } from './lessonView.js';
+import { checkReport } from './reports.js';
 
 const PREREQ_IDEAS = PREREQUISITE.ideas;
 const ALL_IDEAS = new Set([...PREREQ_IDEAS, ...MODULES.flatMap((m) => m.ideas)]);
@@ -32,6 +33,25 @@ function walk(node, path, visit) {
 
 const isLedgerPage = (o) => Array.isArray(o.rows) && typeof o.type === 'string';
 const isJournalPage = (o) => Array.isArray(o.entries) && o.entries.every((e) => Array.isArray(e?.lines));
+const isReport = (o) => typeof o.report === 'string';
+// Each report is shown only once the module that teaches it has been reached.
+const REPORT_IDEAS = {
+  'trial-balance': ['trial-balance', 'The trial balance is taught in Module 9'],
+  reconciliation: ['bank-reconciliation', 'Bank reconciliation is taught in Module 10'],
+  budget: ['budget-as-ledger', 'The budget is taught in Module 11'],
+  'income-statement': ['income-statement', 'The income statement is taught in Module 12'],
+  'net-worth': ['net-worth-statement', 'The net-worth statement is taught in Module 12'],
+};
+
+// A bank statement's lines marked 'in' and 'out' must take its first
+// balance to its last.
+function statementProblems(doc) {
+  const moves = doc.lines.filter((l) => l[2] === 'in' || l[2] === 'out');
+  const balances = doc.lines.filter((l) => typeof l[1] === 'number' && !l[2]);
+  if (moves.length === 0 || balances.length < 2) return [];
+  const end = balances[0][1] + moves.reduce((s, [, v, d]) => s + (d === 'in' ? v : -v), 0);
+  return end === balances[balances.length - 1][1] ? [] : [`the statement does not add up: it should close at ${end} cents.`];
+}
 const hasAmount = (r) => Boolean(r.debit || r.credit);
 const ASK_KEYS = new Set(['debit', 'credit', 'balance', 'side']);
 
@@ -80,6 +100,11 @@ function checkCommon(node, path, position, problems) {
       o.entries.forEach((e, i) => { if (!entryBalances(e)) problems.push(`${p}.entries[${i}]: this entry does not balance.`); });
     }
     if (o.journal && !entryBalances(o.journal)) problems.push(`${p}.journal: this entry does not balance.`);
+    if (isReport(o)) {
+      const [idea, words] = REPORT_IDEAS[o.report] ?? [];
+      if (idea && !taught.has(idea)) problems.push(`${p}: ${words}; do not show it before then.`);
+      for (const q of checkReport(o)) problems.push(`${p}: ${q}`);
+    }
     for (const id of [o.source, ...(Array.isArray(o.sources) ? o.sources : [])].filter((x) => typeof x === 'string')) {
       if (!SOURCES[id]) problems.push(`${p}: unknown source "${id}".`);
     }
@@ -95,6 +120,7 @@ function checkCommon(node, path, position, problems) {
       if (f.answer < 0) problems.push(`${p}: "${f.label}" has an answer below zero.`);
     }
     if (o.sourceDoc) {
+      if (o.sourceDoc.kind === 'statement') for (const q of statementProblems(o.sourceDoc)) problems.push(`${p}.sourceDoc: ${q}`);
       for (const [label, value] of o.sourceDoc.lines ?? []) {
         if (typeof value === 'number' && !Number.isSafeInteger(value)) problems.push(`${p}.sourceDoc: "${label}" must be whole cents.`);
       }

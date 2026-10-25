@@ -85,3 +85,15 @@ test('citations can be drawn for any step or question that names its sources', a
   assert.match(citationHTML({ sources: ['fed-g19-2026q2'] }), /Source: .*22\.15%.*Federal Reserve/);
   assert.equal(citationHTML({ sources: [] }), '');
 });
+
+test('reports are drawn beside a step with the other pages, and a statement shows money in and out', async () => {
+  const { sourceDocHTML } = await import('../js/lessonView.js');
+  const report = { report: 'net-worth', name: 'Jordan', date: '2026-06-30', assets: [{ no: 2, name: 'Spending bucket', amount: 41200 }], liabilities: [], ask: ['net'] };
+  const html = ledgerPanelHTML({ reports: [report] });
+  assert.match(html, /Net-worth statement/);
+  assert.match(html, /to work out/);
+  assert.match(ledgerPanelHTML({ report }, { revealed: true }), /class="money col-money answer">412\.00/);
+  const doc = sourceDocHTML({ kind: 'statement', title: 'Bank statement', lines: [['Jun 5 Paycheck', 5000, 'in'], ['Jun 9 Debit card', 2000, 'out']] });
+  assert.match(doc, /\+\$50\.00/);
+  assert.match(doc, /−\$20\.00/);
+});

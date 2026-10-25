@@ -3,6 +3,7 @@
 import { percentOf, formatCents } from '../js/money.js';
 import { paycheck } from '../js/paycheck.js';
 import { TAX_2026 } from './tax2026.js';
+import { runningBalances } from '../js/ledger.js';
 
 export const money = (cents) => `$${formatCents(cents)}`;
 
@@ -129,6 +130,7 @@ export const CHART = {
   'net-worth': { no: 30, name: 'Net worth', type: 'networth' },
   wages: { no: 40, name: 'Wages', type: 'income' },
   gifts: { no: 41, name: 'Gifts received', type: 'income' },
+  'interest-earned': { no: 42, name: 'Interest earned', type: 'income' },
   taxes: { no: 50, name: 'Taxes withheld', type: 'expense' },
   rent: { no: 51, name: 'Rent', type: 'expense' },
   groceries: { no: 52, name: 'Groceries', type: 'expense' },
@@ -139,6 +141,7 @@ export const CHART = {
   donations: { no: 57, name: 'Donations', type: 'expense' },
   'card-interest': { no: 58, name: 'Card interest', type: 'expense' },
   household: { no: 59, name: 'Household supplies', type: 'expense' },
+  'bank-fees': { no: 60, name: 'Bank fees', type: 'expense' },
 };
 
 // Labels give the number and name only: from Module 5 the learner tells the
@@ -173,4 +176,15 @@ export function journal(entries, { sheetNo = 1, name = 'Jordan (example)' } = {}
       lines: lines.map(([account, debit, credit, posted = false]) => ({ account, label: CHART[account].name, debit, credit, folio: posted ? String(CHART[account].no) : '' })),
     })),
   };
+}
+
+// A trial balance built from ledger pages: each page's closing balance on
+// its side, in account-number order. Pages with no balance are left out.
+export function trialBalanceFrom(pages, { name = pages[0]?.name ?? '', date, ask } = {}) {
+  const accounts = pages
+    .map((page) => ({ page, last: runningBalances(page).at(-1) }))
+    .filter(({ last }) => last && last.balance > 0)
+    .sort((a, b) => a.page.accountNo - b.page.accountNo)
+    .map(({ page, last }) => ({ no: page.accountNo, name: page.account, [last.side === 'Dr' ? 'debit' : 'credit']: last.balance }));
+  return { report: 'trial-balance', name, date, accounts, ...(ask ? { ask } : {}) };
 }

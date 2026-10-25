@@ -49,4 +49,7 @@ export const badModules = {
   untaughtIdeaInPractice: (() => { const m = clone(goodModule); m.practice = { recall: [{ id: 'r1', uses: ['trial-balance'] }] }; return m; })(),
   sourceDocNotCents: (() => { const m = clone(goodModule); step(m).sourceDoc = { kind: 'paystub', title: 'Pay stub', lines: [['Gross pay', 1212.5]] }; return m; })(),
   negativeAnswer: (() => { const m = clone(goodModule); m.steps.push({ id: 'n', kind: 'predict', text: ['Balance?'], uses: ['debit-credit-rules'], answer: -500, explanation: 'x' }); return m; })(),
+  reportTooEarly: (() => { const m = clone(goodModule); step(m).report = { report: 'trial-balance', name: 'Jordan', date: '2026-06-30', accounts: [{ no: 3, name: 'Saving bucket', debit: 18180 }, { no: 1, name: 'Checking', credit: 18180 }] }; return m; })(),
+  badReport: (() => { const m = clone(goodModule); m.id = 'm09'; m.position = 'm09'; step(m).reports = [{ report: 'trial-balance', name: 'Jordan', date: '2026-06-30', accounts: [{ no: 3, name: 'Saving bucket', debit: 18180 }, { no: 1, name: 'Checking', credit: 18100 }] }]; return m; })(),
+  statementNotAddingUp: (() => { const m = clone(goodModule); step(m).sourceDoc = { kind: 'statement', title: 'Bank statement', lines: [['Opening balance', 10000], ['Jun 5 Paycheck', 5000, 'in'], ['Jun 9 Debit card', 2000, 'out'], ['Closing balance', 14000]] }; return m; })(),
 };

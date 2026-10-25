@@ -3,6 +3,7 @@
 
 import { escapeHTML } from './html.js';
 import { ledgerHTML, journalHTML } from './ledgerView.js';
+import { reportHTML } from './reports.js';
 import { gradeItem } from './grade.js';
 import { formatCents } from './money.js';
 import { SOURCES } from '../content/sources.js';
@@ -13,22 +14,25 @@ export function gradePrediction(step, typed) {
 }
 
 // A source document drawn beside the ledger: a pay stub, receipt, check or
-// bank statement, as { kind, title, lines: [[label, value], ...], note }.
-// Numbers are whole cents and are written as money; text is shown as is.
+// bank statement, as { kind, title, lines: [[label, value, direction?], ...], note }.
+// Numbers are whole cents and are written as money; text is shown as is. A
+// statement line marked 'in' or 'out' shows its sign.
+const SIGNS = { in: '+', out: '−' };
 export function sourceDocHTML(doc) {
-  const rows = doc.lines.map(([label, value]) => {
-    const shown = typeof value === 'number' ? `$${formatCents(value)}` : value;
+  const rows = doc.lines.map(([label, value, direction]) => {
+    const shown = typeof value === 'number' ? `${SIGNS[direction] ?? ''}$${formatCents(value)}` : value;
     return `<tr><th scope="row">${escapeHTML(label)}</th><td>${escapeHTML(shown)}</td></tr>`;
   }).join('');
   return `<figure class="source-doc source-${escapeHTML(doc.kind)}"><figcaption>${escapeHTML(doc.title)}</figcaption><table>${rows}</table>${doc.note ? `<p class="source-note">${escapeHTML(doc.note)}</p>` : ''}</figure>`;
 }
 
 // Everything drawn beside a step or a question: source document, journal
-// page, and one or more ledger pages. Used by lessons and checks alike.
+// page, reports, and one or more ledger pages. Used by lessons and checks alike.
 export function ledgerPanelHTML(step, { revealed = false } = {}) {
   const parts = [];
   if (step.sourceDoc) parts.push(sourceDocHTML(step.sourceDoc));
   if (step.journalPage) parts.push(journalHTML(step.journalPage, { highlightEntry: step.highlightEntry ?? null }));
+  for (const report of [...(step.report ? [step.report] : []), ...(step.reports ?? [])]) parts.push(reportHTML(report, { showAnswers: revealed }));
   const pages = [...(step.ledger ? [step.ledger] : []), ...(step.ledgers ?? [])];
   pages.forEach((page, i) => parts.push(ledgerHTML(page, { highlightRow: i === 0 ? (step.highlightRow ?? null) : null, showAnswers: revealed })));
   return parts.join('');

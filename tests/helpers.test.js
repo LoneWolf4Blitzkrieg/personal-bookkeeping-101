@@ -98,3 +98,20 @@ test('journal builds entries whose posted lines carry the ledger account number'
   ]);
   assert.equal(page.entries[0].folio, 'J1');
 });
+
+test('trialBalanceFrom lists each page\'s closing balance on its side, from the pages themselves', async () => {
+  const { chartPage, trialBalanceFrom } = await import('../content/helpers.js');
+  const pages = [
+    chartPage('spending', [['2026-06-01', 'Brought forward', '', 41200, 0], ['2026-06-09', 'Groceries', 'J2', 0, 3610]]),
+    chartPage('groceries', [['2026-06-09', 'Desert Mart', 'J2', 3610, 0]]),
+    chartPage('net-worth', [['2026-06-01', 'Opening', '', 0, 41200]]),
+  ];
+  const tb = trialBalanceFrom(pages, { date: '2026-06-30' });
+  assert.deepEqual(tb.accounts, [
+    { no: 2, name: 'Spending bucket', debit: 37590 },
+    { no: 30, name: 'Net worth', credit: 41200 },
+    { no: 52, name: 'Groceries', debit: 3610 },
+  ]);
+  assert.equal(tb.report, 'trial-balance');
+  assert.equal(tb.name, 'Jordan (example)');
+});

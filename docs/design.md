@@ -70,7 +70,7 @@ Paper or digital **[Raul Bautista]**: the learner chooses. Digital means typing 
 
 ## 4. Course structure
 
-The proposal's template: 16 modules of 2.5 hours (1 hour instruction, 90 minutes practice), about two a week over eight weeks, mastery gate at the end of every module, cumulative checkpoints after modules 4, 8 and 12, final project in modules 15 and 16. The main course may run past 40 hours if it needs to **[Raul Bautista]**; this overrides the proposal's rule of cutting scope instead.
+The proposal's template: 16 modules of 2.5 hours (1 hour instruction, 90 minutes practice), about two a week over eight weeks, mastery gate at the end of every module, cumulative checkpoints after modules 4, 8 and 12, final project in modules 15 and 16. The main course may run past 40 hours if it needs to, up to 80 hours in all **[Raul Bautista, cap of 80 hours set October 24, 2026]**; this overrides the proposal's rule of cutting scope instead.
 
 Module outline **[Claude's call; content topics are Raul Bautista's]**. Each teaching module introduces three ideas (42 in all, exactly the proposal's cap; this is why the extension allowance matters):
 
