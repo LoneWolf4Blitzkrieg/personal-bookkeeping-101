@@ -276,10 +276,10 @@ export function startAssessment(root, id, requestedVersion) {
     const passedOn = store.load().examPassedAt;
     if (session.meta.kind === 'exam' && session.results.length === 0 && !examBegun && passedOn && !practiceChosen) {
       itemBox.innerHTML = `<div class="feedback feedback-right"><p><strong>You passed the final exam on ${escapeHTML(longDate(passedOn))}.</strong></p>
-        <p><a class="button" href="certificate.html">Get your certificate</a> <button class="button button-secondary" type="button" data-action="practice-exam">Take the exam again for practice (your pass stays)</button></p></div>`;
+        <p><button class="button button-secondary" type="button" data-action="practice-exam">Take the exam again for practice (your pass stays)</button></p></div>`;
       itemBox.insertAdjacentHTML('beforeend', celebrationHTML());
       wireCelebration(itemBox.querySelector('.celebration'));
-      itemBox.querySelector('a.button')?.focus();
+      itemBox.querySelector('.celebration a.button')?.focus();
       return;
     }
     // Before the exam's first question: the author's note on honest work.
