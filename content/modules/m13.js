@@ -175,7 +175,7 @@ const explainFund = explainTemplate({
 
 // --- Lesson -------------------------------------------------------------------
 
-// Luis's July: four needs and two wants; the fund grows by transfers.
+// Luis's July: five needs and two wants; the fund grows by transfers.
 const LUIS_PLAN = [bline('rent', 45000), bline('groceries', 26000), bline('transport', 6400), bline('phone', 4500), bline('utilities', 4000), bline('eating-out', 6000), bline('fun', 4000)];
 const LUIS_ESSENTIALS = 45000 + 26000 + 6400 + 4500 + 4000; // $859.00
 const luisFund = (extra = [], opts = {}) => fundPage('Luis (example)', 90000, 7500, 7500, extra, opts);
@@ -293,7 +293,7 @@ export const M13_LESSON = {
       id: 'independent', kind: 'predict', title: 'On your own', uses: ['fund-sizing'],
       text: ['Ana\'s essential expenses are $780.00 a month, and her Emergency fund holds $1,150.00. How much more does she need for the three-month minimum?'],
       answer: 3 * 78000 - 115000,
-      misconceptions: [{ cents: 115000 - 78000, explanation: 'The minimum is three months: 3 × $780.00.' }],
+      misconceptions: [{ cents: 3 * 78000, explanation: 'That is the whole minimum. Subtract what the fund already holds.' }],
       explanation: '3 × $780.00 = $2,340.00. $2,340.00 − $1,150.00 = $1,190.00.',
     },
     {

@@ -297,6 +297,13 @@ export function validateProgress(data) {
     if (typeOf(m) !== 'object' || !Array.isArray(m.steps) || typeof m.timeMs !== 'number' || !Array.isArray(m.gateAttempts) || typeof m.passed !== 'boolean') {
       return `This progress file has a damaged record for ${id}.`;
     }
+    if (m.project !== undefined) {
+      const pr = m.project;
+      const indices = (list) => Array.isArray(list) && list.every((i) => Number.isInteger(i) && i >= 0);
+      if (typeOf(pr) !== 'object' || ![null, 'sample', 'own'].includes(pr.path) || typeof pr.figuresOk !== 'boolean' || !indices(pr.checklist) || !indices(pr.rubric)) {
+        return `This progress file has a damaged final-project record for ${id}.`;
+      }
+    }
   }
   for (const group of ['checkpoints', 'placement', 'other']) {
     for (const [id, c] of Object.entries(data[group])) {

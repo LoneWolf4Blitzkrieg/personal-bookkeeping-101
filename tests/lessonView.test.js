@@ -128,3 +128,13 @@ test('a final-project module ends with a link onward only once it is complete', 
   assert.ok(!open.includes('Take the module check'), 'no module check');
   assert.match(stepHTML(module, 0, { project: { path: 'own', completed: true } }), /href="lesson.html\?m=m16"/);
 });
+
+test('a project counts only ticks that belong to its step', async () => {
+  const { projectReady } = await import('../js/lessonView.js');
+  const step = { checklist: ['A', 'B'], rubric: ['C'] };
+  assert.equal(projectReady(step, { path: 'own', checklist: [0, 1], rubric: [0] }), true);
+  assert.equal(projectReady(step, { path: 'own', checklist: [0, 7], rubric: [0] }), false, 'an index past the list');
+  assert.equal(projectReady(step, { path: 'own', checklist: [0, 0], rubric: [0] }), false, 'the same item twice');
+  assert.equal(projectReady(step, { path: 'sample', figuresOk: false, checklist: [0, 1], rubric: [0] }), false, 'sample figures not yet right');
+  assert.equal(projectReady(step, { path: null, checklist: [0, 1], rubric: [0] }), false, 'no month chosen');
+});

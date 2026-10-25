@@ -46,7 +46,7 @@ const priceRise = num('m14-price-after', 'interpreting', { price: { min: 2000, m
   explanation: `3.7% of ${money(p.price)} is ${money(percentOf(p.price, INFLATION))} (rounded to the cent). ${money(p.price)} + ${money(percentOf(p.price, INFLATION))} = ${money(priceAfter(p.price))}.`,
 }));
 
-const cashShort = num('m14-cash-short', 'interpreting', { cash: { min: 10000, max: 200000, step: 1 }, name: { pick: NAMES } }, (p) => {
+const cashShort = num('m14-cash-short', 'interpreting', { cash: { min: 60000, max: 200000, step: 1 }, name: { pick: NAMES } }, (p) => {
   const rise = percentOf(p.cash, INFLATION);
   return {
     prompt: `${p.name} kept ${money(p.cash)} in cash in a safe for a year. A year ago it would have bought a month of groceries and bills. Since then, those prices rose 3.7%. How far short of buying the same things is the cash now?`,
@@ -95,23 +95,23 @@ const cdBalance = num('m14-cd-balance', 'interpreting', { amount: { min: 30000, 
 });
 
 // A known cost, divided into equal monthly amounts (built from whole cents
-// per month, so it divides exactly).
-const sinkingMonthly = num('m14-sinking-monthly', 'interpreting', { per: { min: 500, max: 9000, step: 1 }, months: { pick: [4, 6, 8, 9, 10, 12] }, name: { pick: NAMES } }, (p) => ({
+// per month, so it divides exactly). The bill comes to $72.00–$360.00.
+const sinkingMonthly = num('m14-sinking-monthly', 'interpreting', { per: { min: 1200, max: 3000, step: 1 }, months: { pick: [6, 8, 9, 10, 12] }, name: { pick: NAMES } }, (p) => ({
   prompt: `${p.name}'s yearly renter's insurance bill of ${money(p.per * p.months)} is due in ${p.months} months. How much should ${p.name} move into the Sinking fund each month to have it ready?`,
   answer: p.per,
   misconceptions: [{ cents: p.per * p.months, explanation: 'That is the whole bill. Share it equally across the months until it is due.' }],
   explanation: `${money(p.per * p.months)} ÷ ${p.months} = ${money(p.per)} a month.`,
 }));
 
-// The bill is always less than what was set aside, so something is left.
+// The phone always costs less than what was set aside, so something is left.
 const sinkingLeft = num('m14-sinking-left', 'interpreting', { opening: { min: 100, max: 6000, step: 1 }, per: { min: 2000, max: 6000, step: 1 }, left: { min: 100, max: 2500, step: 1 }, name: { pick: NAMES } }, (p) => {
   const saved = p.opening + 3 * p.per;
   const bill = saved - p.left;
   return {
-    prompt: `${p.name} saved for a yearly bus pass on the Sinking fund page, then paid for it. What does the page show after the last line?`,
+    prompt: `${p.name} saved for a new phone on the Sinking fund page, then bought it. What does the page show after the last line?`,
     ledger: chartPage('sinking', [
       ['2026-08-01', 'Brought forward', '', p.opening, 0], ['2026-08-07', 'From Saving bucket', 'J2', p.per, 0, true], ['2026-09-07', 'From Saving bucket', 'J5', p.per, 0, true],
-      ['2026-10-07', 'From Saving bucket', 'J8', p.per, 0, true], ['2026-10-15', 'Yearly bus pass', 'J9', 0, bill, true],
+      ['2026-10-07', 'From Saving bucket', 'J8', p.per, 0, true], ['2026-10-15', 'New phone', 'J9', 0, bill, true],
     ], { name: p.name, askFrom: 4 }),
     highlightRow: 4,
     answer: p.left,
@@ -120,7 +120,7 @@ const sinkingLeft = num('m14-sinking-left', 'interpreting', { opening: { min: 10
   };
 });
 
-const RECORD_ACCOUNTS = accountOptions(['sinking', 'emergency', 'saving', 'spending', 'insurance', 'transport', 'interest-earned']);
+const RECORD_ACCOUNTS = accountOptions(['sinking', 'emergency', 'saving', 'spending', 'insurance', 'phone', 'interest-earned']);
 const RECORD_EVENTS = {
   'set-aside': (p) => ({
     prompt: `${p.name} moves ${money(p.amount)} from the Saving bucket into the Sinking fund for next year's renter's insurance. Record the entry.`,
@@ -137,15 +137,15 @@ const RECORD_EVENTS = {
     answer: [{ account: 'saving', debit: p.amount, credit: 0 }, { account: 'interest-earned', debit: 0, credit: p.amount }],
     explanation: 'The Saving bucket grows, so debit it. Interest is income, so credit Interest earned.',
   }),
-  'bus-pass': (p) => ({
-    prompt: `${p.name} saved for a yearly bus pass in the Sinking fund. The pass costs ${money(p.amount)}, paid from it. Record the entry.`,
-    answer: [{ account: 'transport', debit: p.amount, credit: 0 }, { account: 'sinking', debit: 0, credit: p.amount }],
-    explanation: 'The pass is a transportation expense, so debit it. Credit the Sinking fund, which saved for it.',
+  'new-phone': (p) => ({
+    prompt: `${p.name} saved for a new phone in the Sinking fund. The phone costs ${money(p.amount)}, paid from it. Record the entry.`,
+    answer: [{ account: 'phone', debit: p.amount, credit: 0 }, { account: 'sinking', debit: 0, credit: p.amount }],
+    explanation: 'A new phone is recorded on the Phone expense page, so debit it. Credit the Sinking fund, which saved for it.',
   }),
 };
 const recordPlan = {
   id: 'm14-record-plan', module: 'm14', kind: 'entry', part: 'producing', points: 4,
-  params: { amount: { min: 1000, max: 60000, step: 1 }, name: { pick: NAMES }, event: { byVersion: Object.keys(RECORD_EVENTS) } },
+  params: { amount: { min: 6000, max: 40000, step: 1 }, name: { pick: NAMES }, event: { byVersion: Object.keys(RECORD_EVENTS) } },
   build: (p) => ({ accounts: RECORD_ACCOUNTS, ...RECORD_EVENTS[p.event](p) }),
 };
 
@@ -257,7 +257,7 @@ export const M14_LESSON = {
     {
       id: 'sinking', kind: 'explain', title: 'Sinking funds', uses: ['sinking-funds', 'transfers', 'journal-entry', 'fund-rules'],
       text: [
-        'Some costs are not emergencies, because you know they are coming. Examples are a yearly renter\'s insurance bill, a bus pass or a phone you will need to replace.',
+        'Some costs are not emergencies, because you know they are coming. Examples are a yearly renter\'s insurance bill, school supplies, or a phone you will need to replace.',
         'A sinking fund saves for them a little each month. Divide the cost by the months until it is due. Keep it on its own page: Sinking fund, account 9, another named part of the Saving bucket. Each month, debit Sinking fund and credit Saving bucket.',
         'Eli\'s renter\'s insurance is $180.00 a year, due in 12 months. $180.00 ÷ 12 = $15.00 a month. When the bill comes, Eli pays it from the Sinking fund, so the emergency fund stays whole.',
       ],
@@ -275,7 +275,7 @@ export const M14_LESSON = {
     },
     {
       id: 'guided', kind: 'predict', title: 'Finish the worked steps', uses: ['sinking-funds'],
-      text: ['A yearly bus pass costs $96.00 and is due in 8 months. Step 1 is done: there are 8 monthly transfers. Finish Step 2: how much is each transfer?'],
+      text: ['School supplies for the fall will cost $96.00, needed in 8 months. Step 1 is done: there are 8 monthly transfers. Finish Step 2: how much is each transfer?'],
       answer: 9600 / 8,
       misconceptions: [{ cents: 9600, explanation: 'Share the $96.00 across the 8 transfers.' }],
       explanation: '$96.00 ÷ 8 = $12.00.',

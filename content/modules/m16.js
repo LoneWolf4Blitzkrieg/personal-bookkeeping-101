@@ -17,12 +17,15 @@ const SPENDING_MONTH_END = S.balance('spending', 'month');
 const ADDED = S.TOTAL_INCOME - S.TOTAL_EXPENSES;
 const UNDER = S.BUDGET_TOTAL - S.ACTUAL_TOTAL;
 
+// The project's figures are running balances and column totals from the
+// learner's own pages, printed nowhere in the course, so they can only be got
+// by doing the work.
+const spendingCredits = S.pageFor('spending', 'month').rows.reduce((sum, r) => sum + r.credit, 0);
 export const M16_FIGURES = [
-  ['Spending bucket balance at month-end, before the bank statement', SPENDING_MONTH_END],
-  ['Adjusted bank balance on the reconciliation', S.ADJUSTED_BANK],
-  ['Trial balance total (each column), after the bank items', S.TRIAL_BALANCE_TOTAL],
-  ['Added to net worth this month', ADDED],
-  ['Net worth on the last day of the month', S.NET_WORTH_END],
+  ['Spending bucket just after the rent check (July 15)', S.balanceAfter('spending', '2026-07-15', 'Rent share, check 215')],
+  ['Credit card balance just after the household supplies (July 14)', S.balanceAfter('card', '2026-07-14', 'Household supplies, credit card')],
+  ['Total of the Spending bucket\'s Credits column for the month, before the bank items', spendingCredits],
+  ['Blow money just after the movie (July 22)', S.balanceAfter('blow', '2026-07-22', 'Movie, debit card, from Blow money')],
 ].map(([label, answer]) => ({ label, answer }));
 
 export const M16_LESSON = {
@@ -37,7 +40,7 @@ export const M16_LESSON = {
       text: [
         'Record every event in your journal, in date order, from its source document: pay stubs, receipts, checks, bills. Then post each entry to its ledger pages, writing the folio references and the posted ticks.',
         'Riley\'s July is listed beside this step and on the printable sample-month sheet. Here is the first page of Riley\'s journal as a model. Record the rest yourself.',
-        'Keep the plan from Module 15: two transfers into the Emergency fund and one into the Sinking fund.',
+        `Keep the plan from Module 15: ${money(S.TO_EMERGENCY)} into the Emergency fund after each paycheck, and ${money(S.TO_SINKING)} into the Sinking fund once a month. The July 25 line is both: ${money(S.TO_EMERGENCY)} + ${money(S.TO_SINKING)}.`,
       ],
       prompt: 'Why record from the source documents rather than from memory?',
       promptAnswer: 'The documents show the exact date and amount, so the books match what really happened, and you can check the bank statement against them later.',
@@ -57,8 +60,9 @@ export const M16_LESSON = {
       id: 'reconcile', kind: 'explain', title: 'Match the bank', uses: ['bank-reconciliation', 'outstanding-items'],
       text: [
         'When the bank statement arrives, tick each of its lines against your books.',
-        'Riley finds two things in the books that are not on the statement yet: check 216 for the utilities share, which has not been cashed, and the birthday gift, which was deposited after the statement closed.',
+        'Riley finds two things in the books that are not on the statement yet: check 216 for the utilities share, which has not been cashed, and the birthday gift, deposited late on July 31, after the bank had made the statement.',
         'Riley also finds two things on the statement that are not in the books: interest the bank paid, and a fee for using another bank\'s ATM. Reconcile the statement with the pages held at the bank.',
+        'Riley keeps the Saving bucket and its two funds in a savings account at the same bank, so one statement covers everything at Desert Bank. The bank paid interest on the savings account.',
       ],
       prompt: 'Why is Cash left out of the bank reconciliation?',
       promptAnswer: 'Cash is in the wallet, not at the bank, so the bank statement cannot show it.',

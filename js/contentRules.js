@@ -145,10 +145,12 @@ function checkSteps(module, problems) {
         if (!Array.isArray(s[list]) || s[list].length === 0 || s[list].some((x) => typeof x !== 'string' || !x)) problems.push(`steps[${i}]: a project step needs a ${list} of plain sentences.`);
       }
       if (!Array.isArray(s.figures) || s.figures.length === 0) problems.push(`steps[${i}]: a project step needs the sample month's figures.`);
-      const shown = ledgerPanelHTML(s, { revealed: false }) + (s.text ?? []).join(' ');
+      // The figures prove the learner kept the books, so no step may show
+      // them, not even after a prediction is answered.
+      const everywhere = steps.map((x) => [ledgerPanelHTML(x, { revealed: true }), ...(x.text ?? []), x.explanation, x.prompt, x.promptAnswer, ...(x.misconceptions ?? []).map((m) => m.explanation)].join(' ')).join(' ');
       for (const f of s.figures ?? []) {
         if (!Number.isSafeInteger(f.answer) || f.answer < 0) problems.push(`steps[${i}]: "${f.label}" needs an answer in whole cents, not below zero.`);
-        else if (shown.includes(formatCents(f.answer))) problems.push(`steps[${i}]: the page shows the figure "${f.label}" (${formatCents(f.answer)}).`);
+        else if (everywhere.includes(formatCents(f.answer))) problems.push(`steps[${i}]: the module shows the figure "${f.label}" (${formatCents(f.answer)}), so it can be copied.`);
       }
     }
     if (s.kind === 'predict') {

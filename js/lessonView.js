@@ -66,8 +66,17 @@ function projectEndHTML(module, completed) {
   const next = module.next ? `<a class="button" href="lesson.html?m=${escapeHTML(module.next.id)}">Go to ${escapeHTML(module.next.title)}</a>` : '';
   const lead = completed
     ? `<p><strong>This part of the final project is complete.</strong></p>${next ? `<p class="lesson-end-links">${next}</p>` : ''}`
-    : '<p><strong>You have reached the end of this part of the final project.</strong> Tick every item above, then mark it complete to open the next module.</p>';
+    : '<p><strong>You have reached the end of this part of the final project.</strong> Choose your month above. If you used the sample month, enter its figures. Then tick every item and mark this part complete to open the next module.</p>';
   return `<div class="lesson-end">${lead}${helpLinksHTML(module)}</div>`;
+}
+
+// True when the project step's conditions are met: a month chosen, the
+// sample month's figures right if it was chosen, and every item ticked (only
+// indices that exist on this step count).
+export function projectReady(step, { path = null, figuresOk = false, checklist = [], rubric = [] } = {}) {
+  const count = (ticked, items) => new Set(ticked.filter((i) => Number.isInteger(i) && i >= 0 && i < items.length)).size;
+  return (path === 'own' || (path === 'sample' && figuresOk))
+    && count(checklist, step.checklist) === step.checklist.length && count(rubric, step.rubric) === step.rubric.length;
 }
 
 // The final project's last step: which month the learner kept, the sample
@@ -77,22 +86,23 @@ function projectEndHTML(module, completed) {
 export function projectHTML(step, state = {}) {
   const { path = null, figuresOk = false, checklist = [], rubric = [], completed = false, figureResults = null } = state;
   const radio = (value, label) => `<label><input type="radio" name="project-path" value="${value}"${path === value ? ' checked' : ''}${completed ? ' disabled' : ''}> ${escapeHTML(label)}</label>`;
-  let html = `<fieldset class="project-path"><legend>Which month did you keep?</legend>${radio('sample', step.sampleLabel ?? 'The sample month')}${radio('own', 'My own month')}</fieldset>`;
+  let html = `<fieldset class="project-path"><legend>Which month did you keep?</legend>${radio('sample', step.sampleLabel ?? 'The sample month')}${radio('own', 'My own month')}<p class="fieldset-note">Choose the month you really kept. The checks only help you if you answer them honestly.</p></fieldset>`;
   if (path === 'sample' && !figuresOk) {
     const fields = step.figures.map((f, i) => {
       const r = figureResults?.[i];
-      const note = r == null ? '' : r ? '<span class="figure-note figure-right">✓ Matches</span>' : '<span class="figure-note figure-wrong">Not yet: recheck this figure in your books</span>';
-      return `<div class="amount-field"><label for="figure-${i}">${escapeHTML(f.label)}</label><div class="answer-row"><span aria-hidden="true">$</span><input id="figure-${i}" name="figure" inputmode="decimal" autocomplete="off" required></div>${note}</div>`;
+      const note = r == null ? '' : r ? `<span class="figure-note figure-right" id="figure-note-${i}">✓ Matches</span>` : `<span class="figure-note figure-wrong" id="figure-note-${i}">Not yet: recheck this figure in your books</span>`;
+      const describe = r == null ? '' : ` aria-describedby="figure-note-${i}"${r ? '' : ' aria-invalid="true"'}`;
+      return `<div class="amount-field"><label for="figure-${i}">${escapeHTML(f.label)}</label><div class="answer-row"><span aria-hidden="true">$</span><input id="figure-${i}" name="figure" inputmode="decimal" autocomplete="off" required${describe}></div>${note}</div>`;
     }).join('');
     html += `<form class="answer-form project-figures" data-kind="project-figures"><p>Enter these figures from your own work on the sample month. All of them must match before the checklist opens.</p>${fields}<button class="button" type="submit">Check my figures</button></form>`;
   }
-  if (path === 'sample' && figuresOk) html += '<p class="feedback feedback-right">All your figures match the sample month\'s books.</p>';
+  if (path === 'sample' && figuresOk) html += '<p class="feedback feedback-right" role="status" tabindex="-1">All your figures match the sample month\'s books.</p>';
   const ready = path === 'own' || (path === 'sample' && figuresOk);
   if (ready) {
     const box = (list, ticked, i, text) => `<li><label><input type="checkbox" data-list="${list}" value="${i}"${ticked.includes(i) ? ' checked' : ''}${completed ? ' disabled' : ''}> ${escapeHTML(text)}</label></li>`;
     html += `<fieldset class="project-list"><legend>Checklist: tick each one you have done</legend><ul class="ticks">${step.checklist.map((c, i) => box('checklist', checklist, i, c)).join('')}</ul></fieldset>`;
     html += `<fieldset class="project-list"><legend>Rubric: tick each one your work meets</legend><ul class="ticks">${step.rubric.map((c, i) => box('rubric', rubric, i, c)).join('')}</ul></fieldset>`;
-    const all = checklist.length === step.checklist.length && rubric.length === step.rubric.length;
+    const all = projectReady(step, state);
     html += completed
       ? `<p class="feedback feedback-right" role="status" tabindex="-1">${escapeHTML(step.completeLabel ?? 'Project')} is marked complete.</p>`
       : `<p><button class="button" type="button" data-action="complete-project"${all ? '' : ' disabled aria-describedby="complete-note"'}>Mark ${escapeHTML(step.completeLabel ?? 'the project')} complete</button></p>${all ? '' : '<p class="feedback-note" id="complete-note">Tick every item in the checklist and the rubric first.</p>'}`;

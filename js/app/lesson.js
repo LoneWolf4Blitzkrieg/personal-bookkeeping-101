@@ -8,7 +8,7 @@ import { parseAmount } from '../money.js';
 import { escapeHTML } from '../html.js';
 import { MODULE_CONTENT } from '../../content/modules/index.js';
 import { DEMO_LESSON } from '../../content/modules/demo.js';
-import { stepHTML, ledgerPanelHTML, gradePrediction } from '../lessonView.js';
+import { stepHTML, ledgerPanelHTML, gradePrediction, projectReady } from '../lessonView.js';
 import { store, update, mountChrome, onExternalChange, trackTime } from './chrome.js';
 
 const CHECK_NAMES = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C', a3: 'Add-on A3' };
@@ -77,6 +77,7 @@ export function startLessonPage(search) {
   body.addEventListener('click', (e) => {
     const action = e.target.closest('[data-action]')?.dataset.action;
     if (!action || index === null) return;
+    if (action === 'next' || action === 'back') figureResults = null;
     if (action === 'next') {
       if (!isDemo) update((p) => markStep(p, module.id, content.steps[index].id));
       index += 1;
@@ -86,7 +87,7 @@ export function startLessonPage(search) {
     if (action === 'complete-project') {
       const step = content.steps[index];
       const state = projectState();
-      const ready = (state.path === 'own' || state.figuresOk) && state.checklist?.length === step.checklist.length && state.rubric?.length === step.rubric.length;
+      const ready = projectReady(step, state);
       if (ready && !state.completed) update((p) => completeModule(p, module.id, new Date().toISOString()));
       renderCourseMap(mapBox, store.load(), module.id, { headingLevel: 3 });
       drawStep(false);
@@ -126,7 +127,7 @@ export function startLessonPage(search) {
       const values = typed.map((t, i) => e.target.querySelectorAll('[name="figure"]')[i].value);
       drawStep(false);
       body.querySelectorAll('[name="figure"]').forEach((x, i) => { x.value = values[i]; });
-      (body.querySelector('.figure-wrong')?.closest('.amount-field')?.querySelector('input') ?? body.querySelector('.project-list input'))?.focus();
+      (body.querySelector('[aria-invalid="true"]') ?? body.querySelector('.project-check .feedback-right'))?.focus();
       return;
     }
     if (e.target.dataset.kind !== 'predict') return;
@@ -156,6 +157,13 @@ export function startLessonPage(search) {
       // a step added later is not skipped).
       const done = new Set(progress.modules[module.id]?.steps ?? []);
       index = content.steps.findIndex((s) => !done.has(s.id));
+      if (content.project) {
+        // A learner comes back to the final project after days of work on
+        // paper: checks answered before stay answered, and a project not yet
+        // complete opens at its checklist.
+        content.steps.forEach((s, i) => { if (s.kind === 'predict' && done.has(s.id)) revealed.add(i); });
+        if (index === -1 && !progress.modules[module.id]?.passed) index = content.steps.length - 1;
+      }
       if (index === -1) index = 0;
     }
     drawStep(false);
@@ -163,7 +171,12 @@ export function startLessonPage(search) {
   }
 
   const opened = draw();
-  onExternalChange(() => { if (index === null || !content) draw(); else renderCourseMap(mapBox, store.load(), isDemo ? null : module.id, { headingLevel: 3 }); });
+  onExternalChange(() => {
+    if (index === null || !content) { draw(); return; }
+    renderCourseMap(mapBox, store.load(), isDemo ? null : module.id, { headingLevel: 3 });
+    // A tick or a completion made in another tab shows here too.
+    if (content.steps[index].kind === 'project') drawStep(false);
+  });
   if (opened && !isDemo) trackTime(module.id);
 }
 

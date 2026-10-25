@@ -25,7 +25,8 @@ export const OPENING = [
   ['checking', 0], ['spending', 31000], ['saving', 12000], ['emergency', 90000], ['sinking', 6000],
   ['investing', 15000], ['charity', 2000], ['blow', 3500], ['cash', 4000], ['card', 8540],
 ];
-export const BANK_PAGES = ['checking', 'spending', 'saving', 'emergency', 'sinking', 'investing', 'charity', 'blow'];
+// In account-number order, as every report lists them.
+export const BANK_PAGES = ['checking', 'spending', 'saving', 'investing', 'charity', 'blow', 'emergency', 'sinking'];
 const SAVING_PAGES = ['saving', 'emergency', 'sinking'];
 const openingOf = (id) => OPENING.find(([a]) => a === id)?.[1] ?? 0;
 const isDebitSide = (id) => ['asset', 'expense'].includes(CHART[id].type);
@@ -42,7 +43,9 @@ export const ESSENTIAL = ['rent', 'groceries', 'transport', 'phone', 'utilities'
 export const ESSENTIAL_MONTH = BUDGET_PLAN.filter(([id]) => ESSENTIAL.includes(id)).reduce((s, [, v]) => s + v, 0);
 export const FUND_MINIMUM = 3 * ESSENTIAL_MONTH;
 export const TO_EMERGENCY = 4000; // after each paycheck
-export const TO_SINKING = 1500; // once a month: $180.00 renter's insurance, due in 12 months
+// The Sinking fund's $60.00 on July 1 is already saved toward a new phone; July
+// adds a second goal: $180.00 renter's insurance, due in 12 months.
+export const TO_SINKING = 1500; // once a month
 
 const split = (p) => [['spending', p.split.spending, 0], ['saving', p.split.saving, 0], ['investing', p.split.investing, 0], ['charity', p.split.charity, 0], ['blow', p.split.blow, 0], ['checking', 0, p.pay.net]];
 const paycheckLines = (p) => [['checking', p.pay.net, 0], ['taxes', p.pay.gross - p.pay.net, 0], ['wages', 0, p.pay.gross]];
@@ -208,9 +211,18 @@ const eventValue = ([, what, lines]) => {
   if (what.startsWith('Split')) return 'by the five-bucket split';
   return lines.reduce((s, [, dr]) => s + dr, 0);
 };
+export const PLAN_NOTE = `The plan from Module 15: ${money(TO_EMERGENCY)} into the Emergency fund after each paycheck, and ${money(TO_SINKING)} into the Sinking fund once a month (the Jul 25 line is ${money(TO_EMERGENCY)} + ${money(TO_SINKING)}).`;
 export const EVENT_DOC = {
   kind: 'list', title: `What happened in ${MONTH}: ${PERSON}`,
   lines: EVENTS.map((e) => [`${shortDate(e[0])} ${e[1]}`, eventValue(e)]),
-  note: `${NOTE} Record each line in your journal in this order.`,
+  note: `${PLAN_NOTE} ${NOTE} Record each line in your journal in this order.`,
 };
-export const PLAN_NOTE = `Plan: ${money(TO_EMERGENCY)} into the Emergency fund after each paycheck, and ${money(TO_SINKING)} into the Sinking fund once a month.`;
+
+// A page's balance just after its first line with this date and wording
+// (for project figures that no report shows).
+export function balanceAfter(id, date, what, stage = 'month') {
+  const page = pageFor(id, stage);
+  const row = page.rows.findIndex((r) => r.date === date && r.items === what);
+  if (row === -1) throw new Error(`No line "${what}" on ${date} on the ${id} page.`);
+  return runningBalances(page)[row].balance;
+}

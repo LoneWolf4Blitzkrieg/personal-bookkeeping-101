@@ -268,3 +268,14 @@ test('the final project keeps its path, figures check and ticks, and survives ex
   assert.ok(back.ok);
   assert.deepEqual(back.progress.modules.m15.project, p.modules.m15.project);
 });
+
+test('an imported file with a damaged final-project record is rejected', () => {
+  const good = saveProject(emptyProgress(T0), 'm15', { path: 'own', checklist: [0], rubric: [] });
+  for (const project of [{ ...good.modules.m15.project, checklist: 'abcdef' }, { ...good.modules.m15.project, path: 'mine' }, { ...good.modules.m15.project, rubric: [-1] }, { ...good.modules.m15.project, figuresOk: 'yes' }]) {
+    const bad = structuredClone(good);
+    bad.modules.m15.project = project;
+    const result = importProgress(exportProgress(bad));
+    assert.equal(result.ok, false, JSON.stringify(project));
+    assert.match(result.reason, /final-project/);
+  }
+});

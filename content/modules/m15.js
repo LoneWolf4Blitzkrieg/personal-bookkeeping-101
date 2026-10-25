@@ -15,11 +15,15 @@ const UNPLANNED = OPENING_SPENDING + SPENDING_IN - S.BUDGET_TOTAL - CARD_DUE;
 const FUND_GAP = S.FUND_MINIMUM - (OPENING_FUND + 2 * S.TO_EMERGENCY);
 const deductions = (p) => p.gross - p.net;
 
+// The project's figures come from the learner's own plan and are printed
+// nowhere in the course, so they can only be got by doing the work.
+const opening = (id) => S.OPENING.find(([x]) => x === id)[1];
+const share = (bucket) => PAY1.split[bucket] + PAY2.split[bucket];
 export const M15_FIGURES = [
-  ['Net worth at the start of the month', S.OPENING_NET_WORTH],
-  ['Take-home pay from the second paycheck', PAY2.pay.net],
-  ['Spending bucket money not yet planned', UNPLANNED],
-  ['How far the Emergency fund will still be below its minimum at month-end', FUND_GAP],
+  ['Total take-home pay for the month (both paychecks)', PAY1.pay.net + PAY2.pay.net],
+  ['Investing bucket at month-end', opening('investing') + share('investing')],
+  ['Saving bucket after both paychecks and the planned transfers out of it', opening('saving') + share('saving') - 2 * S.TO_EMERGENCY - S.TO_SINKING],
+  ['Charity bucket after both paychecks, before any donation', opening('charity') + share('charity')],
 ].map(([label, answer]) => ({ label, answer }));
 
 export const M15_LESSON = {
@@ -75,7 +79,8 @@ export const M15_LESSON = {
     },
     {
       id: 'predict-pay', kind: 'predict', title: 'Check: the second paycheck', uses: ['gross-vs-net', 'paycheck-deductions'],
-      text: [`Riley's July 24 paycheck is for ${PAY2.hours} hours at $15.15. What is the take-home pay?`],
+      text: [`Riley's July 24 pay stub is beside this step, with its last line left blank. What is the take-home pay?`],
+      sourceDoc: { ...S.payStubs()[1], lines: S.payStubs()[1].lines.filter(([label]) => label !== 'Take-home pay') },
       answer: PAY2.pay.net,
       misconceptions: [{ cents: PAY2.pay.gross, explanation: 'That is the gross pay. Take out Social Security, Medicare and both income taxes.' }],
       explanation: `Gross pay is ${money(PAY2.pay.gross)}. Social Security takes ${money(PAY2.pay.socialSecurity)}, Medicare ${money(PAY2.pay.medicare)}, federal tax ${money(PAY2.pay.federal)} and Arizona tax ${money(PAY2.pay.arizona)}: ${money(deductions(PAY2.pay))} in all. Take-home pay is ${money(PAY2.pay.net)}.`,
@@ -112,7 +117,7 @@ export const M15_LESSON = {
       text: [
         `Riley's essential expenses are the needs in the budget: ${money(S.ESSENTIAL_MONTH)} a month. The three-month minimum is 3 × ${money(S.ESSENTIAL_MONTH)} = ${money(S.FUND_MINIMUM)}, and the Emergency fund holds ${money(OPENING_FUND)}.`,
         `Riley's plan is to move ${money(S.TO_EMERGENCY)} from the Saving bucket into the Emergency fund after each paycheck, until the fund reaches the minimum.`,
-        `Riley's renter's insurance costs $180.00 a year and is due in 12 months, so ${money(S.TO_SINKING)} a month goes into the Sinking fund.`,
+        `The Sinking fund already holds ${money(opening('sinking'))}, saved toward a new phone. Riley adds a second goal: renter's insurance costs $180.00 a year and is due in 12 months, so ${money(S.TO_SINKING)} a month goes into the Sinking fund.`,
       ],
       prompt: 'Why does the plan move money into the Emergency fund every paycheck, even though the fund is far from the minimum?',
       promptAnswer: 'Small regular transfers build the fund steadily, and even part of the minimum gives some security.',
