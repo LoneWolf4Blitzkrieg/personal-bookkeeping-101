@@ -11,6 +11,8 @@ import { isUnlocked, nextVersion, attemptsFor, openSession, saveSession, session
 import { store, update, mountChrome, trackTime } from './chrome.js';
 import { ASSESSMENTS } from '../../content/assess/index.js';
 
+const moduleName = (id) => (/^m\d\d$/.test(id) ? `Module ${Number(id.slice(1))}` : /^a\d$/.test(id) ? `Add-on ${id.toUpperCase()}` : id === 'prereq' ? 'Money arithmetic refresher' : id);
+
 const PART_LABELS = { interpreting: 'Read and predict', producing: 'Record it yourself', explaining: 'Explain why' };
 
 function entryRowHTML(item, i) {
@@ -78,7 +80,7 @@ function feedbackHTML(result) {
     : '';
   const tone = result.correct === false || (result.selfMarked && result.points < result.max) ? 'feedback-wrong' : 'feedback-right';
   return `<div class="feedback ${tone}">
-    <p><strong>${result.points} of ${result.max} points.</strong> ${escapeHTML(result.feedback ?? '')}</p>${rubric}
+    <p><strong>${result.points} of ${result.max} ${result.max === 1 ? 'point' : 'points'}.</strong> ${escapeHTML(result.feedback ?? '')}</p>${rubric}
     <button class="button" type="button" data-action="next">Next</button>
   </div>`;
 }
@@ -105,7 +107,7 @@ function resultsHTML(session) {
   const kind = session.meta?.kind ?? 'gate';
   const words = VERDICTS[kind] ?? VERDICTS.gate;
   const score = s.max !== undefined ? `${s.points} of ${s.max}` : `${s.percent}%`;
-  const missed = s.missedModules?.length ? `<p>Modules to review: ${s.missedModules.map(escapeHTML).join(', ')}</p>` : '';
+  const missed = s.missedModules?.length ? `<p>Review these first: ${s.missedModules.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
   const rows = session.results.map((r, i) => {
     const item = session.items[i];
     const why = item.kind === 'explain' ? `Model answer: ${item.modelAnswer}` : (item.explanation ?? '');
