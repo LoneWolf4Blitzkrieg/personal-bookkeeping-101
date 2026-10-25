@@ -5,6 +5,7 @@
 import { createStorage, browserBackend, windowNameBackend } from '../storage.js';
 import { createProgressStore } from '../progressStore.js';
 import { addTime } from '../progress.js';
+import { readLargeText, writeLargeText, textSizeButtonHTML, LARGE_CLASS } from '../textSize.js';
 
 const primary = createStorage(browserBackend());
 // When localStorage is blocked, progress still follows the learner from page
@@ -25,8 +26,29 @@ function banner(className, text) {
   (topbar ?? document.body.firstElementChild)?.insertAdjacentElement('afterend', p);
 }
 
+function safeLocalStorage() {
+  try { return window.localStorage; } catch { return null; }
+}
+
+// The "Larger text" button, at the end of the top bar.
+function mountTextSize(topbar) {
+  if (!topbar || topbar.querySelector('.text-size-toggle')) return;
+  const storage = safeLocalStorage();
+  let on = readLargeText(storage);
+  document.documentElement.classList.toggle(LARGE_CLASS, on);
+  topbar.insertAdjacentHTML('beforeend', textSizeButtonHTML(on));
+  const button = topbar.querySelector('.text-size-toggle');
+  button.addEventListener('click', () => {
+    on = !on;
+    document.documentElement.classList.toggle(LARGE_CLASS, on);
+    button.setAttribute('aria-pressed', String(on));
+    writeLargeText(storage, on);
+  });
+}
+
 export function mountChrome() {
   const topbar = document.querySelector('.topbar');
+  mountTextSize(topbar);
   if (topbar && !indicator) {
     indicator = document.createElement('span');
     indicator.className = 'saved-indicator';
