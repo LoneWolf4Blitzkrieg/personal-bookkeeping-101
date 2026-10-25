@@ -279,3 +279,27 @@ test('an imported file with a damaged final-project record is rejected', () => {
     assert.match(result.reason, /final-project/);
   }
 });
+
+test('a progress file whose saved answers hold anything but plain numbers and ids is refused', async () => {
+  const { assessmentVersions } = await import('../js/items.js');
+  const { createSession, submit } = await import('../js/session.js');
+  const { fourTemplates } = await import('./fixtures/templates.js');
+  const { formatCents } = await import('../js/money.js');
+  const items = assessmentVersions(fourTemplates, 'm03', { count: 4 })[0];
+  let s = createSession(items, { assessmentId: 'm03', kind: 'gate', version: 1 });
+  s = submit(s, formatCents(items[0].answer));
+  s = submit(s, '0.01');
+  s = submit(s, items[2].answer.map((l) => ({ ...l })));
+  s = submit(s, { text: 'x' });
+  s = submit(s, { text: 'x', ticks: [true, false] });
+  const real = saveSession(emptyProgress(T0), s.meta, s.results);
+  assert.equal(importProgress(exportProgress(real)).ok, true, 'real saved answers load');
+  const crafted = structuredClone(real);
+  crafted.sessions.m03.results[0].max = '<img src=x onerror="alert(1)">';
+  const r = importProgress(exportProgress(crafted));
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /damaged sitting for m03/);
+  const noId = structuredClone(real);
+  delete noId.sessions.m03.results[1].templateId;
+  assert.equal(importProgress(exportProgress(noId)).ok, false);
+});

@@ -1,4 +1,5 @@
-// Personal Bookkeeping 101 by Raul Bautista, licensed under CC BY-NC-SA 4.0.
+// Personal Bookkeeping 101 by Raul Bautista is licensed under CC BY-NC-SA 4.0 (free for non-commercial use):
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
 // The double-click version of the course: built from the course's own files by
 // tools/build-offline.mjs. Do not edit by hand; run that tool instead.
 (function () {
@@ -8287,13 +8288,14 @@ function resultsHTML(session) {
   const s = summary(session);
   const kind = session.meta?.kind ?? 'gate';
   const words = kind === 'placement' ? placementWords(session.meta.checkpointId) : VERDICTS[kind] ?? VERDICTS.gate;
-  const score = s.max !== undefined ? `${s.points} of ${s.max}` : `${s.percent}%`;
+  // Numbers only: saved results can come from a loaded progress file.
+  const score = s.max !== undefined ? `${Number(s.points)} of ${Number(s.max)}` : `${Number(s.percent)}%`;
   const missedList = s.missedModules ?? (['exam', 'retention'].includes(kind) && !s.passed ? [...new Set(session.results.filter((r) => r.points < r.max).map((r) => r.module))] : []);
   const missed = missedList.length ? `<p>Review these first: ${missedList.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
   const rows = session.results.map((r, i) => {
     const item = session.items[i];
     const why = item.kind === 'explain' ? `Model answer: ${item.modelAnswer}` : (item.explanation ?? '');
-    return `<tr><td>${i + 1}</td><td>${PART_LABELS[r.part]}</td><td>${r.points} / ${r.max}</td><td>${escapeHTML(why)}</td></tr>`;
+    return `<tr><td>${i + 1}</td><td>${PART_LABELS[r.part]}</td><td>${Number(r.points)} / ${Number(r.max)}</td><td>${escapeHTML(why)}</td></tr>`;
   }).join('');
   return `<h2 id="results-heading" tabindex="-1">Your result: ${score}</h2>
     <p class="verdict ${s.passed ? 'pass' : 'retry'}">${s.passed ? words.pass : words.retry}</p>${missed}
@@ -8368,7 +8370,8 @@ function itemsFor(assessment, version) {
 function startAssessment(root, id, requestedVersion) {
   mountChrome();
   let progress = store.load();
-  const assessment = ASSESSMENTS[id];
+  // Own keys only: an address like ?id=constructor must not find Object's.
+  const assessment = Object.hasOwn(ASSESSMENTS, id) ? ASSESSMENTS[id] : undefined;
   if (!assessment) {
     root.innerHTML = '<h1>Check not found</h1><p>There is no check with that name. Return to the course map to find your next step.</p>';
     return;
@@ -8619,13 +8622,13 @@ function startCertificatePage(root) {
 };
 
 defs["js/app/chrome.js"] = function (exports, require, define) {
-const { createStorage, browserBackend, windowNameBackend } = require("js/storage.js");
-const { createProgressStore } = require("js/progressStore.js");
+const { createStorage, browserBackend, sessionBackend, windowNameBackend } = require("js/storage.js");
+const { createFallingStore } = require("js/progressStore.js");
 const { addTime } = require("js/progress.js");
 const { readLargeText, writeLargeText, textSizeButtonHTML, LARGE_CLASS } = require("js/textSize.js");
-define(exports, { persistent: () => persistent, store: () => store, mountChrome: () => mountChrome, update: () => update, replace: () => replace, onExternalChange: () => onExternalChange, trackTime: () => trackTime });
+define(exports, { store: () => store, mountChrome: () => mountChrome, update: () => update, replace: () => replace, onExternalChange: () => onExternalChange, trackTime: () => trackTime });
 // Shared page furniture for saving: the progress store (localStorage, or a
-// same-tab fallback when storage is blocked), the "Saved" indicator, the
+// same-tab fallback when storage is blocked or full), the "Saved" indicator, the
 // banners, time tracking, and refreshing when progress changes elsewhere.
 
 
@@ -8633,11 +8636,14 @@ define(exports, { persistent: () => persistent, store: () => store, mountChrome:
 
 
 
+let mounted = false; // set before the store, which may fall back at once
 const primary = createStorage(browserBackend());
-// When localStorage is blocked, progress still follows the learner from page
-// to page in the same tab (window.name), but is lost when the tab closes.
-const persistent = primary.available;
-const store = createProgressStore(persistent ? primary : createStorage(windowNameBackend()));
+// When localStorage is blocked or full, progress still follows the learner from
+// page to page in the same tab (sessionStorage, or window.name when that is
+// blocked too), but is lost when the tab closes.
+const store = createFallingStore(primary, [sessionBackend(), windowNameBackend()], {
+  onFallBack: () => { if (mounted) storageBanner(); },
+});
 
 let indicator = null;
 let hideTimer = null;
@@ -8650,6 +8656,10 @@ function banner(className, text) {
   p.textContent = text;
   const topbar = document.querySelector('.topbar');
   (topbar ?? document.body.firstElementChild)?.insertAdjacentElement('afterend', p);
+}
+
+function storageBanner() {
+  banner('storage-banner', 'Your browser is not letting this course save progress (storage is blocked or full). Your progress is kept while this tab stays open, but it will be lost when you close the tab. To keep it, use "Save a progress file" on the home page before closing, or open the course in a normal browser window.');
 }
 
 function safeLocalStorage() {
@@ -8681,9 +8691,8 @@ function mountChrome() {
     indicator.setAttribute('role', 'status');
     topbar.insertBefore(indicator, topbar.querySelector('.map-toggle'));
   }
-  if (!persistent) {
-    banner('storage-banner', 'Your browser is not letting this course save progress (storage is blocked or full). Your progress is kept while this tab stays open, but it will be lost when you close the tab. To keep it, use "Save a progress file" on the home page before closing, or open the course in a normal browser window.');
-  }
+  mounted = true;
+  if (!store.available) storageBanner();
   store.load();
   if (store.recovered) {
     banner('storage-banner recovered-banner', 'Your saved progress could not be read, so the course started fresh. A copy of the damaged data was kept in this browser. If you saved a progress file, you can load it on the home page.');
@@ -9134,7 +9143,8 @@ function sheetFor(name) {
 
 // The ledger pages of one lesson step, ready to print with answers hidden.
 function lessonSheet(moduleId, stepId) {
-  const lesson = moduleId === 'demo' ? DEMO_LESSON : MODULE_CONTENT[moduleId];
+  // Own keys only: an address like ?lesson=constructor must not find Object's.
+  const lesson = moduleId === 'demo' ? DEMO_LESSON : Object.hasOwn(MODULE_CONTENT, moduleId) ? MODULE_CONTENT[moduleId] : undefined;
   const step = lesson?.steps.find((s) => s.id === stepId);
   if (!step) return null;
   const html = ledgerPanelHTML(step, { revealed: false });
@@ -10343,15 +10353,38 @@ function startOffline(pages) {
     // hidden page, and the checks put focus in the first answer box.
     hide.remove();
     page.start(route.search);
-    const target = route.anchor && document.getElementById(route.anchor);
-    if (target) target.scrollIntoView();
-    else window.scrollTo(0, history.state?.pb101Scroll ?? 0);
-    let timer = null;
+    // A page coming back (Back, Forward, Reload) returns to where it was left.
+    // A page opened fresh stays where its start left it (the focused answer
+    // box), unless the address names a place on it.
+    const saved = history.state?.pb101Scroll;
+    const place = route.anchor && document.getElementById(route.anchor);
+    if (saved != null) window.scrollTo(0, saved);
+    else if (place) goTo(place);
     window.addEventListener('scroll', () => {
       clearTimeout(timer);
-      timer = setTimeout(() => history.replaceState({ ...history.state, pb101Scroll: window.scrollY }, ''), 150);
+      timer = setTimeout(saveScroll, 150);
     }, { passive: true });
+    window.addEventListener('pagehide', () => { clearTimeout(timer); saveScroll(); });
   });
+
+  // Keeps this page's position in its own history entry, never in the entry
+  // of a page the learner is already moving to.
+  let timer = null;
+  let openingFresh = false;
+  function saveScroll() {
+    if (openingFresh) return;
+    const now = routeFromHash(location.hash);
+    if (now.page !== route.page || now.search !== route.search) return;
+    history.replaceState({ ...history.state, pb101Scroll: window.scrollY }, '');
+  }
+
+  // Moves to a place on the page the way a followed link does, so the next
+  // Tab continues from there.
+  function goTo(place) {
+    if (!place.matches('a[href], button, input, select, textarea, [tabindex]')) place.setAttribute('tabindex', '-1');
+    place.scrollIntoView(); // its top at the top, as a followed link puts it
+    place.focus({ preventScroll: true });
+  }
 
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -10363,22 +10396,29 @@ function startOffline(pages) {
       // changing the address, which names the page being shown.
       e.preventDefault();
       const place = document.getElementById(decoded(raw.slice(1)));
-      if (!place) return;
-      if (!place.matches('a[href], button, input, select, textarea, [tabindex]')) place.setAttribute('tabindex', '-1');
-      place.focus();
+      if (place) goTo(place);
       return;
     }
     const to = offlineHref(new URL(link.href), new URL(location.href));
     if (!to) return;
     e.preventDefault();
-    if (to === location.hash) location.reload();
-    else location.assign(to); // the hashchange below shows the new page
+    clearTimeout(timer);
+    if (to === location.hash) {
+      // A link to the page already shown opens it fresh, at the top.
+      history.replaceState({ ...history.state, pb101Scroll: null }, '');
+      openingFresh = true;
+      location.reload();
+      return;
+    }
+    saveScroll();
+    location.assign(to); // the hashchange below shows the new page
   });
 
   // A followed link, Back or Forward: show the page the address now names.
   window.addEventListener('hashchange', () => {
     const next = routeFromHash(location.hash);
     if (next.page === route.page && next.search === route.search) return;
+    clearTimeout(timer);
     location.reload();
   });
 }
@@ -10721,6 +10761,13 @@ function typeOf(v) {
   return typeof v;
 }
 
+// A saved answer in an unfinished sitting, as session.js records it.
+function validResult(r) {
+  const text = (v) => v === undefined || typeof v === 'string';
+  return typeOf(r) === 'object' && typeof r.templateId === 'string' && text(r.part) && text(r.module)
+    && Number.isFinite(r.points) && Number.isFinite(r.max);
+}
+
 function validateProgress(data) {
   if (typeOf(data) !== 'object') return 'This is not a progress file.';
   if (data.version !== PROGRESS_VERSION) return `This progress file is from a different version of the course (${data.version ?? 'unknown'}).`;
@@ -10749,7 +10796,7 @@ function validateProgress(data) {
     }
   }
   for (const [id, s] of Object.entries(data.sessions)) {
-    if (typeOf(s) !== 'object' || typeOf(s.meta) !== 'object' || !Array.isArray(s.results)) return `This progress file has a damaged sitting for ${id}.`;
+    if (typeOf(s) !== 'object' || typeOf(s.meta) !== 'object' || !Array.isArray(s.results) || !s.results.every(validResult)) return `This progress file has a damaged sitting for ${id}.`;
   }
   return null;
 }
@@ -10771,12 +10818,14 @@ function importProgress(text) {
 
 defs["js/progressStore.js"] = function (exports, require, define) {
 const { emptyProgress, validateProgress } = require("js/progress.js");
-define(exports, { PROGRESS_KEY: () => PROGRESS_KEY, createProgressStore: () => createProgressStore });
+const { createStorage } = require("js/storage.js");
+define(exports, { PROGRESS_KEY: () => PROGRESS_KEY, createProgressStore: () => createProgressStore, createFallingStore: () => createFallingStore });
 // Loads and saves a learner's progress through a storage wrapper
 // (js/storage.js). Damaged saved data is kept aside, never silently lost.
 // Every change should go through update(), which applies it to the latest
 // saved progress so a page holding an old copy cannot overwrite newer work
 // (another tab, or a page restored with the Back button).
+
 
 
 
@@ -10800,6 +10849,69 @@ function createProgressStore(storage, now = () => new Date().toISOString(), key 
     },
     save(progress) {
       return storage.set(key, progress);
+    },
+    update(change) {
+      const next = change(store.load());
+      store.save(next);
+      return next;
+    },
+  };
+  return store;
+}
+
+// A progress store that moves to a same-tab fallback when the main storage is
+// blocked or full, or fills up later, and says so through onFallBack. The
+// fallback is the first of `fallbacks` (raw backends: sessionStorage, then
+// window.name) that works, opened only when needed. Progress is carried over,
+// so the learner keeps their place, and is written back to the main storage
+// as soon as it has room again.
+function createFallingStore(primary, fallbacks, { onFallBack = () => {}, now, key = PROGRESS_KEY } = {}) {
+  const valid = (p) => p != null && !validateProgress(p);
+  const readFrom = (backend) => {
+    try {
+      const text = backend?.getItem(key);
+      return text == null ? null : JSON.parse(text);
+    } catch {
+      return null;
+    }
+  };
+  const clearFallbacks = () => {
+    for (const backend of fallbacks) {
+      try { if (backend?.getItem(key) != null) backend.removeItem(key); } catch { /* nothing to clear */ }
+    }
+  };
+  let active = createProgressStore(primary, now, key);
+  let fellBack = false;
+  const fallBack = (carried) => {
+    if (fellBack) return;
+    fellBack = true;
+    const fallback = fallbacks.map((backend) => createStorage(backend)).find((s) => s.available) ?? createStorage(undefined);
+    active = createProgressStore(fallback, now, key);
+    if (valid(carried)) active.save(carried);
+    onFallBack();
+  };
+
+  // An earlier page in this tab may have left newer progress in the fallback.
+  const left = fallbacks.map(readFrom).find(valid);
+  const saved = primary.get(key);
+  if (!primary.available) fallBack(left ?? saved);
+  else if (left) {
+    if (primary.set(key, left)) clearFallbacks();
+    else fallBack(left);
+  } else if (valid(saved) && !primary.set(key, saved)) {
+    // Present but cannot be rewritten: the storage is full.
+    fallBack(saved);
+  }
+
+  const store = {
+    get available() { return !fellBack; },
+    get recovered() { return active.recovered; },
+    load: () => active.load(),
+    save(progress) {
+      if (active.save(progress)) return true;
+      if (fellBack) return false;
+      fallBack(progress);
+      return active.save(progress);
     },
     update(change) {
       const next = change(store.load());
@@ -11057,7 +11169,7 @@ function summary(session) {
 };
 
 defs["js/storage.js"] = function (exports, require, define) {
-define(exports, { createStorage: () => createStorage, windowNameBackend: () => windowNameBackend, browserBackend: () => browserBackend });
+define(exports, { createStorage: () => createStorage, windowNameBackend: () => windowNameBackend, sessionBackend: () => sessionBackend, browserBackend: () => browserBackend });
 // A safe wrapper over localStorage (or any object with getItem/setItem/
 // removeItem). It never throws: private windows, blocked storage and full
 // storage all just report that saving is unavailable or failed.
@@ -11119,12 +11231,23 @@ function windowNameBackend(win = globalThis.window) {
       return {};
     }
   };
-  const write = (data) => { win.name = NAME_PREFIX + JSON.stringify(data); };
+  // An emptied store gives the tab its name back blank.
+  const write = (data) => { win.name = Object.keys(data).length ? NAME_PREFIX + JSON.stringify(data) : ''; };
   return {
     getItem: (k) => read()[k] ?? null,
     setItem: (k, v) => { const d = read(); d[k] = String(v); write(d); },
     removeItem: (k) => { const d = read(); delete d[k]; write(d); },
   };
+}
+
+// The browser's sessionStorage: kept for one tab and one site, never handed
+// to another site the tab moves on to (unlike window.name).
+function sessionBackend() {
+  try {
+    return globalThis.sessionStorage ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 // The browser's localStorage, if the page is allowed to touch it at all.

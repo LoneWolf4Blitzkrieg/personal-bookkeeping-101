@@ -59,12 +59,23 @@ export function windowNameBackend(win = globalThis.window) {
       return {};
     }
   };
-  const write = (data) => { win.name = NAME_PREFIX + JSON.stringify(data); };
+  // An emptied store gives the tab its name back blank.
+  const write = (data) => { win.name = Object.keys(data).length ? NAME_PREFIX + JSON.stringify(data) : ''; };
   return {
     getItem: (k) => read()[k] ?? null,
     setItem: (k, v) => { const d = read(); d[k] = String(v); write(d); },
     removeItem: (k) => { const d = read(); delete d[k]; write(d); },
   };
+}
+
+// The browser's sessionStorage: kept for one tab and one site, never handed
+// to another site the tab moves on to (unlike window.name).
+export function sessionBackend() {
+  try {
+    return globalThis.sessionStorage ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 // The browser's localStorage, if the page is allowed to touch it at all.

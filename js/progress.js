@@ -293,6 +293,13 @@ function typeOf(v) {
   return typeof v;
 }
 
+// A saved answer in an unfinished sitting, as session.js records it.
+function validResult(r) {
+  const text = (v) => v === undefined || typeof v === 'string';
+  return typeOf(r) === 'object' && typeof r.templateId === 'string' && text(r.part) && text(r.module)
+    && Number.isFinite(r.points) && Number.isFinite(r.max);
+}
+
 export function validateProgress(data) {
   if (typeOf(data) !== 'object') return 'This is not a progress file.';
   if (data.version !== PROGRESS_VERSION) return `This progress file is from a different version of the course (${data.version ?? 'unknown'}).`;
@@ -321,7 +328,7 @@ export function validateProgress(data) {
     }
   }
   for (const [id, s] of Object.entries(data.sessions)) {
-    if (typeOf(s) !== 'object' || typeOf(s.meta) !== 'object' || !Array.isArray(s.results)) return `This progress file has a damaged sitting for ${id}.`;
+    if (typeOf(s) !== 'object' || typeOf(s.meta) !== 'object' || !Array.isArray(s.results) || !s.results.every(validResult)) return `This progress file has a damaged sitting for ${id}.`;
   }
   return null;
 }

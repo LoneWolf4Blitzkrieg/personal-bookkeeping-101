@@ -50,8 +50,25 @@ test('every bundled module runs and exports exactly what the real module exports
 });
 
 test('the bundler refuses what the double-click version could not carry over', () => {
-  assert.throws(() => rewrite('js/x.js', "history.replaceState(null, '', '?m=m03');"), /cannot use "history.replaceState"/);
-  assert.throws(() => rewrite('js/x.js', 'const q = location.search;'), /cannot use "location.search"/);
+  const address = /cannot read or change the address/;
+  assert.throws(() => rewrite('js/x.js', "history.replaceState(null, '', '?m=m03');"), address);
+  assert.throws(() => rewrite('js/x.js', 'const q = location.search;'), address);
+  assert.throws(() => rewrite('js/x.js', 'const u = new URL(window.location);'), address);
+  assert.throws(() => rewrite('js/x.js', 'const s = new URL(document.URL).searchParams;'), address);
+  assert.throws(() => rewrite('js/x.js', 'const o = location.origin;'), address);
+  assert.throws(() => rewrite('js/x.js', "window.location = 'index.html';"), address);
+  assert.throws(() => rewrite('js/x.js', 'const { search } = location;'), address);
+  assert.throws(() => rewrite('js/x.js', 'const q = location?.search;'), address);
+  assert.throws(() => rewrite('js/x.js', 'const u = document.documentURI;'), address);
+  assert.throws(() => rewrite('js/x.js', 'const h = `${location.hash}`;'), address);
+  for (const harmless of [
+    "const text = 'Write the date and location. The history. Its bls-cpi-history id.';",
+    "const url = 'https://www.bls.gov/cpi/history.htm';",
+    'const url = "https://example.org/search?location=AZ";',
+    'const t = `Prices vary (by location). ${1 + 1} [location] here`;',
+    "// the history of the Fed\nconst x = s.replace(/'/g, '&#39;');",
+  ]) assert.doesNotThrow(() => rewrite('js/x.js', harmless), harmless);
+  assert.throws(() => rewrite('js/x.js', 'export let count = 0;'), /export a function/);
   assert.throws(() => rewrite('js/x.js', "import x from './y.js';"), /cannot bundle/);
   assert.throws(() => rewrite('js/x.js', "export default 1;"), /cannot bundle/);
   assert.throws(() => rewrite('js/x.js', "const m = await import('./y.js');"), /cannot bundle/);
@@ -60,6 +77,13 @@ test('the bundler refuses what the double-click version could not carry over', (
   assert.deepEqual(ok.deps, ['js/y.js']);
   assert.match(ok.code, /const \{ a: b, c \} = require\("js\/y\.js"\);/);
   assert.match(ok.code, /define\(exports, \{ f: \(\) => f, g: \(\) => f \}\);/);
+});
+
+test('the page list matches the pages on disk, and page scripts may use only a bare location.search', async () => {
+  const { readdirSync } = await import('node:fs');
+  const runners = readdirSync(root).filter((f) => f.endsWith('.html') && read(f).includes('<script type="module">')).sort();
+  assert.deepEqual(runners, [...PAGES].sort());
+  assert.ok(!read(OUTPUT).includes('window.search') && !read(OUTPUT).includes('document.search'));
 });
 
 test('index.html loads the bundle only from a file, and the other pages send the learner there', () => {

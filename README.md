@@ -39,7 +39,8 @@ Good to know:
 - **Keep the whole folder together.** If you open `index.html` on its own, it shows a message that part of the course is missing.
 - **Progress in the downloaded copy is separate** from progress on the website. To carry it across, use **Save a progress file** in one, then **Load a progress file** in the other.
 - **In Firefox, progress belongs to the place where the folder is.** If you move or rename the folder, the course starts with no progress. Use **Save a progress file** first, then **Load a progress file** after the move.
-- **In Chrome, every copy of the course on the computer shares the same progress**, for example an old download and a new one.
+- **In Chrome, every page opened from a file shares the same saved data.** Every copy of the course on your computer shares one progress record, for example an old download and a new one. Any other HTML file you open from your computer could read it. That includes the name on your certificate and your error-log notes. If that matters to you, use the course on the web or from a local web server.
+- **Back reloads the page.** Your answers and progress stay saved, but the page comes back fresh. A check shows its results only once, so note what to review before you leave them. Text you typed but did not submit is cleared.
 - In a private window, progress lasts only until you close the window, as on the web.
 
 ## Publishing on GitHub Pages

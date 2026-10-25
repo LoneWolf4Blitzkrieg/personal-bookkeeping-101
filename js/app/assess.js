@@ -126,13 +126,14 @@ function resultsHTML(session) {
   const s = summary(session);
   const kind = session.meta?.kind ?? 'gate';
   const words = kind === 'placement' ? placementWords(session.meta.checkpointId) : VERDICTS[kind] ?? VERDICTS.gate;
-  const score = s.max !== undefined ? `${s.points} of ${s.max}` : `${s.percent}%`;
+  // Numbers only: saved results can come from a loaded progress file.
+  const score = s.max !== undefined ? `${Number(s.points)} of ${Number(s.max)}` : `${Number(s.percent)}%`;
   const missedList = s.missedModules ?? (['exam', 'retention'].includes(kind) && !s.passed ? [...new Set(session.results.filter((r) => r.points < r.max).map((r) => r.module))] : []);
   const missed = missedList.length ? `<p>Review these first: ${missedList.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
   const rows = session.results.map((r, i) => {
     const item = session.items[i];
     const why = item.kind === 'explain' ? `Model answer: ${item.modelAnswer}` : (item.explanation ?? '');
-    return `<tr><td>${i + 1}</td><td>${PART_LABELS[r.part]}</td><td>${r.points} / ${r.max}</td><td>${escapeHTML(why)}</td></tr>`;
+    return `<tr><td>${i + 1}</td><td>${PART_LABELS[r.part]}</td><td>${Number(r.points)} / ${Number(r.max)}</td><td>${escapeHTML(why)}</td></tr>`;
   }).join('');
   return `<h2 id="results-heading" tabindex="-1">Your result: ${score}</h2>
     <p class="verdict ${s.passed ? 'pass' : 'retry'}">${s.passed ? words.pass : words.retry}</p>${missed}
@@ -207,7 +208,8 @@ function itemsFor(assessment, version) {
 export function startAssessment(root, id, requestedVersion) {
   mountChrome();
   let progress = store.load();
-  const assessment = ASSESSMENTS[id];
+  // Own keys only: an address like ?id=constructor must not find Object's.
+  const assessment = Object.hasOwn(ASSESSMENTS, id) ? ASSESSMENTS[id] : undefined;
   if (!assessment) {
     root.innerHTML = '<h1>Check not found</h1><p>There is no check with that name. Return to the course map to find your next step.</p>';
     return;

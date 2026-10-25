@@ -1,17 +1,20 @@
 // Shared page furniture for saving: the progress store (localStorage, or a
-// same-tab fallback when storage is blocked), the "Saved" indicator, the
+// same-tab fallback when storage is blocked or full), the "Saved" indicator, the
 // banners, time tracking, and refreshing when progress changes elsewhere.
 
-import { createStorage, browserBackend, windowNameBackend } from '../storage.js';
-import { createProgressStore } from '../progressStore.js';
+import { createStorage, browserBackend, sessionBackend, windowNameBackend } from '../storage.js';
+import { createFallingStore } from '../progressStore.js';
 import { addTime } from '../progress.js';
 import { readLargeText, writeLargeText, textSizeButtonHTML, LARGE_CLASS } from '../textSize.js';
 
+let mounted = false; // set before the store, which may fall back at once
 const primary = createStorage(browserBackend());
-// When localStorage is blocked, progress still follows the learner from page
-// to page in the same tab (window.name), but is lost when the tab closes.
-export const persistent = primary.available;
-export const store = createProgressStore(persistent ? primary : createStorage(windowNameBackend()));
+// When localStorage is blocked or full, progress still follows the learner from
+// page to page in the same tab (sessionStorage, or window.name when that is
+// blocked too), but is lost when the tab closes.
+export const store = createFallingStore(primary, [sessionBackend(), windowNameBackend()], {
+  onFallBack: () => { if (mounted) storageBanner(); },
+});
 
 let indicator = null;
 let hideTimer = null;
@@ -24,6 +27,10 @@ function banner(className, text) {
   p.textContent = text;
   const topbar = document.querySelector('.topbar');
   (topbar ?? document.body.firstElementChild)?.insertAdjacentElement('afterend', p);
+}
+
+function storageBanner() {
+  banner('storage-banner', 'Your browser is not letting this course save progress (storage is blocked or full). Your progress is kept while this tab stays open, but it will be lost when you close the tab. To keep it, use "Save a progress file" on the home page before closing, or open the course in a normal browser window.');
 }
 
 function safeLocalStorage() {
@@ -55,9 +62,8 @@ export function mountChrome() {
     indicator.setAttribute('role', 'status');
     topbar.insertBefore(indicator, topbar.querySelector('.map-toggle'));
   }
-  if (!persistent) {
-    banner('storage-banner', 'Your browser is not letting this course save progress (storage is blocked or full). Your progress is kept while this tab stays open, but it will be lost when you close the tab. To keep it, use "Save a progress file" on the home page before closing, or open the course in a normal browser window.');
-  }
+  mounted = true;
+  if (!store.available) storageBanner();
   store.load();
   if (store.recovered) {
     banner('storage-banner recovered-banner', 'Your saved progress could not be read, so the course started fresh. A copy of the damaged data was kept in this browser. If you saved a progress file, you can load it on the home page.');

@@ -186,3 +186,8 @@ test('a brought-forward line is described as brought forward, not money in', () 
   assert.match(html, /Jul 1[^<]*brought forward \$1,240\.16/);
   assert.doesNotMatch(html, /money in \$1,240\.16/);
 });
+
+test('a print address naming a built-in object property finds no lesson', async () => {
+  const { lessonSheet } = await import('../js/app/print.js');
+  for (const id of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) assert.equal(lessonSheet(id, 'x'), null, id);
+});

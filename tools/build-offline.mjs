@@ -8,15 +8,72 @@
 //
 // A test rebuilds the bundle and fails if offline/course.js is out of date.
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, realpathSync } from 'node:fs';
 import { posix } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { PAGE_NAMES } from '../js/offlineRouter.js';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 export const OUTPUT = 'offline/course.js';
-export const PAGES = ['index.html', 'lesson.html', 'assess.html', 'print.html', 'certificate.html'];
+// The pages are the router's list, which must name every top-level page that
+// runs the course (has a module script): a page left off would be unreachable.
+export const PAGES = PAGE_NAMES;
 const ROUTER = 'js/offlineRouter.js';
-const ADDRESS = /\b(location\.(search|hash|href|pathname|assign|replace|reload)|history\.(pushState|replaceState|back|forward|go|state))\b/;
+// Code that reads or changes the address. Searched in code only (see
+// codeOnly), so citation links and lesson text may say "history" or "location".
+const ADDRESS = /\b(location|history|documentURI|baseURI)\b|\bdocument\.URL\b/;
+
+// The source with strings, template text, regular expressions and comments
+// blanked out, keeping the code inside template ${...} parts.
+export function codeOnly(source) {
+  let out = '';
+  let i = 0;
+  let depth = 0; // { } nesting in code
+  const holes = []; // the depth at each open template ${
+  let last = ''; // the last code character that is not a space
+  const template = (from) => {
+    let j = from;
+    while (j < source.length) {
+      if (source[j] === '\\') j += 2;
+      else if (source[j] === '`') { out += '``'; last = '`'; return j + 1; }
+      else if (source[j] === '$' && source[j + 1] === '{') { holes.push(depth); depth += 1; out += '`${'; last = '{'; return j + 2; }
+      else j += 1;
+    }
+    return j;
+  };
+  while (i < source.length) {
+    const c = source[i];
+    const d = source[i + 1];
+    if (c === '/' && d === '/') { const j = source.indexOf('\n', i); i = j === -1 ? source.length : j; continue; }
+    if (c === '/' && d === '*') { const j = source.indexOf('*/', i + 2); i = j === -1 ? source.length : j + 2; out += ' '; continue; }
+    if (c === "'" || c === '"') {
+      let j = i + 1;
+      while (j < source.length && source[j] !== c && source[j] !== '\n') j += source[j] === '\\' ? 2 : 1;
+      out += '""'; last = '"'; i = j + 1; continue;
+    }
+    if (c === '`') { i = template(i + 1); continue; }
+    if (c === '/' && (last === '' || '(,=:[!&|?{};+-*%<>~^'.includes(last))) {
+      let j = i + 1;
+      let inClass = false;
+      while (j < source.length && source[j] !== '\n' && (inClass || source[j] !== '/')) {
+        if (source[j] === '\\') j += 1;
+        else if (source[j] === '[') inClass = true;
+        else if (source[j] === ']') inClass = false;
+        j += 1;
+      }
+      j += 1;
+      while (/[a-z]/.test(source[j] ?? '')) j += 1;
+      out += '/x/'; last = '/'; i = j; continue;
+    }
+    if (c === '}' && holes.length && depth === holes[holes.length - 1] + 1) { holes.pop(); depth -= 1; i = template(i + 1); continue; }
+    if (c === '{') depth += 1;
+    if (c === '}') depth -= 1;
+    out += c;
+    if (!/\s/.test(c)) last = c;
+    i += 1;
+  }
+  return out;
+}
 
 // Windows checkouts may hold CRLF line endings; the bundle always uses LF.
 export const read = (path) => readFileSync(ROOT + path, 'utf8').replace(/\r\n/g, '\n');
@@ -54,7 +111,11 @@ export function rewrite(id, source, { page = false } = {}) {
       requires.push(`const ${name} = require(${JSON.stringify(dep)});`);
       return '';
     })
-    .replace(/^[ \t]*export\s+(async\s+function\*?|function\*?|const|let|class)\s+(\w+)/gm, (_, kind, name) => {
+    .replace(/^[ \t]*export\s+let\b.*$/gm, (line) => {
+      // Importers would get a frozen copy, not the live value ES modules give.
+      throw new Error(`${id}: cannot bundle "${line.trim()}": export a function that returns the value instead`);
+    })
+    .replace(/^[ \t]*export\s+(async\s+function\*?|function\*?|const|class)\s+(\w+)/gm, (_, kind, name) => {
       exported.push([name, name]);
       return `${kind} ${name}`;
     })
@@ -70,8 +131,11 @@ export function rewrite(id, source, { page = false } = {}) {
   if (left) throw new Error(`${id}: cannot bundle "${left[0].trim()}"`);
   // In the bundle every page lives at index.html#/page, so a module that read
   // or changed the address would see or break index.html's own.
-  const address = id === ROUTER || page ? null : code.match(ADDRESS);
-  if (address) throw new Error(`${id}: the double-click version cannot use "${address[0]}"`);
+  const address = id === ROUTER || page ? null : codeOnly(code).match(ADDRESS);
+  if (address) {
+    const line = codeOnly(code).slice(codeOnly(code).lastIndexOf('\n', address.index) + 1).split('\n')[0].trim();
+    throw new Error(`${id}: the double-click version cannot read or change the address: "${line}"`);
+  }
   const getters = exported.map(([name, local]) => `${name}: () => ${local}`).join(', ');
   if (getters) code = `define(exports, { ${getters} });\n${code}`;
   return { deps, code: `${requires.join('\n')}\n${code.replace(/^\n+/, '')}` };
@@ -79,8 +143,32 @@ export function rewrite(id, source, { page = false } = {}) {
 
 // Takes a page apart, and refuses anything the double-click version would
 // otherwise silently leave out.
+// What a page's <head> may hold: anything else would be silently left out.
+const HEAD_LINES = [
+  /^<meta charset="utf-8">$/,
+  /^<meta name="viewport" content="width=device-width, initial-scale=1">$/,
+  /^<title>[^<]*<\/title>$/,
+  /^<link rel="icon" href="data:,">$/,
+  /^<link rel="stylesheet" href="[^"]+">$/,
+  /^<script>try \{ if \(localStorage\.getItem\('pb101-large-text'\) === '1'\) document\.documentElement\.classList\.add\('large-text'\); \} catch \(e\) \{ \/\* storage blocked \*\/ \}<\/script>$/,
+];
+const HEAD_SCRIPTS = [
+  "if (location.protocol === 'file:') location.replace('index.html#/' + location.pathname.split('/').pop() + location.search);",
+  "if (location.protocol === 'file:') document.write('<script src=\"offline/course.js\"><\\/script>');",
+];
+
+function checkHead(file, html) {
+  if (!html.includes('<html lang="en">\n<head>')) throw new Error(`${file}: expected <html lang="en"> with nothing else on it`);
+  let head = html.match(/<head>([\s\S]*?)<\/head>/)?.[1] ?? '';
+  head = head.replace(/<script>\s*((?:\/\/[^\n]*\n\s*)*)([^\n]*)\s*<\/script>/g, (all, comments, code) => (HEAD_SCRIPTS.includes(code.trim()) ? '' : all));
+  for (const line of head.split('\n').map((l) => l.trim()).filter(Boolean)) {
+    if (!HEAD_LINES.some((re) => re.test(line))) throw new Error(`${file}: the double-click version would leave out "${line}" from the head`);
+  }
+}
+
 function pageParts(file) {
   const html = read(file);
+  checkHead(file, html);
   const body = html.match(/<body>([\s\S]*)<\/body>/)?.[1];
   if (!body) throw new Error(`${file}: no <body>`);
   const scripts = [...body.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
@@ -123,12 +211,18 @@ export function buildOffline() {
     modules.set(id, mod);
   };
 
+  const runners = readdirSync(ROOT).filter((f) => f.endsWith('.html') && read(f).includes('<script type="module">')).sort();
+  if (JSON.stringify(runners) !== JSON.stringify([...PAGES].sort())) {
+    throw new Error(`the pages with a module script (${runners.join(', ')}) must be exactly PAGE_NAMES in ${ROUTER}`);
+  }
+
   const pages = PAGES.map((file) => {
     const parts = pageParts(file);
     const start = rewrite(file, dedent(parts.start), { page: true });
     for (const dep of start.deps) visit(dep, []);
     // The page's own address after "#/" takes the place of location.search.
-    const code = start.code.replace(/\blocation\.search\b/g, 'search');
+    // Only a bare location.search: window.location.search is refused below.
+    const code = start.code.replace(/(?<![\w$.])location\.search\b/g, 'search');
     if (/\b(location|history)\b/.test(code)) throw new Error(`${file}: its start script uses the address beyond location.search`);
     return `  ${JSON.stringify(file)}: {
     title: ${JSON.stringify(parts.title)},
@@ -144,7 +238,8 @@ ${code.trim()}
   const defs = [...modules.keys()].sort().map((id) =>
     `defs[${JSON.stringify(id)}] = function (exports, require, define) {\n${modules.get(id).code.trim()}\n};`);
 
-  return `// Personal Bookkeeping 101 by Raul Bautista, licensed under CC BY-NC-SA 4.0.
+  return `// Personal Bookkeeping 101 by Raul Bautista is licensed under CC BY-NC-SA 4.0 (free for non-commercial use):
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
 // The double-click version of the course: built from the course's own files by
 // tools/build-offline.mjs. Do not edit by hand; run that tool instead.
 (function () {
@@ -178,7 +273,11 @@ if (typeof document !== 'undefined') require(${JSON.stringify(ROUTER)}).startOff
 `;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+// Run as a command (also through a symlinked folder): write the bundle.
+const runAsCommand = (() => {
+  try { return realpathSync(process.argv[1] ?? '') === fileURLToPath(import.meta.url); } catch { return false; }
+})();
+if (runAsCommand) {
   mkdirSync(ROOT + posix.dirname(OUTPUT), { recursive: true });
   const text = buildOffline();
   writeFileSync(ROOT + OUTPUT, text);

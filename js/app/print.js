@@ -30,7 +30,8 @@ export function sheetFor(name) {
 
 // The ledger pages of one lesson step, ready to print with answers hidden.
 export function lessonSheet(moduleId, stepId) {
-  const lesson = moduleId === 'demo' ? DEMO_LESSON : MODULE_CONTENT[moduleId];
+  // Own keys only: an address like ?lesson=constructor must not find Object's.
+  const lesson = moduleId === 'demo' ? DEMO_LESSON : Object.hasOwn(MODULE_CONTENT, moduleId) ? MODULE_CONTENT[moduleId] : undefined;
   const step = lesson?.steps.find((s) => s.id === stepId);
   if (!step) return null;
   const html = ledgerPanelHTML(step, { revealed: false });

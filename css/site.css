@@ -35,6 +35,8 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
 
 .skip-link { position: absolute; left: -999px; top: 0; background: var(--ink); color: #fff; padding: .5rem 1rem; z-index: 10; }
 .skip-link:focus { left: 1rem; }
+/* Places reached by a skip link or "Go to the course map" in the double-click version: no frame round the whole region. */
+main[tabindex="-1"]:focus, nav[tabindex="-1"]:focus { outline: none; }
 
 /* Top bar */
 .topbar {

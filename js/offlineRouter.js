@@ -66,15 +66,38 @@ export function startOffline(pages) {
     // hidden page, and the checks put focus in the first answer box.
     hide.remove();
     page.start(route.search);
-    const target = route.anchor && document.getElementById(route.anchor);
-    if (target) target.scrollIntoView();
-    else window.scrollTo(0, history.state?.pb101Scroll ?? 0);
-    let timer = null;
+    // A page coming back (Back, Forward, Reload) returns to where it was left.
+    // A page opened fresh stays where its start left it (the focused answer
+    // box), unless the address names a place on it.
+    const saved = history.state?.pb101Scroll;
+    const place = route.anchor && document.getElementById(route.anchor);
+    if (saved != null) window.scrollTo(0, saved);
+    else if (place) goTo(place);
     window.addEventListener('scroll', () => {
       clearTimeout(timer);
-      timer = setTimeout(() => history.replaceState({ ...history.state, pb101Scroll: window.scrollY }, ''), 150);
+      timer = setTimeout(saveScroll, 150);
     }, { passive: true });
+    window.addEventListener('pagehide', () => { clearTimeout(timer); saveScroll(); });
   });
+
+  // Keeps this page's position in its own history entry, never in the entry
+  // of a page the learner is already moving to.
+  let timer = null;
+  let openingFresh = false;
+  function saveScroll() {
+    if (openingFresh) return;
+    const now = routeFromHash(location.hash);
+    if (now.page !== route.page || now.search !== route.search) return;
+    history.replaceState({ ...history.state, pb101Scroll: window.scrollY }, '');
+  }
+
+  // Moves to a place on the page the way a followed link does, so the next
+  // Tab continues from there.
+  function goTo(place) {
+    if (!place.matches('a[href], button, input, select, textarea, [tabindex]')) place.setAttribute('tabindex', '-1');
+    place.scrollIntoView(); // its top at the top, as a followed link puts it
+    place.focus({ preventScroll: true });
+  }
 
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -86,22 +109,29 @@ export function startOffline(pages) {
       // changing the address, which names the page being shown.
       e.preventDefault();
       const place = document.getElementById(decoded(raw.slice(1)));
-      if (!place) return;
-      if (!place.matches('a[href], button, input, select, textarea, [tabindex]')) place.setAttribute('tabindex', '-1');
-      place.focus();
+      if (place) goTo(place);
       return;
     }
     const to = offlineHref(new URL(link.href), new URL(location.href));
     if (!to) return;
     e.preventDefault();
-    if (to === location.hash) location.reload();
-    else location.assign(to); // the hashchange below shows the new page
+    clearTimeout(timer);
+    if (to === location.hash) {
+      // A link to the page already shown opens it fresh, at the top.
+      history.replaceState({ ...history.state, pb101Scroll: null }, '');
+      openingFresh = true;
+      location.reload();
+      return;
+    }
+    saveScroll();
+    location.assign(to); // the hashchange below shows the new page
   });
 
   // A followed link, Back or Forward: show the page the address now names.
   window.addEventListener('hashchange', () => {
     const next = routeFromHash(location.hash);
     if (next.page === route.page && next.search === route.search) return;
+    clearTimeout(timer);
     location.reload();
   });
 }
