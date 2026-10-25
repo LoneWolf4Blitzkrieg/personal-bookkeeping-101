@@ -193,8 +193,8 @@ const HUMANA = company('humana');
 const MERCK = company('merck');
 const COMPANY_DOC = {
   kind: 'list', title: 'Revenue and net income, from each company\'s annual reports (millions of dollars)',
-  lines: COMPANIES.map((c) => [c.name, COMPANY_YEARS.map((y) => `${y}: $${c.years[y][0].toLocaleString('en-US')} and $${c.years[y][1].toLocaleString('en-US')}`).join(' · ')]),
-  note: 'For each year: revenue (sales), then net income (profit) attributable to the company. Drug companies first, then health insurers.',
+  lines: COMPANIES.flatMap((c) => COMPANY_YEARS.map((y) => [`${c.name}, ${y}`, `sales $${c.years[y][0].toLocaleString('en-US')} · profit $${c.years[y][1].toLocaleString('en-US')}`])),
+  note: 'Sales are revenue; profit is net income attributable to the company. Drug companies first, then health insurers.',
 };
 const BUDGET_DOC = (y) => ({
   kind: 'list', title: `Federal budget, fiscal year ${y} (October ${y - 1} to September ${y})`,
