@@ -51,7 +51,7 @@ const spentOrMoved = num('m07-spent', 'interpreting', {
   const events = `${p.name} takes ${money(p.atm)} out of an ATM, pays ${money(p.groc)} for groceries by debit card, moves ${money(p.save)} from the Spending bucket into Saving, and pays ${money(p.lunch)} cash for lunch.`;
   if (p.ask === 'spent') {
     return {
-      prompt: `In one week, ${events} How much did ${p.name} spend, that is, how much was debited to expense pages?`,
+      prompt: `In one week, ${events} How much did ${p.name} spend? That is, how much was debited to expense pages?`,
       answer: p.groc + p.lunch,
       misconceptions: [{ cents: p.atm + p.groc + p.save + p.lunch, explanation: 'The ATM withdrawal and the move to Saving are transfers: no expense page changes.' }],
       explanation: `Only the groceries and the lunch are expenses: ${money(p.groc)} + ${money(p.lunch)} = ${money(p.groc + p.lunch)}.`,
@@ -105,7 +105,7 @@ const explainSpending = explainTemplate({
       modelAnswer: 'It is the proof of the amount. If a balance looks wrong, or you return something, you can check the entry against it.',
       rubric: ['Says it proves the amount (it is the source document)', 'Says you can check the entry against it later (errors, returns)'] },
     { prompt: 'In one or two sentences: a purchase paid by debit card credits the Spending bucket, but one paid in cash credits Cash. Why?',
-      modelAnswer: 'The credit goes to the page the money came from. A debit card takes bank money held in the Spending bucket; cash comes out of your wallet.',
+      modelAnswer: 'The credit goes to the page the money came from. A debit card takes bank money held in the Spending bucket. Cash comes out of your wallet.',
       rubric: ['Says the credit goes where the money came from', 'Names the bank money (Spending bucket) for a debit card and the wallet (Cash) for cash'] },
     { prompt: 'In one or two sentences: why is one receipt sometimes recorded on two expense pages?',
       modelAnswer: 'Because it can hold two kinds of spending, such as groceries and household supplies. Each kind has its own page, so the amounts are split between them.',
@@ -191,7 +191,7 @@ export const M07_LESSON = {
         'The journal page shows a debit-card purchase, a cash purchase and a donation.',
       ],
       prompt: 'Why is the Spending bucket credited for a debit-card purchase, but Cash for a cash purchase?',
-      promptAnswer: 'The credit goes to wherever the money came from. A debit card takes bank money held in the Spending bucket; cash comes from your wallet.',
+      promptAnswer: 'The credit goes to wherever the money came from. A debit card takes bank money held in the Spending bucket. Cash comes from your wallet.',
       journalPage: journal([
         ['2026-06-08', 'J4', 'Desert Mart receipt (debit card)', [['groceries', 1341, 0, true], ['spending', 0, 1341, true]]],
         ['2026-06-09', 'J4', 'Lunch, paid in cash', [['eating-out', 975, 0, true], ['cash', 0, 975, true]]],
@@ -219,12 +219,12 @@ export const M07_LESSON = {
       sourceDoc: receipt(STORES[1], [['Rice', 840], ['Beans', 315], ['Chicken', 1030], ['Paper towels', 699], ['Sponges', 576]]),
       answer: 1275,
       misconceptions: [{ cents: 5645, explanation: 'The two debits together must equal the $34.60 credit: subtract the groceries from the total.' }],
-      explanation: '$34.60 − $21.85 = $12.75, which is $6.99 + $5.76. Debits: $21.85 + $12.75 = $34.60, equal to the credit.',
+      explanation: '$34.60 − $21.85 = $12.75, which is $6.99 + $5.76. The debits are $21.85 + $12.75 = $34.60, equal to the credit.',
     },
     {
       id: 'transfers', kind: 'explain', title: 'Transfers are not spending', uses: ['transfers', 'accounting-equation'],
       text: [
-        'Moving money between your own pages is a transfer: an ATM withdrawal (debit Cash, credit the Spending bucket), moving money into the Saving bucket, or splitting a paycheck into buckets.',
+        'Moving money between your own pages is a transfer. Examples are an ATM withdrawal (debit Cash, credit the Spending bucket), moving money into the Saving bucket, or splitting a paycheck into buckets.',
         'A transfer is not spending. Nothing is used up and no expense page changes, so your net worth stays the same. Only the place the money is kept changes.',
         'A purchase is different. It debits an expense, and your net worth goes down by the amount spent.',
       ],
@@ -247,7 +247,7 @@ export const M07_LESSON = {
       id: 'independent', kind: 'predict', title: 'On your own', uses: ['recording-purchases', 'transfers'],
       text: ['Rosa\'s Spending bucket shows $380.00. She moves $50.00 to Blow money, then pays $42.18 for groceries by debit card. What does the Spending bucket show now?'],
       answer: 28782,
-      misconceptions: [{ cents: 33782, explanation: 'Moving money to Blow money is a transfer, but it still leaves the Spending bucket: credit it.' }],
+      misconceptions: [{ cents: 33782, explanation: 'Moving money to Blow money is a transfer, but the money still leaves the Spending bucket, so credit it.' }],
       explanation: '$380.00 − $50.00 − $42.18 = $287.82.',
     },
     {
@@ -260,7 +260,7 @@ export const M07_LESSON = {
     },
     {
       id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['transfers', 'recording-purchases'],
-      text: ['In one week Kai takes $40.00 out of an ATM, pays $63.10 for groceries by debit card, moves $25.00 into Saving, and pays $8.75 cash for lunch. How much did he spend, that is, how much was debited to expense pages?'],
+      text: ['In one week Kai takes $40.00 out of an ATM, pays $63.10 for groceries by debit card, moves $25.00 into Saving, and pays $8.75 cash for lunch. How much did he spend? That is, how much was debited to expense pages?'],
       answer: 7185,
       misconceptions: [{ cents: 13685, explanation: 'The ATM withdrawal and the move to Saving are transfers, not spending.' }],
       explanation: 'Groceries and lunch: $63.10 + $8.75 = $71.85.',

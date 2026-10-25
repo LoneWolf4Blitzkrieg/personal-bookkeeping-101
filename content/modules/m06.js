@@ -89,7 +89,7 @@ const explainJournal = explainTemplate({
       modelAnswer: 'In the journal it holds the ledger account number the line was posted to. On a ledger page it holds the journal page the entry came from, so each points to the other.',
       rubric: ['Journal folio = the ledger account number', 'Ledger folio = the journal page (so they point to each other)'] },
     { prompt: 'In one or two sentences: what does a ✓ beside an amount on a ledger page tell you?',
-      modelAnswer: 'That the amount has been posted from the journal and checked against it: same date, same amount, same side.',
+      modelAnswer: 'It means the amount has been posted from the journal and checked against it: same date, same amount, same side.',
       rubric: ['Says the amount was posted from the journal', 'Says it was checked against the journal entry'] },
     { prompt: 'In one or two sentences: you were interrupted while posting. How do you find where to start again?',
       modelAnswer: 'Look for the first journal line with an empty Folio column. Lines above it have been posted, so start posting from there.',
@@ -156,8 +156,8 @@ export const M06_LESSON = {
     {
       id: 'journal', kind: 'explain', title: 'The journal', uses: ['journal-entry', 'equal-sides'],
       text: [
-        'Until now, each event went straight onto two ledger pages. Bookkeepers first write every event in a journal, the book of original entry: one book where events are written in date order, as they happen.',
-        'A journal entry has the date, the accounts debited (written first), the accounts credited (written below and set in to the right), the amounts, and a short explanation of what happened. Journal pages are numbered J1, J2 and so on.',
+        'Until now, each event went straight onto two ledger pages. Bookkeepers first write every event in a journal, the book of original entry. It is one book where events are written in date order, as they happen.',
+        'A journal entry has the date, the accounts debited (written first), the accounts credited (written below and indented to the right), the amounts, and a short explanation of what happened. Journal pages are numbered J1, J2 and so on.',
         'Because the whole event sits in one place, you can check that the debits equal the credits before anything reaches the ledger. In this entry, $155.02 + $103.35 = $258.37.',
       ],
       prompt: 'Why write the whole event in the journal before you touch the ledger pages?',
@@ -228,7 +228,7 @@ export const M06_LESSON = {
     },
     {
       id: 'guided', kind: 'predict', title: 'Finish the worked steps', uses: ['posting', 'posted-marks'],
-      text: ['Posting the entry for moving $50.00 from the Spending bucket into Saving. Step 1 is done: the Saving line is written with folio J3 and ticked, and 3 is written in the journal. Step 2 is done: the Spending line is written with folio J3. Finish Step 3: what is the Spending balance on that line?'],
+      text: ['You are posting the entry for moving $50.00 from the Spending bucket into Saving. Step 1 is done: the Saving line is written with folio J3 and ticked, and 3 is written in the journal. Step 2 is done: the Spending line is written with folio J3. Finish Step 3: what is the Spending balance on that line?'],
       journalPage: journal([['2026-06-15', 'J3', 'To Saving bucket', [['saving', 5000, 0, true], ['spending', 0, 5000, false]]]], { sheetNo: 3 }),
       ledger: chartPage('spending', [['2026-06-14', 'Brought forward', '', 31890, 0], ['2026-06-15', 'To Saving bucket', 'J3', 0, 5000]], { askFrom: 1 }),
       highlightRow: 1,

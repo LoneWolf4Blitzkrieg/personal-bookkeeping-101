@@ -99,7 +99,7 @@ const explainChart = explainTemplate({
   id: 'm05-explain', module: 'm05',
   variants: [
     { prompt: 'In one or two sentences: why are account numbers grouped by kind of account?',
-      modelAnswer: 'So the number alone tells you what kind of account a page is, and so which side makes it go up. Pages of the same kind also file together.',
+      modelAnswer: 'So the number alone tells you what kind of account a page is, and so which side makes it go up. Pages of the same kind also stay together.',
       rubric: ['Says the number shows the kind of account', 'Says this tells you how the account behaves, or keeps the pages in order'] },
     { prompt: 'In one or two sentences: what does the Folio column on a ledger line tell you?',
       modelAnswer: 'It gives the number of the page that holds the other side of the entry, so you can find the matching line.',
@@ -108,7 +108,7 @@ const explainChart = explainTemplate({
       modelAnswer: 'So you can see how much went to each thing, such as groceries compared with eating out, and plan from it.',
       rubric: ['Says each kind of spending is kept apart', 'Says this shows how much went to each one (to plan or budget)'] },
     { prompt: 'In one or two sentences: Cash and Checking are both your money. Why do they get separate pages?',
-      modelAnswer: 'The money is held in different places: your wallet and the bank. Separate pages show how much is in each, and each page can be checked against what is really there.',
+      modelAnswer: 'The money is held in different places: your wallet and the bank. Separate pages show how much is in each, and you can check each page against what is really there.',
       rubric: ['Says the money is held in different places', 'Says separate pages show (or let you check) how much is in each'] },
   ],
 });
@@ -167,7 +167,7 @@ export const M05_LESSON = {
       id: 'accounts', kind: 'explain', title: 'One page for each account', uses: ['personal-accounts', 'accounting-equation'],
       text: [
         'Your books have one ledger page for each account. A personal set of books uses the five kinds of account you met in Module 3.',
-        'Assets (what you own): Cash, the money in your wallet; Checking, take-home pay that has arrived in the bank and has not yet been split into buckets; and your five bucket pages.',
+        'Assets (what you own): Cash, the money in your wallet. Checking, take-home pay that has reached the bank and is not yet split into buckets. Your five bucket pages are assets too.',
         'Liabilities (what you owe): a credit card (Module 8) and any money you owe a person. Net worth: one page that records what you were worth on the day you started your books.',
         'Income: Wages, and Gifts received for money people give you. Expenses: one page for each kind of spending, such as Rent, Groceries, Eating out, Transportation and Phone.',
       ],
@@ -189,7 +189,7 @@ export const M05_LESSON = {
     {
       id: 'numbers', kind: 'explain', title: 'Account numbers', uses: ['account-numbers', 'personal-accounts'],
       text: [
-        'Each page has an account number in its header. The numbers are grouped by kind of account, so the number alone tells you what kind of account a page is: 1 to 19 are assets, 20 to 29 liabilities, 30 net worth, 40 to 49 income, and 50 to 99 expenses.',
+        'Each page has an account number in its header. The numbers are grouped by kind of account, so the number alone tells you what kind of account a page is. Accounts 1 to 19 are assets, 20 to 29 are liabilities, 30 is net worth, 40 to 49 are income, and 50 to 99 are expenses.',
         `The list of every account and its number is your chart of accounts. This course uses this one. ${CHART_TEXT}`,
         'Your own chart can have different expense pages. Keep the groups, and give a new page the next free number in its group. Keep the pages in number order, so any page is easy to find.',
       ],
@@ -208,7 +208,7 @@ export const M05_LESSON = {
       id: 'folio', kind: 'explain', title: 'The Folio column', uses: ['folio-reference', 'equal-sides'],
       text: [
         'Every entry has two sides, written on two pages. The Folio column ties them together: on each line, write the number of the page that holds the other side.',
-        'Jordan moves $40.00 from the Spending bucket (account 2) into Cash (account 7). On the Cash page, the line is a debit with folio 2. On the Spending page, it is a credit with folio 7. Follow either folio and you find the other half of the entry.',
+        'Jordan moves $40.00 from the Spending bucket (account 2) into Cash (account 7). On the Cash page, the line is a debit with folio 2. On the Spending page, it is a credit with folio 7. Follow either folio to find the other half of the entry.',
         'In Module 6 you will start a journal. From then on, the Folio column points to the journal page instead.',
       ],
       prompt: 'You find a line on a page and cannot remember what it was for. How does its folio help?',
@@ -237,7 +237,7 @@ export const M05_LESSON = {
       ledger: chartPage('blow', [['2026-06-06', 'Brought forward', '', 3140, 0], ['2026-06-12', 'From Spending bucket', '2', 2500, 0]], { name: 'Ana (example)', askFrom: 1 }),
       highlightRow: 1,
       answer: 5640,
-      misconceptions: [{ cents: 640, explanation: 'Blow money is an asset receiving money: a debit, so add.' }],
+      misconceptions: [{ cents: 640, explanation: 'Blow money is an asset that receives money, so it is a debit: add.' }],
       explanation: '$31.40 + $25.00 = $56.40, a debit balance.',
     },
     {

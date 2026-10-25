@@ -60,13 +60,13 @@ const CARD_EVENTS = {
     return {
       prompt: `Write the journal entry: you buy ${words} for ${money(p.amount)} with your credit card.`,
       answer: [{ account, debit: p.amount, credit: 0 }, { account: 'card', debit: 0, credit: p.amount }],
-      explanation: 'The expense is debited. Credit card (a liability) goes up, because you now owe more: credit. No bucket changes yet.',
+      explanation: 'The expense is debited. Credit card (a liability) goes up because you now owe more, so it is credited. No bucket changes yet.',
     };
   },
   payment: (p) => ({
     prompt: `Write the journal entry: you pay ${money(p.amount)} to your credit card company from the Spending bucket.`,
     answer: [{ account: 'card', debit: p.amount, credit: 0 }, { account: 'spending', debit: 0, credit: p.amount }],
-    explanation: 'Credit card (a liability) goes down, because you owe less: debit. The Spending bucket (an asset) goes down: credit.',
+    explanation: 'Credit card (a liability) goes down because you owe less, so it is debited. The Spending bucket (an asset) goes down, so it is credited.',
   }),
   interest: (p) => ({
     prompt: `Write the journal entry: your card statement charges ${money(p.amount)} of interest.`,
@@ -135,7 +135,7 @@ const cardMonth = {
         ['2026-07-20', 'Payment', 'J7', p.pay, 0, true],
       ], { name: p.name, askFrom: 1, creditLimit: 100000 }),
       fields: balances.map((answer, k) => ({ label: `Balance after line ${k + 2}`, answer })),
-      explanation: `Interest and charges are credits that raise what is owed; the payment is a debit that lowers it. The four balances are ${balances.map(money).join(', ')}.`,
+      explanation: `Interest and charges are credits that raise what is owed. The payment is a debit that lowers it. The four balances are ${balances.map(money).join(', ')}.`,
     };
   },
 };
@@ -285,7 +285,7 @@ export const M08_LESSON = {
     },
     {
       id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['minimum-payment-cost'],
-      text: [`With the example rule (${MINIMUM_RULE}), what is the minimum payment on a $2,000.00 balance whose interest this month is ${money(monthlyInterest(200000, APR))}?`],
+      text: [`With the example rule (${MINIMUM_RULE}), what is the minimum payment on a $2,000.00 balance when this month's interest is ${money(monthlyInterest(200000, APR))}?`],
       answer: minimumPayment(200000, monthlyInterest(200000, APR)),
       misconceptions: [{ cents: 2000, explanation: 'The minimum is the interest plus 1% of the balance.' }],
       explanation: `${money(monthlyInterest(200000, APR))} + $20.00 (1% of $2,000.00) = ${money(minimumPayment(200000, monthlyInterest(200000, APR)))}.`,
@@ -309,7 +309,7 @@ export const M08_GATE = { id: 'm08', kind: 'gate', title: 'Module 8 check', temp
 // Fluency drill on the core operation: a charge raises what is owed.
 const drill = [1, 2, 3].map((n) => num(`m08-drill-${n}`, 'interpreting', { a: { min: 2000, max: 60000, step: 1 }, b: { min: 300, max: 9000, step: 1 } }, (p) => ({
   prompt: `Drill ${n} of 3: the card page shows a credit balance of ${money(p.a)}. A ${money(p.b)} charge is posted. New balance?`, answer: p.a + p.b,
-  misconceptions: [{ cents: p.a - p.b, explanation: 'A charge is a credit to the card: you owe more.' }],
+  misconceptions: [{ cents: p.a - p.b, explanation: 'A charge is a credit to the card, because you owe more.' }],
   explanation: `A charge adds to what you owe: ${money(p.a)} + ${money(p.b)} = ${money(p.a + p.b)}.`,
 })));
 
