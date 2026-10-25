@@ -250,7 +250,7 @@ Task 9 adds a test: the sample month's books close, reconcile to its bank statem
 - [ ] **Step 2:** Run `npm test`. Expected: FAIL.
 - [ ] **Step 3:** Write the exam and retention item sets from existing templates.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS. Take the exam once in the browser pane, then print and download the certificate.
-- [ ] **Step 4b (author request, October 25, 2026):** On passing, the celebration: canvas fireworks, the author's chosen Ode to Joy recording, `media/ode-to-joy-finale.mp3` (52 s; a third-party recording excluded from the CC licence; see `media/NOTICE.md`), the author's message adapted by a Sonnet agent; music starts from a click, stop/mute control, reduced-motion fallback. See the ledger's "RESUME HERE, PART 2".
+- [ ] **Step 4b (author request, October 25, 2026):** On passing, the celebration: canvas fireworks, the author's chosen Ode to Joy recording, `media/ode-to-joy-finale.mp3` (the author's 50 s edit; a third-party recording excluded from the CC licence; see `media/NOTICE.md`), the author's message adapted by a Sonnet agent; music starts from a click, stop/mute control, reduced-motion fallback. See the ledger's "RESUME HERE, PART 2".
 - [ ] **Step 5:** Commit; Opus review; fix; commit.
 
 ### Task 12: Accessibility, print and publishing readiness
