@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your certificate · Personal Bookkeeping 101</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the certificate</a>
+
+  <header class="topbar">
+    <a class="brand" href="index.html">Personal Bookkeeping <span>101</span></a>
+  </header>
+
+  <main class="home certificate-page" id="main">
+    <h1 class="no-print">Your certificate</h1>
+    <div id="certificate-root"></div>
+  </main>
+
+  <footer class="site-footer">
+    <p><i>Personal Bookkeeping 101</i> by Raul Bautista is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">CC BY-NC-SA 4.0</a> (free for non-commercial use).</p>
+  </footer>
+
+  <script type="module">
+    import { startCertificatePage } from './js/app/certificate.js';
+    startCertificatePage(document.getElementById('certificate-root'));
+  </script>
+  <script>
+    // Module scripts do not run when a page is opened straight from a file.
+    if (location.protocol === 'file:') {
+      document.body.insertAdjacentHTML('afterbegin', '<p class="storage-banner">This course must be opened from its web address (or a local web server), not by opening the file directly. See the README for how to start it.</p>');
+    }
+  </script>
+</body>
+</html>

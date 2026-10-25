@@ -17,4 +17,8 @@
   .answer { color: transparent !important; }
   .ledger .ask { background: transparent; }
   .ledger tr.highlight td { background: transparent; }
+
+  /* The certificate prints alone, on one page */
+  .certificate-page { padding: 0; max-width: none; }
+  .certificate-page h1 { display: none; }
 }

@@ -24,6 +24,8 @@ import { CHECKPOINT_A } from './ca.js';
 import { CHECKPOINT_B } from './cb.js';
 import { CHECKPOINT_C } from './cc.js';
 import { PLACEMENT_A, PLACEMENT_B } from './placement.js';
+import { FINAL_EXAM } from './exam.js';
+import { RETENTION } from './retention.js';
 
 const byId = (...list) => Object.fromEntries(list.map((a) => [a.id, a]));
 
@@ -49,4 +51,5 @@ export const ASSESSMENTS = byId(
   A1_GATE, A1_PRACTICE, A1_EXTRA, A1_REMEDIAL,
   A2_GATE, A2_PRACTICE, A2_EXTRA, A2_REMEDIAL,
   A3_GATE, A3_PRACTICE, A3_EXTRA, A3_REMEDIAL,
+  FINAL_EXAM, RETENTION,
 );

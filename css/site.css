@@ -208,3 +208,18 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 .author-note h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
 .author-note p { margin: 0 0 .6rem; }
 .author-note-signature { font-style: italic; color: var(--ink-soft); margin-bottom: 0; }
+
+/* Final exam: the author's note before the first question, and the celebration */
+.exam-intro .author-note { margin-bottom: 1rem; }
+.celebration { margin: 1.5rem 0; padding: 1rem 1.25rem; border: 2px solid var(--accent); border-radius: 10px; background: var(--panel); max-width: 44rem; }
+.celebration h2 { margin-top: 0; }
+.celebration-message { font-size: 1.15rem; line-height: 1.6; }
+.celebration-credit { font-size: .85rem; color: var(--muted, #555); }
+.celebration-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+/* Certificate page */
+.certificate-page .certificate { margin-top: 1.5rem; }
+.certificate-actions { margin-top: 1rem; }
+
+/* Anything marked hidden stays hidden, whatever its other styles say */
+[hidden] { display: none !important; }

@@ -124,6 +124,14 @@ export function saveProject(progress, moduleId, { path, figuresOk, checklist, ru
   return p;
 }
 
+// The name the learner wants on the certificate (kept with their progress,
+// so it travels in a progress file).
+export function saveCertificateName(progress, name) {
+  const p = clone(progress);
+  p.certificateName = String(name);
+  return p;
+}
+
 export function recordCheckpoint(progress, id, score, at, version, items = []) {
   const p = clone(progress);
   const c = (p.checkpoints[id] ??= { attempts: [], passed: false });
@@ -292,6 +300,7 @@ export function validateProgress(data) {
     if (typeOf(data[field]) !== type) return `This progress file has a damaged "${field}".`;
   }
   if (!(data.examPassedAt === null || typeof data.examPassedAt === 'string')) return 'This progress file has a damaged "examPassedAt".';
+  if (data.certificateName !== undefined && typeof data.certificateName !== 'string') return 'This progress file has a damaged "certificateName".';
   if (!Array.isArray(data.exam.attempts)) return 'This progress file has a damaged "exam".';
   for (const [id, m] of Object.entries(data.modules)) {
     if (typeOf(m) !== 'object' || !Array.isArray(m.steps) || typeof m.timeMs !== 'number' || !Array.isArray(m.gateAttempts) || typeof m.passed !== 'boolean') {

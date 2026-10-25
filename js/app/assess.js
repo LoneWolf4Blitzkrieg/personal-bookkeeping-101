@@ -10,6 +10,8 @@ import { createSession, resumeSession, submit, currentItem, isComplete, summary 
 import { isUnlocked, nextVersion, attemptsFor, openSession, saveSession, sessionMatches, recordGate, recordCheckpoint, recordExam, recordPlacement, recordOther, recordPractice, recallDue, failureStep, addErrorEntry } from '../progress.js';
 import { store, update, mountChrome, trackTime } from './chrome.js';
 import { ASSESSMENTS } from '../../content/assess/index.js';
+import { examIntroHTML } from '../examView.js';
+import { celebrationHTML, wireCelebration } from '../celebration.js';
 
 const moduleName = (id) => (/^m\d\d$/.test(id) ? `Module ${Number(id.slice(1))}` : /^a\d$/.test(id) ? `Add-on ${id.toUpperCase()}` : id === 'prereq' ? 'Money arithmetic refresher' : id);
 
@@ -94,7 +96,8 @@ const VERDICTS = {
     pass: 'Passed. Everything so far has stuck.',
     retry: 'Not yet. You need 80%. Go back to the earliest module listed below, redo its practice set and gate, then try this checkpoint again.',
   },
-  exam: { pass: 'Passed. You have completed the course.', retry: 'Not yet. You need 80%. Review the modules you found hardest and try again.' },
+  exam: { pass: 'Passed. You have completed the course.', retry: 'Not yet. You need 80%. Review the modules listed below, starting with the earliest, and try again. You will get a different version.' },
+  retention: { pass: 'Well remembered. Four weeks on, the course has stuck.', retry: 'Some of it has faded, which is normal after four weeks. Reread the modules listed below; nothing in the course is locked by this review.' },
   prereq: {
     pass: 'Passed. You have the money arithmetic this course uses. Start Module 1 whenever you are ready.',
     retry: 'Not yet. Work through the <a href="lesson.html?m=prereq">money arithmetic refresher</a>, then take this check again. It only takes a few minutes.',
@@ -123,7 +126,8 @@ function resultsHTML(session) {
   const kind = session.meta?.kind ?? 'gate';
   const words = kind === 'placement' ? placementWords(session.meta.checkpointId) : VERDICTS[kind] ?? VERDICTS.gate;
   const score = s.max !== undefined ? `${s.points} of ${s.max}` : `${s.percent}%`;
-  const missed = s.missedModules?.length ? `<p>Review these first: ${s.missedModules.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
+  const missedList = s.missedModules ?? (['exam', 'retention'].includes(kind) && !s.passed ? [...new Set(session.results.filter((r) => r.points < r.max).map((r) => r.module))] : []);
+  const missed = missedList.length ? `<p>Review these first: ${missedList.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
   const rows = session.results.map((r, i) => {
     const item = session.items[i];
     const why = item.kind === 'explain' ? `Model answer: ${item.modelAnswer}` : (item.explanation ?? '');
@@ -225,6 +229,7 @@ export function startAssessment(root, id, requestedVersion) {
   let session = saved && saved.meta.version === version ? resumeSession(items, meta, saved.results) : createSession(items, meta);
   const attemptsAtStart = attemptsFor(progress, assessment.id);
   let pendingText = '';
+  let examBegun = false;
   let stale = false;
   // A sitting that was already complete when saved (for example after a
   // template changed) is recorded now rather than left hanging.
@@ -247,7 +252,22 @@ export function startAssessment(root, id, requestedVersion) {
         itemBox.insertAdjacentHTML('beforeend', `<div class="next-step"><h3>What to do next</h3><p>${NEXT_STEPS[failureStep(failed)]}</p></div>`);
       }
       if (!s.passed) itemBox.insertAdjacentHTML('beforeend', errorLogFormHTML());
+      if (session.meta.kind === 'exam' && s.passed) {
+        itemBox.querySelector('#results-heading').insertAdjacentHTML('beforebegin', celebrationHTML());
+        wireCelebration(itemBox.querySelector('.celebration'));
+        itemBox.querySelector('#celebration-title').focus();
+        return;
+      }
+      // Passing the last add-on check opens the final exam.
+      if (session.meta.kind === 'gate' && session.meta.assessmentId === 'a3' && s.passed) {
+        itemBox.querySelector('.verdict').insertAdjacentHTML('afterend', '<p><a class="button" href="assess.html?id=exam">Go to the final exam</a></p>');
+      }
       itemBox.querySelector('#results-heading').focus();
+      return;
+    }
+    // Before the exam's first question: the author's note on honest work.
+    if (session.meta.kind === 'exam' && session.results.length === 0 && !examBegun) {
+      itemBox.innerHTML = examIntroHTML();
       return;
     }
     itemBox.innerHTML = itemHTML(currentItem(session), session.results.length, session.items.length);
@@ -257,6 +277,7 @@ export function startAssessment(root, id, requestedVersion) {
   root.addEventListener('click', (e) => {
     const action = e.target.dataset?.action;
     if (action === 'next') show();
+    if (action === 'begin-exam') { examBegun = true; show(); }
     if (action === 'add-line') {
       const tbody = itemBox.querySelector('.entry-table tbody');
       tbody.insertAdjacentHTML('beforeend', entryRowHTML(currentItem(session), tbody.rows.length));

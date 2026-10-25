@@ -50,6 +50,14 @@ export function courseMapHTML(progress, currentId, modules = MODULES, { headingL
     }
   }
   if (phase !== null) parts.push('</ol>');
+  // After the add-on: the final exam, the certificate and the four-week review.
+  if (modules === MODULES) {
+    const exam = state(progress, 'exam', Boolean(progress.examPassedAt));
+    const certificate = progress.examPassedAt && progress.modules.m15?.passed && progress.modules.m16?.passed ? { cls: '', note: '' } : { cls: ' locked', note: ' (locked)' };
+    const review = state(progress, 'retention', progress.other.retention?.attempts?.length > 0);
+    const item = (href, label, s) => `<li><a class="map-checkpoint${s.cls}" href="${href}">${label}${s.note ? `<span class="visually-hidden">${s.note}</span>` : ''}</a></li>`;
+    parts.push(`<${h} class="map-phase">The finish</${h}><ol class="map-list">${item('assess.html?id=exam', 'Final exam', exam)}${item('certificate.html', 'Your certificate', certificate)}${item('assess.html?id=retention', 'Four-week review', review)}</ol>`);
+  }
   return parts.join('');
 }
 
