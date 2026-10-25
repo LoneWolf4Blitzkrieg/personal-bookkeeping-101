@@ -17,7 +17,7 @@ export function startCertificatePage(root) {
   const status = certificateStatus(progress);
   if (!status.ready) {
     root.innerHTML = `<div class="lock-notice"><p><strong>Not yet.</strong> ${escapeHTML(status.reason)}</p>
-      <p>Your certificate is waiting at the end of the course. <a href="index.html#course-map">Go to the course map</a>.</p></div>`;
+      <p>Your certificate is waiting for you at the end of the course. <a href="index.html#course-map">Go to the course map</a>.</p></div>`;
     return;
   }
 
@@ -35,7 +35,7 @@ export function startCertificatePage(root) {
     view.innerHTML = `${certificateHTML({ name, date: status.date })}
       <p class="certificate-actions no-print"><button class="button" type="button" id="print-certificate">Print</button>
       <button class="button button-secondary" type="button" id="download-certificate">Download as a file</button></p>
-      <p class="no-print">To save it as a PDF, choose Print and then "Save as PDF" as the printer.</p>`;
+      <p class="no-print">To save a PDF, choose Print, then pick "Save as PDF" as the printer.</p>`;
     view.querySelector('#print-certificate').addEventListener('click', () => window.print());
     view.querySelector('#download-certificate').addEventListener('click', () => {
       const blob = new Blob([certificateDocument({ name, date: status.date })], { type: 'text/html' });

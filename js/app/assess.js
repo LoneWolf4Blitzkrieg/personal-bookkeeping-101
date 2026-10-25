@@ -96,7 +96,7 @@ const VERDICTS = {
     pass: 'Passed. Everything so far has stuck.',
     retry: 'Not yet. You need 80%. Go back to the earliest module listed below, redo its practice set and gate, then try this checkpoint again.',
   },
-  exam: { pass: 'Passed. You have completed the course.', retry: 'Not yet. You need 80%. Review the modules listed below, starting with the earliest, and try again. You will get a different version.' },
+  exam: { pass: 'Passed. You have completed the course.', retry: 'Not yet. You need 80%. Review the modules listed below, earliest first, then try again. You will get a different version.' },
   retention: { pass: 'Well remembered. Four weeks on, the course has stuck.', retry: 'Some of it has faded, which is normal after four weeks. Reread the modules listed below; nothing in the course is locked by this review.' },
   prereq: {
     pass: 'Passed. You have the money arithmetic this course uses. Start Module 1 whenever you are ready.',

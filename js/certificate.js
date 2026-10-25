@@ -31,7 +31,7 @@ export function certificateStatus(progress) {
   if (!progress?.modules?.m15?.passed || !progress?.modules?.m16?.passed) missing.push('mark both parts of the final project complete (Modules 15 and 16)');
   if (!progress?.examPassedAt) missing.push('pass the final exam');
   return missing.length
-    ? { ready: false, reason: `To earn your certificate, ${missing.join(' and ')}.` }
+    ? { ready: false, reason: `To get your certificate, ${missing.join(' and ')}.` }
     : { ready: true, date: progress.examPassedAt };
 }
 
@@ -42,7 +42,7 @@ export function certificateHTML({ name, date }) {
   <h2 class="certificate-course">${escapeHTML(COURSE_TITLE)}</h2>
   <p class="certificate-presented">This is to say that</p>
   <p class="certificate-name">${escapeHTML(cleanName(name))}</p>
-  <p class="certificate-body">kept, proved and reported a full month of books, passed the check at the end of all 16 modules and the three add-on modules, and passed the 50-question final exam with at least 80% of the points.</p>
+  <p class="certificate-body">kept, proved and reported a full month of books, passed the check at the end of each of the 16 modules and the three add-on modules, and passed the 50-question final exam with at least 80% of the points.</p>
   <p class="certificate-date">Completed on ${escapeHTML(longDate(date))}</p>
   <p class="certificate-unofficial">${escapeHTML(UNOFFICIAL)}</p>
   <p class="certificate-credit"><i>${escapeHTML(COURSE_TITLE)}</i> by Raul Bautista is licensed under <a href="${LICENCE_URL}" rel="license">CC BY-NC-SA 4.0</a> (free for non-commercial use).</p>
