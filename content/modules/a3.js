@@ -61,7 +61,7 @@ const ageLimit = num('a3-age-limit', 'interpreting', { age: { pick: [35, 44, 50,
     prompt: `${p.name} is ${p.age}, earned ${money(p.earned)} from work in 2026, and has already put ${money(p.put)} into an IRA for 2026. How much more can ${p.name} put in for 2026?`,
     source: IRA_2026.source,
     answer: limit - p.put,
-    misconceptions: [{ cents: other - p.put, explanation: p.age >= 50 ? 'At 50 or older, $1,100.00 more is allowed: the limit is $8,600.00.' : 'The extra $1,100.00 is only for people 50 or older: the limit is $7,500.00.' }],
+    misconceptions: [{ cents: other - p.put, explanation: p.age >= 50 ? 'At 50 or older, $1,100.00 more is allowed. The limit is $8,600.00.' : 'The extra $1,100.00 is only for people 50 or older. The limit is $7,500.00.' }],
     explanation: `${p.age >= 50 ? `At ${p.age}, the 2026 limit is $7,500.00 + $1,100.00 = ${money(LIMIT_50)}` : `Under 50, the 2026 limit is ${money(LIMIT)}`}. ${money(limit)} − ${money(p.put)} = ${money(limit - p.put)} more.`,
   };
 });
@@ -74,7 +74,7 @@ const yearOfInterest = num('a3-year-of-interest', 'interpreting', { opening: { m
     ledger: chartPage('ira', [['2027-01-01', 'Brought forward', '', p.opening, 0], ['2027-12-31', 'CD interest (1.76%)', 'J2', interest, 0, true]], { name: p.name, askFrom: 1 }),
     highlightRow: 1,
     answer: p.opening + interest,
-    misconceptions: [{ cents: p.opening - interest, explanation: 'Interest is added to the IRA: it is a debit to an asset page.' }],
+    misconceptions: [{ cents: p.opening - interest, explanation: 'Interest is added to the IRA. It is a debit to an asset page.' }],
     explanation: `1.76% of ${money(p.opening)} is ${money(interest)}. ${money(p.opening)} + ${money(interest)} = ${money(p.opening + interest)}.`,
   };
 });
@@ -85,7 +85,7 @@ const twoYears = num('a3-two-years', 'interpreting', { c: { min: 50000, max: 750
     prompt: `${p.name} opens an IRA holding a 12-month CD at 1.76% a year. ${p.name} puts in ${money(p.c)} each January, and the CD's interest is added each December. What does the IRA hold after two years?`,
     source: DEPOSIT_SOURCE,
     answer,
-    misconceptions: [{ cents: 2 * p.c, explanation: 'Add each December\'s interest, too: 1.76% of what the IRA held that year.' }],
+    misconceptions: [{ cents: 2 * p.c, explanation: 'Add each December\'s interest, too. It is 1.76% of what the IRA held that year.' }],
     explanation: `Year 1: ${money(p.c)} + ${money(percentOf(p.c, CD))} = ${money(yearOn(p.c))}. Year 2: ${money(yearOn(p.c))} + ${money(p.c)} = ${money(yearOn(p.c) + p.c)}, plus ${money(percentOf(yearOn(p.c) + p.c, CD))} interest = ${money(answer)}.`,
   };
 });
@@ -114,7 +114,7 @@ const RECORD_EVENTS = {
   contribution: (p) => ({
     prompt: `${p.name} moves ${money(p.amount)} from the Investing bucket into an IRA. Record the entry.`,
     answer: [{ account: 'ira', debit: p.amount, credit: 0 }, { account: 'investing', debit: 0, credit: p.amount }],
-    explanation: 'A transfer between your own pages: debit the IRA, which receives, and credit the Investing bucket, which gives.',
+    explanation: 'This is a transfer between your own pages. Debit the IRA, which receives. Credit the Investing bucket, which gives.',
   }),
   interest: (p) => ({
     prompt: `The CD in ${p.name}'s IRA pays ${money(p.amount)} of interest. Record the entry.`,
@@ -154,10 +154,10 @@ const explainIra = explainTemplate({
   id: 'a3-explain', module: 'a3',
   variants: [
     { prompt: 'In one or two sentences: what is an IRA?',
-      modelAnswer: 'An account for saving for retirement, with tax advantages. It can hold savings such as a CD, or investments such as mutual funds.',
+      modelAnswer: 'It is an account for saving for retirement, with tax advantages. It can hold savings such as a CD, or investments such as mutual funds.',
       rubric: ['Says it is an account for saving for retirement', 'Mentions the tax advantage (or what it can hold)'] },
     { prompt: 'In one or two sentences: how is a Roth IRA taxed differently from a traditional IRA?',
-      modelAnswer: 'A traditional IRA can lower your taxes now, but withdrawals are taxed later. A Roth uses money already taxed, and qualified withdrawals are not taxed.',
+      modelAnswer: 'A traditional IRA can lower your taxes now, but withdrawals are taxed later. A Roth uses money that was already taxed, and qualified withdrawals are not taxed.',
       rubric: ['Says traditional withdrawals are taxed later (contributions may be deductible)', 'Says Roth contributions are after tax and qualified withdrawals are tax-free'] },
     { prompt: 'In one or two sentences: why is the most you can put in the smaller of the yearly limit and what you earned?',
       modelAnswer: 'IRA contributions must come from pay for work. You cannot put in more than you earned that year, or more than the yearly limit.',
@@ -177,7 +177,7 @@ const FORTY = iraBalance(MAYA, 40);
 export const A3_LESSON = {
   id: 'a3',
   title: 'IRAs and saving for later',
-  coreIdea: 'An IRA is an account for saving for retirement, with tax advantages. A traditional IRA can lower your taxes now and is taxed later; a Roth IRA is taxed now and not later. Each year has a limit, and money left to grow for decades earns interest on its interest.',
+  coreIdea: 'An IRA is an account for saving for retirement, with tax advantages. A traditional IRA can lower your taxes now, but it is taxed later. A Roth IRA is taxed now and not later. Each year has a limit. Money left to grow for decades earns interest on its interest.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['corporate-pricing'],
@@ -190,8 +190,8 @@ export const A3_LESSON = {
       id: 'what', kind: 'explain', title: 'What an IRA is', uses: ['what-an-ira-is', 'transfers', 'compound-interest'],
       text: [
         'An IRA (individual retirement account) is an account for saving for retirement, with tax advantages. You open it with a bank, a credit union or an investment firm.',
-        'An IRA can hold savings, such as a CD. Bank deposits in IRAs, CDs included, are insured by the FDIC up to $250,000 per owner at each bank. It can also hold investments such as mutual funds. Those are not insured: their value goes up and down, and they "may lose value."',
-        'In your books, the IRA is a page of its own, IRA (account 10): a home for Investing bucket money. Moving money in is a transfer: debit IRA, credit Investing bucket. Maya puts in $1,000.00 each January. Her IRA holds a CD at 1.76% a year, the October 2026 average, and its interest is added each December.',
+        'An IRA can hold savings, such as a CD. Bank deposits in IRAs, CDs included, are insured by the FDIC up to $250,000 per owner at each bank. An IRA can also hold investments such as mutual funds. Those are not insured. Their value goes up and down, and they "may lose value."',
+        'In your books, the IRA is a page of its own, IRA (account 10). It is a home for Investing bucket money. Moving money in is a transfer: debit IRA, credit Investing bucket. Maya puts in $1,000.00 each January. Her IRA holds a CD at 1.76% a year, the October 2026 average, and its interest is added each December.',
         'This course explains how IRAs work. It does not tell you what to buy.',
       ],
       prompt: 'Why does moving money from the Investing bucket into an IRA leave your net worth the same?',
@@ -206,7 +206,7 @@ export const A3_LESSON = {
       ledger: mayaPage(2, 2),
       highlightRow: 3,
       answer: iraBalance(MAYA, 2),
-      misconceptions: [{ cents: 2 * MAYA + 2 * percentOf(MAYA, CD), explanation: 'Year 2\'s interest is 1.76% of everything in the IRA that year, $2,017.60, not of $1,000.00.' }],
+      misconceptions: [{ cents: 2 * MAYA + 2 * percentOf(MAYA, CD), explanation: 'Year 2\'s interest is 1.76% of everything in the IRA that year ($2,017.60), not of $1,000.00.' }],
       explanation: `$1,017.60 + $1,000.00 = $2,017.60. 1.76% of $2,017.60 is ${money(percentOf(201760, CD))}, so the IRA holds ${money(iraBalance(MAYA, 2))}.`,
       source: DEPOSIT_SOURCE,
     },
@@ -241,9 +241,9 @@ export const A3_LESSON = {
     {
       id: 'limits', kind: 'explain', title: 'Limits and decades of growth', uses: ['limits-and-growth', 'compound-interest'],
       text: [
-        'For 2026, the most anyone can put into all their IRAs together is $7,500.00, or $8,600.00 at age 50 or older ($1,100.00 more). It can never be more than you earned from work that year. Roth IRAs also have an income limit: for a single person in 2026 it phases out between $153,000.00 and $168,000.00.',
+        'For 2026, the most anyone can put into all their IRAs together is $7,500.00, or $8,600.00 at age 50 or older ($1,100.00 more). It can never be more than you earned from work that year. Roth IRAs also have an income limit. For a single person in 2026, it phases out between $153,000.00 and $168,000.00.',
         `Time does a lot of the work. If Maya keeps putting in $1,000.00 a year at 1.76% for 40 years, she puts in $40,000.00 and her IRA holds ${money(FORTY)}. The rest is interest, much of it interest on interest.`,
-        'Investments such as stock and bond funds can grow faster than a CD, or lose value; nobody can promise either. The course uses the CD rate because it is a real, published figure.',
+        'Investments such as stock and bond funds can grow faster than a CD or lose value. Nobody can promise either. The course uses the CD rate because it is a real, published figure.',
       ],
       prompt: 'Why does the interest grow faster in the later years?',
       promptAnswer: 'Each year adds a contribution and that year\'s interest, so there is more money earning interest every year.',
@@ -253,7 +253,7 @@ export const A3_LESSON = {
       id: 'predict-limit', kind: 'predict', title: 'Predict: the most you can put in', uses: ['limits-and-growth'],
       text: ['Kai is 20, earned $5,240.00 from a part-time job in 2026, and has already put $3,000.00 into a Roth IRA for 2026. How much more can Kai put in for 2026?'],
       answer: 224000,
-      misconceptions: [{ cents: LIMIT - 300000, explanation: 'Kai earned less than $7,500.00, so his limit is what he earned: $5,240.00.' }],
+      misconceptions: [{ cents: LIMIT - 300000, explanation: 'Kai earned less than $7,500.00, so his limit is what he earned, $5,240.00.' }],
       explanation: 'The most is the smaller of $7,500.00 and $5,240.00, which is $5,240.00. $5,240.00 − $3,000.00 = $2,240.00 more.',
       source: IRA_2026.source,
     },

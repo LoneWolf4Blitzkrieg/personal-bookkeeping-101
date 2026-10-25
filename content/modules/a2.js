@@ -194,7 +194,7 @@ const MERCK = company('merck');
 const COMPANY_DOC = {
   kind: 'list', title: 'Revenue and net income, from each company\'s annual reports (millions of dollars)',
   lines: COMPANIES.flatMap((c) => COMPANY_YEARS.map((y) => [`${c.name}, ${y}`, `sales $${c.years[y][0].toLocaleString('en-US')} · profit $${c.years[y][1].toLocaleString('en-US')}`])),
-  note: 'Sales are revenue; profit is net income attributable to the company. Drug companies first, then health insurers.',
+  note: 'Sales are revenue. Profit is net income attributable to the company. Drug companies come first, then health insurers.',
 };
 const BUDGET_DOC = (y) => ({
   kind: 'list', title: `Federal budget, fiscal year ${y} (October ${y - 1} to September ${y})`,
@@ -205,7 +205,7 @@ const BUDGET_DOC = (y) => ({
 export const A2_LESSON = {
   id: 'a2',
   title: 'Inflation and its causes',
-  coreIdea: 'Inflation is measured by the Consumer Price Index. Economists broadly accept three causes: faster growth in money, government deficit spending, and rising costs. Whether company pricing added to it is debated, so this module shows the numbers and the evidence on each side.',
+  coreIdea: 'Inflation is measured by the Consumer Price Index. Economists broadly accept three causes: faster growth in money, government deficit spending, and rising costs. Whether company pricing added to inflation is debated, so this module shows the numbers and the evidence on each side.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['fed-money-supply'],
@@ -217,7 +217,7 @@ export const A2_LESSON = {
     {
       id: 'measure', kind: 'explain', title: 'Measuring inflation', uses: ['measuring-inflation', 'buying-power', 'percentages'],
       text: [
-        'The Bureau of Labor Statistics checks the prices of a fixed basket of things people buy, such as food, rent, gas and doctor visits, every month. The Consumer Price Index (CPI) turns those prices into one number.',
+        'Every month, the Bureau of Labor Statistics checks the prices of a fixed basket of things people buy, such as food, rent, gas and doctor visits. The Consumer Price Index (CPI) turns those prices into one number.',
         'Compare the index on two dates. In June 2021 it was 271.696; in June 2022 it was 296.311. So things that cost $100.00 in June 2021 cost 296.311 ÷ 271.696 × $100.00 = $109.06 a year later. Prices rose 9.1%, the largest 12-month rise since 1981. Energy prices rose 41.6%.',
       ],
       prompt: 'Why does the index use the same basket of things every month?',
@@ -243,12 +243,12 @@ export const A2_LESSON = {
     {
       id: 'causes', kind: 'explain', title: 'Causes economists broadly accept', uses: ['accepted-causes', 'fed-money-supply'],
       text: [
-        `More money. From Add-on A1: the money supply (M2) grew from ${billions(M2['2019-12'])} in December 2019 to ${billions(M2['2020-12'])} in December 2020, about a quarter in one year. When money grows much faster than the things there are to buy, prices tend to rise.`,
+        `More money. In Add-on A1, the money supply (M2) grew from ${billions(M2['2019-12'])} in December 2019 to ${billions(M2['2020-12'])} in December 2020, about a quarter in one year. When money grows much faster than the things there are to buy, prices tend to rise.`,
         `Deficit spending. In fiscal year 2020 the federal government spent ${billions(BUDGET[2020].outlays)} and took in ${billions(BUDGET[2020].receipts)}: it borrowed ${money(per100(deficit(2020), BUDGET[2020].outlays))} of every $100.00 it spent. Economists at the San Francisco Fed estimated that U.S. income support during the pandemic may have added about 3 percentage points to inflation by the end of 2021, an estimate they call uncertain.`,
         'Rising costs. When energy, shipping and materials cost more, businesses pay more to make and deliver what they sell. Energy prices rose 41.6% in the year to June 2022.',
         'Economists broadly agree that all three played a part. They disagree about how much each one mattered.',
       ],
-      prompt: 'Why can spending more than it takes in push prices up?',
+      prompt: 'Why can government spending more than it takes in push prices up?',
       promptAnswer: 'It puts extra money in people\'s hands. If they spend it faster than businesses can supply more, prices rise.',
       sourceDoc: BUDGET_DOC(2020),
       sources: [M2_SOURCE, BUDGET_SOURCE, 'sffed-2022-07', 'bls-cpi-2022-06'],
@@ -265,12 +265,12 @@ export const A2_LESSON = {
     {
       id: 'companies', kind: 'explain', title: 'Company books: profit per $100.00 of sales', uses: ['corporate-pricing', 'income-statement'],
       text: [
-        'Some people argue that companies raised prices more than their costs rose, adding to inflation. You can check part of that question with numbers anyone can read: companies\' annual reports.',
-        'To avoid picking only the examples that fit one view, the course uses a fixed rule: the five largest U.S. drug companies and the five largest U.S. health insurers by 2019 revenue, comparing 2019, before the pandemic, with 2021 and 2022.',
+        'Some people argue that companies raised prices more than their costs rose, adding to inflation. You can check part of that question with numbers anyone can read, in companies\' annual reports.',
+        'To avoid picking only the examples that fit one view, the course uses a fixed rule. It takes the five largest U.S. drug companies and the five largest U.S. health insurers by 2019 revenue. It compares 2019, before the pandemic, with 2021 and 2022.',
         `Each annual report has an income statement, like yours from Module 12. Divide net income (profit) by revenue (sales) and multiply by 100: that is profit per $100.00 of sales. Johnson & Johnson: ${millions(JNJ.years[2019][1])} ÷ ${millions(JNJ.years[2019][0])} × 100 = ${money(profit(JNJ, 2019))} in 2019, and ${money(profit(JNJ, 2022))} in 2022.`,
       ],
       prompt: 'Why compare profit per $100.00 of sales, not just total profit?',
-      promptAnswer: 'A company that sells more makes more profit even at the same prices. Per $100.00 of sales shows whether it kept a bigger share of each sale.',
+      promptAnswer: 'A company that sells more makes more profit even at the same prices. Profit per $100.00 of sales shows whether it kept a bigger share of each sale.',
       reports: [companyStatement(JNJ, 2019), companyStatement(JNJ, 2022)],
       sources: [JNJ.source],
     },
@@ -288,7 +288,7 @@ export const A2_LESSON = {
       text: [
         `From 2019 to 2022, profit per $100.00 of sales rose at ${RISERS.length} of the ten companies and fell at the other ${COMPANIES.length - RISERS.length}. Drug companies kept far more of each $100.00 than insurers, whose payments for their members' care take up most of what they collect.`,
         'Most of the companies sold much more in 2022 than in 2019, so their profits in dollars grew even where profit per $100.00 did not.',
-        'These numbers show what the companies kept. By themselves they cannot show whether their prices caused inflation: that needs evidence about prices and costs across the whole economy.',
+        'These numbers show what the companies kept. By themselves they cannot show whether their prices caused inflation. That needs evidence about prices and costs across the whole economy.',
       ],
       prompt: 'Why can\'t these ten companies\' numbers settle whether company pricing caused inflation?',
       promptAnswer: 'They show what ten companies kept from their sales, not how prices and costs moved across the whole economy, which is what inflation measures.',
@@ -299,8 +299,8 @@ export const A2_LESSON = {
       id: 'debate', kind: 'explain', title: 'The evidence on each side (not graded)', tags: ['debated'], uses: ['corporate-pricing', 'accepted-causes'],
       text: [
         'How much company pricing added to recent inflation is debated among economists. This course shows the evidence and does not grade an opinion on it.',
-        'Evidence that it added a lot: Kansas City Fed economists found that companies\' markups (price over cost) grew 3.4% in 2021, when inflation was 5.8%, so markups could explain more than half of that year\'s inflation, which they link to companies raising prices ahead of expected cost increases. A Federal Trade Commission staff report found grocery retailers\' revenues ran more than 6% over their total costs in 2021, above their 2015 peak of 5.6%, and 7% in the first three quarters of 2023.',
-        'Evidence that it was not a main driver: San Francisco Fed economists found that markups across the whole economy "have stayed essentially flat" since the recovery began, and that rising markups "have not been a main driver" of the surge in inflation. A later Kansas City Fed study found that profits\' share of inflation fell after the first half of 2021, and over the first two years of the recovery (41%) was below the average of past recoveries (59%).',
+        'Evidence that it added a lot: Kansas City Fed economists found that companies\' markups (price over cost) grew 3.4% in 2021, when inflation was 5.8%, so markups could explain more than half of that year\'s inflation, which they link to companies raising prices ahead of expected cost increases. A Federal Trade Commission staff report found grocery retailers\' revenues ran more than 6% over their total costs in 2021, above their 2015 peak of 5.6%, and 7% over total costs in the first three quarters of 2023.',
+        'Evidence that it was not a main driver: San Francisco Fed economists found that markups across the whole economy "have stayed essentially flat" since the recovery began, and that rising markups "have not been a main driver" of the surge in inflation. A later Kansas City Fed study found that profits\' share of inflation fell after the first half of 2021. Over the first two years of the recovery, that share (41%) was below the average of past recoveries (59%).',
         'What both sides agree on: profits rose fast in 2021, and costs and demand also rose. The disagreement is over how much of the price rise came from each.',
       ],
       prompt: 'What evidence would you want to see before deciding how much company pricing added to inflation?',
@@ -311,7 +311,7 @@ export const A2_LESSON = {
       id: 'insulin', kind: 'explain', title: 'A documented case: insulin prices', uses: ['corporate-pricing', 'measuring-inflation'],
       text: [
         'Prices can also fall. In 2023 the three largest insulin makers announced cuts to U.S. list prices. Eli Lilly cut the list prices of Humalog and Humulin by 70% (effective late 2023). Sanofi cut the list price of Lantus by 78%, and Novo Nordisk cut some insulins by up to 75% (both effective January 2024).',
-        'Medicare capped what people pay for each covered insulin at $35 for a month\'s supply, from January 1, 2023 under Part D and from July 1, 2023 for insulin used with a pump under Part B.',
+        'Medicare capped what people pay at $35 for a month\'s supply of each covered insulin. The cap began January 1, 2023 under Part D, and July 1, 2023 for insulin used with a pump under Part B.',
       ],
       prompt: 'Why is a price cut announced by the maker a documented fact, while the cause of inflation is debated?',
       promptAnswer: 'A price cut is a single event the companies announced and anyone can check. The cause of inflation depends on how many forces across the whole economy are weighed.',

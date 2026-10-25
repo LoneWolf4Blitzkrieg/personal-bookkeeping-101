@@ -36,7 +36,7 @@ const reservesPage = num('a1-reserves-page', 'interpreting', { opening: { min: 1
   ledger: page('bankReserves', [['2026-07-01', 'Brought forward', '', p.opening, 0], ['2026-07-02', 'Payments in from other banks', 'R1', p.inflow, 0], ['2026-07-02', 'Payments out to other banks', 'R1', 0, p.outflow]], { askFrom: 1 }),
   highlightRow: 2,
   answer: p.opening + p.inflow - p.outflow,
-  misconceptions: [{ cents: p.opening - p.inflow + p.outflow, explanation: 'Reserves are an asset of the bank: money coming in is a debit and adds; money going out is a credit and subtracts.' }],
+  misconceptions: [{ cents: p.opening - p.inflow + p.outflow, explanation: 'Reserves are an asset of the bank. Money coming in is a debit and adds. Money going out is a credit and subtracts.' }],
   explanation: `${money(p.opening)} + ${money(p.inflow)} − ${money(p.outflow)} = ${money(p.opening + p.inflow - p.outflow)}.`,
 }));
 
@@ -52,7 +52,7 @@ const paymentDeposits = num('a1-payment-deposits', 'interpreting', { opening: { 
   ledger: page('bankDeposits', [['2026-07-01', 'Brought forward', '', 0, p.opening], ['2026-07-03', `Government payment to ${p.name}`, 'D1', 0, p.pay]], { askFrom: 1 }),
   highlightRow: 1,
   answer: p.opening + p.pay,
-  misconceptions: [{ cents: p.opening - p.pay, explanation: 'Deposits are what the bank owes its customers, a liability: the payment is a credit and adds to it.' }],
+  misconceptions: [{ cents: p.opening - p.pay, explanation: 'Deposits are what the bank owes its customers. They are a liability, so the payment is a credit and adds to it.' }],
   explanation: `The bank now owes ${p.name} more: ${money(p.opening)} + ${money(p.pay)} = ${money(p.opening + p.pay)}.`,
 }));
 
@@ -61,7 +61,7 @@ const fedBuys = num('a1-fed-buys', 'interpreting', { reserves: { min: 300000000,
   source: 'powell-balance-sheet-2025',
   answer: p.reserves + p.buy,
   misconceptions: [{ cents: p.reserves - p.buy, explanation: 'The Fed pays by crediting the banks\' reserves, so they go up. Buying securities adds money.' }],
-  explanation: `${money(p.reserves)} + ${money(p.buy)} = ${money(p.reserves + p.buy)}. The new reserves did not come from anywhere else: the Fed created them.`,
+  explanation: `${money(p.reserves)} + ${money(p.buy)} = ${money(p.reserves + p.buy)}. The new reserves did not come from anywhere else. The Fed created them.`,
 }));
 
 const fedSells = num('a1-fed-sells', 'interpreting', { reserves: { min: 300000000, max: 900000000, step: 1 }, sell: { min: 10000000, max: 90000000, step: 1 } }, (p) => ({
@@ -100,22 +100,22 @@ const FED_EVENTS = {
   buy: (p) => ({
     prompt: `In the Fed's books, record this: the Fed buys ${money(p.amount)} of Treasury securities from banks and pays by crediting their reserve accounts.`,
     answer: [{ account: 'fed-securities', debit: p.amount, credit: 0 }, { account: 'fed-reserves', debit: 0, credit: p.amount }],
-    explanation: 'The Fed now owns more securities, an asset: debit F1. It owes the banks more reserves, a liability: credit F2.',
+    explanation: 'The Fed now owns more securities, an asset, so debit F1. It owes the banks more reserves, a liability, so credit F2.',
   }),
   sell: (p) => ({
     prompt: `In the Fed's books, record this: the Fed sells ${money(p.amount)} of Treasury securities to banks, which pay from their reserve accounts.`,
     answer: [{ account: 'fed-reserves', debit: p.amount, credit: 0 }, { account: 'fed-securities', debit: 0, credit: p.amount }],
-    explanation: 'The Fed owes the banks less reserves: debit F2. It owns fewer securities: credit F1.',
+    explanation: 'The Fed owes the banks less in reserves, so debit F2. It owns fewer securities, so credit F1.',
   }),
   tax: (p) => ({
     prompt: `In the Fed's books, record this: people pay ${money(p.amount)} of taxes from their banks to the Treasury.`,
     answer: [{ account: 'fed-reserves', debit: p.amount, credit: 0 }, { account: 'fed-treasury', debit: 0, credit: p.amount }],
-    explanation: 'The banks\' reserves go down: debit F2. The Treasury\'s account goes up: credit F3. The money moves from one account at the Fed to another.',
+    explanation: 'The banks\' reserves go down, so debit F2. The Treasury\'s account goes up, so credit F3. The money moves from one account at the Fed to another.',
   }),
   spend: (p) => ({
     prompt: `In the Fed's books, record this: the Treasury pays ${money(p.amount)} to people, whose banks receive it in their reserve accounts.`,
     answer: [{ account: 'fed-treasury', debit: p.amount, credit: 0 }, { account: 'fed-reserves', debit: 0, credit: p.amount }],
-    explanation: 'The Treasury\'s account goes down: debit F3. The banks\' reserves go up: credit F2.',
+    explanation: 'The Treasury\'s account goes down, so debit F3. The banks\' reserves go up, so credit F2.',
   }),
 };
 const recordFed = {
@@ -139,7 +139,7 @@ const flowTable = {
       ['Fed: Banks\' reserves', p.fedReserves - p.tax + p.buy],
       ['Fed: Treasury\'s account', p.treasury + p.tax],
     ].map(([label, answer]) => ({ label, answer })),
-    explanation: `Taxes: the bank's reserves and its customers' deposits both fall by ${money(p.tax)}; at the Fed, banks' reserves fall and the Treasury's account rises by ${money(p.tax)}. The purchase: the bank swaps ${money(p.buy)} of securities for reserves, so its reserves and the Fed's Banks' reserves rise by ${money(p.buy)}; its deposits do not change, because the bank itself sold.`,
+    explanation: `Taxes: the bank's reserves and its customers' deposits both fall by ${money(p.tax)}. At the Fed, banks' reserves fall and the Treasury's account rises by ${money(p.tax)}. The purchase: the bank swaps ${money(p.buy)} of securities for reserves. Its reserves and the Fed's Banks' reserves both rise by ${money(p.buy)}. Its deposits do not change, because the bank itself sold the securities.`,
   }),
 };
 
@@ -153,10 +153,10 @@ const explainFed = explainTemplate({
       modelAnswer: 'It pays by crediting the reserve accounts of the banks involved. Those reserves are new: they did not come out of anyone else\'s account.',
       rubric: ['Says the Fed pays by crediting banks\' reserve accounts', 'Says the reserves are newly created (not moved from someone else)'] },
     { prompt: 'In one or two sentences: when you pay a tax from your checking account, why does your bank\'s Customers\' deposits page go down?',
-      modelAnswer: 'Deposits are what the bank owes you. After the payment it owes you less, so the liability is debited, and the money moves on to the Treasury\'s account at the Fed.',
+      modelAnswer: 'Deposits are what the bank owes you. After the payment it owes you less, so the liability is debited. The money moves on to the Treasury\'s account at the Fed.',
       rubric: ['Says deposits are what the bank owes its customers (a liability)', 'Says the payment lowers what it owes, as the money moves to the Treasury'] },
     { prompt: 'In one or two sentences: what did the Federal Reserve Act of 1913 mean by an "elastic currency"?',
-      modelAnswer: 'Money whose amount can grow or shrink as the country needs. The Fed can add money by buying securities and take it out by selling them.',
+      modelAnswer: 'It means money whose amount can grow or shrink as the country needs. The Fed can add money by buying securities and take it out by selling them.',
       rubric: ['Says the amount of money can grow or shrink with the country\'s needs', 'Names a way the Fed does it (buying or selling securities)'] },
   ],
 });
@@ -183,7 +183,7 @@ const [M2_FROM, M2_TO] = ['2019-12', '2020-12'];
 export const A1_LESSON = {
   id: 'a1',
   title: 'The Federal Reserve',
-  coreIdea: 'The Federal Reserve is the central bank of the United States: the bank for banks and for the government. Every payment you make moves through several sets of books, and the Fed can add money to them or take it out.',
+  coreIdea: 'The Federal Reserve is the central bank of the United States. It is the bank for banks and for the government. Every payment you make moves through several sets of books, and the Fed can add money to them or take it out.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['sinking-funds'],
@@ -196,9 +196,9 @@ export const A1_LESSON = {
       id: 'the-fed', kind: 'explain', title: 'What the Fed is', uses: ['what-the-fed-is', 'accounting-equation'],
       text: [
         'The Federal Reserve, or the Fed, is the central bank of the United States. President Woodrow Wilson signed the Federal Reserve Act on December 23, 1913. Its official title says it was passed "to furnish an elastic currency": money whose amount can grow or shrink as the country needs.',
-        'The Fed is a Board of Governors in Washington, D.C., and 12 regional Federal Reserve Banks around the country.',
+        'The Fed has a Board of Governors in Washington, D.C., and 12 regional Federal Reserve Banks around the country.',
         'You cannot open an account at the Fed. It is the bank for banks and for the government. Banks keep reserve accounts there, and the U.S. Treasury keeps its account there. When money moves from one bank to another, it moves between their reserve accounts.',
-        'From here on, the course shows other people\'s books on simplified ledger pages: the Fed\'s, a bank\'s and the Treasury\'s. Each keeps its own books, with debits equal to credits, just like yours.',
+        'From here on, the course shows other people\'s books on simplified ledger pages: the Fed\'s, a bank\'s and the Treasury\'s. Each keeps its own books, and debits equal credits, just like yours.',
       ],
       prompt: 'Why does a payment from your bank to someone at another bank change two reserve accounts at the Fed?',
       promptAnswer: 'The money leaves your bank\'s reserve account and arrives in the other bank\'s reserve account. Both accounts are at the Fed.',
@@ -224,7 +224,7 @@ export const A1_LESSON = {
         'Every set of books balances. When the government pays someone, the same path runs the other way.',
       ],
       prompt: 'Why does Desert Bank debit Customers\' deposits when Ana pays her tax?',
-      promptAnswer: 'Deposits are what the bank owes its customers, a liability. After the payment it owes Ana $300.00 less, so the page is debited.',
+      promptAnswer: 'Deposits are what the bank owes its customers. They are a liability. After the payment it owes Ana $300.00 less, so the page is debited.',
       ledgers: flowPages(),
       highlightRow: 1,
     },
@@ -234,13 +234,13 @@ export const A1_LESSON = {
       ledger: page('bankDeposits', [['2026-07-01', 'Brought forward', '', 0, DEPOSITS_OPENING], ['2026-07-15', 'Ana pays her tax', 'D1', TAX, 0], ['2026-07-22', 'Government payment to Ana', 'D2', 0, 120000]], { askFrom: 1 }),
       highlightRow: 2,
       answer: DEPOSITS_OPENING - TAX + 120000,
-      misconceptions: [{ cents: DEPOSITS_OPENING - TAX - 120000, explanation: 'The bank now owes Ana more: deposits are credited and go up.' }],
+      misconceptions: [{ cents: DEPOSITS_OPENING - TAX - 120000, explanation: 'The bank now owes Ana more. Deposits are credited and go up.' }],
       explanation: '$1,800,000.00 − $300.00 + $1,200.00 = $1,800,900.00.',
     },
     {
       id: 'money', kind: 'explain', title: 'How the Fed changes the amount of money', uses: ['fed-money-supply', 'money-flows'],
       text: [
-        'The Fed adds money by buying Treasury securities, which are the government\'s IOUs. In the words of the Fed\'s chair, it does so "by purchasing Treasury securities in the open market and crediting the reserve accounts of the banks involved." Those reserves are new: they do not come out of anyone else\'s account.',
+        'The Fed adds money by buying Treasury securities, which are the government\'s IOUs. In the words of the Fed\'s chair, it does so "by purchasing Treasury securities in the open market and crediting the reserve accounts of the banks involved." Those reserves are new. They do not come out of anyone else\'s account.',
         'In the Fed\'s books: debit Treasury securities (an asset) and credit Banks\' reserves (what it owes the banks). If a bank\'s customer sold the securities, the bank also credits that customer\'s deposit, so the money in people\'s and companies\' accounts grows too.',
         'Selling securities does the reverse and takes money out. The Fed also sets a target for the federal funds rate, the rate banks charge each other overnight, which affects what loans cost.',
         `The amount of money can change quickly. The money supply called M2 (cash, checking and savings deposits, and similar accounts) was ${billions(M2[M2_FROM])} in ${monthName(M2_FROM)} and ${billions(M2[M2_TO])} a year later.`,
@@ -257,7 +257,7 @@ export const A1_LESSON = {
       ledger: page('fedReserves', [['2026-07-01', 'Brought forward', '', 0, FED_RESERVES], ['2026-07-20', 'Paid for securities bought', 'F9', 0, PURCHASE], ['2026-07-27', 'Received for securities sold', 'F10', 50000000, 0]], { askFrom: 2 }),
       highlightRow: 2,
       answer: FED_RESERVES + PURCHASE - 50000000,
-      misconceptions: [{ cents: FED_RESERVES + PURCHASE + 50000000, explanation: 'The banks pay from their reserves: the page is debited and goes down.' }],
+      misconceptions: [{ cents: FED_RESERVES + PURCHASE + 50000000, explanation: 'The banks pay from their reserves. The page is debited and goes down.' }],
       explanation: '$32,000,000.00 + $2,000,000.00 − $500,000.00 = $33,500,000.00.',
     },
     {
@@ -265,14 +265,14 @@ export const A1_LESSON = {
       text: [`M2 was ${billions(M2[M2_FROM])} in ${monthName(M2_FROM)} and ${billions(M2[M2_TO])} in ${monthName(M2_TO)}. Step 1 is done: ${billions(M2[M2_TO])} − ${billions(M2[M2_FROM])} = ${billions(M2[M2_TO] - M2[M2_FROM])} of new money. Finish Step 2: for every $100.00 that existed in ${monthName(M2_FROM)}, how many dollars of new money were there? Round to the cent.`],
       answer: per100(M2[M2_TO] - M2[M2_FROM], M2[M2_FROM]),
       misconceptions: [{ cents: per100(M2[M2_TO], M2[M2_FROM]), explanation: 'That is what each $100.00 grew to. The new money is the part above $100.00.' }],
-      explanation: `${billions(M2[M2_TO] - M2[M2_FROM])} ÷ ${billions(M2[M2_FROM])} × 100 = ${money(per100(M2[M2_TO] - M2[M2_FROM], M2[M2_FROM]))}: about a quarter more money in one year.`,
+      explanation: `${billions(M2[M2_TO] - M2[M2_FROM])} ÷ ${billions(M2[M2_FROM])} × 100 = ${money(per100(M2[M2_TO] - M2[M2_FROM], M2[M2_FROM]))}. That is about a quarter more money in one year.`,
       source: M2_SOURCE,
     },
     {
       id: 'independent', kind: 'predict', title: 'On your own', uses: ['fed-money-supply'],
       text: ['Desert Bank has $237,300.00 of reserves at the Fed. The Fed buys $40,000.00 of Treasury securities from the bank. What do the bank\'s reserves show now?'],
       answer: 23730000 + 4000000,
-      misconceptions: [{ cents: 23730000 - 4000000, explanation: 'The Fed pays the bank by crediting its reserve account: reserves go up.' }],
+      misconceptions: [{ cents: 23730000 - 4000000, explanation: 'The Fed pays the bank by crediting its reserve account. Reserves go up.' }],
       explanation: '$237,300.00 + $40,000.00 = $277,300.00. (The bank\'s securities page goes down by the same amount.)',
     },
     {
@@ -293,7 +293,7 @@ export const A1_LESSON = {
       id: 'exit-check-3', kind: 'predict', title: 'Exit check 3 of 3', uses: ['fed-money-supply'],
       text: ['A bank has $90,000.00 of reserves at the Fed. The Fed sells it $15,000.00 of Treasury securities. What do its reserves show now?'],
       answer: 9000000 - 1500000,
-      misconceptions: [{ cents: 9000000 + 1500000, explanation: 'The bank pays from its reserves: they go down.' }],
+      misconceptions: [{ cents: 9000000 + 1500000, explanation: 'The bank pays from its reserves. They go down.' }],
       explanation: '$90,000.00 − $15,000.00 = $75,000.00.',
     },
   ],
