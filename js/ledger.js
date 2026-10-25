@@ -21,18 +21,31 @@ export function runningBalances(page) {
   });
 }
 
+const isAmount = (n) => Number.isSafeInteger(n) && n >= 0;
+
+// Balanced: every amount is whole, non-negative cents; each line is a debit
+// or a credit, not both; and total debits equal total credits (above zero).
 export function entryBalances(entry) {
   let debits = 0;
   let credits = 0;
   for (const line of entry.lines) {
-    debits += line.debit || 0;
-    credits += line.credit || 0;
+    const debit = line.debit || 0;
+    const credit = line.credit || 0;
+    if (!isAmount(debit) || !isAmount(credit)) return false;
+    if (debit > 0 && credit > 0) return false;
+    debits += debit;
+    credits += credit;
   }
   return debits > 0 && debits === credits;
 }
 
+// Returns { pages, entry }: new page objects with the entry's lines posted
+// (folio = journal page, ✓ on the posted side), and a copy of the entry whose
+// lines carry the ledger account number as folio and a posted mark.
 export function postEntry(entry, pages) {
-  const copy = pages.map((p) => ({ ...p, rows: p.rows.map((r) => ({ ...r, posted: [...r.posted] })) }));
+  if (!entryBalances(entry)) throw new Error('This entry does not balance: debits must equal credits.');
+  const copy = pages.map((p) => ({ ...p, rows: p.rows.map((r) => ({ ...r, posted: [...(r.posted ?? [false, false])] })) }));
+  const postedLines = [];
   for (const line of entry.lines) {
     const page = copy.find((p) => p.id === line.account);
     if (!page) throw new Error(`No ledger page for account: ${line.account}`);
@@ -46,8 +59,9 @@ export function postEntry(entry, pages) {
       credit,
       posted: [debit > 0, credit > 0],
     });
+    postedLines.push({ ...line, folio: page.accountNo, posted: true });
   }
-  return copy;
+  return { pages: copy, entry: { ...entry, lines: postedLines } };
 }
 
 export function trialBalance(pages) {

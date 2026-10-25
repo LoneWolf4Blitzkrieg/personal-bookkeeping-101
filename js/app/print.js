@@ -9,8 +9,8 @@ const DEMO = {
   rows: [
     { date: '2026-06-06', items: 'From paycheck, 15%', folio: 'J1', debit: 18180, credit: 0, posted: [true, false] },
     { date: '2026-06-20', items: 'From paycheck, 15%', folio: 'J2', debit: 18180, credit: 0, posted: [true, false], ask: ['balance', 'side'] },
-    ...Array.from({ length: 18 }, () => ({})),
   ],
+  minRows: 20,
 };
 
 export function sheetFor(name) {

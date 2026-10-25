@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ledgerHTML, blankPage } from '../js/ledgerView.js';
+import { ledgerHTML, blankPage, readLedgerInputs } from '../js/ledgerView.js';
 
 const saving = {
   id: 'saving', sheetNo: 1, accountNo: 3, name: 'Jordan', account: 'Saving bucket', type: 'asset',
@@ -56,6 +56,37 @@ test('editable mode turns cells into labelled inputs', () => {
   const inputs = html.match(/<input /g) || [];
   assert.equal(inputs.length, 2 * 7, 'seven typed columns per row (not the two tick columns)');
   assert.match(html, /<input [^>]*aria-label="Row 1 Debits"/);
+  assert.match(html, /<input [^>]*type="date"[^>]*value="2026-06-06"/, 'dates keep their year');
+  assert.match(html, /<button [^>]*class="tick"[^>]*name="r0-drTick"/);
+});
+
+test('editable mode never pre-fills a computed balance or side', () => {
+  const html = ledgerHTML(saving, { editable: true, showAnswers: true });
+  assert.doesNotMatch(html, /name="r0-balance" value="[^"]+"/);
+  assert.doesNotMatch(html, /name="r0-side" value="[^"]+"/);
+  const typed = ledgerHTML({ ...saving, rows: [{ ...saving.rows[0], side: 'Dr', balance: 18180 }] }, { editable: true });
+  assert.match(typed, /name="r0-balance" value="181.80"/, 'a balance the learner typed is kept');
+});
+
+test('readLedgerInputs turns named input values back into rows, reporting bad amounts', () => {
+  const { rows, errors } = readLedgerInputs([
+    ['r0-date', '2026-06-06'], ['r0-items', 'Pay'], ['r0-folio', 'J1'], ['r0-debit', '1,212.00'], ['r0-credit', ''],
+    ['r0-drTick', 'true'], ['r0-crTick', 'false'], ['r0-side', 'dr'], ['r0-balance', '1212'],
+    ['r1-items', 'Lunch'], ['r1-credit', 'abc'],
+  ]);
+  assert.deepEqual(rows[0], { date: '2026-06-06', items: 'Pay', folio: 'J1', debit: 121200, credit: 0, posted: [true, false], side: 'Dr', balance: 121200 });
+  assert.equal(rows[1].items, 'Lunch');
+  assert.deepEqual(errors, [{ row: 1, column: 'credit', reason: 'not-an-amount' }]);
+});
+
+test('inactive columns are empty in both modes', () => {
+  const page = { ...saving, activeColumns: ['date', 'items', 'balance'] };
+  const html = ledgerHTML(page, { showAnswers: true }).split('<tbody>')[1];
+  for (const hidden of ['J1', '✓', '>Dr<']) assert.ok(!html.includes(hidden), `${hidden} hidden`);
+  assert.equal((html.match(/181\.80/g) || []).length, 1, 'balance shown, debit hidden');
+  const edit = ledgerHTML(page, { editable: true });
+  assert.doesNotMatch(edit, /name="r0-folio"/);
+  assert.doesNotMatch(edit, /name="r0-drTick"/);
 });
 
 test('inactive columns are greyed and say when they are taught', () => {
@@ -85,7 +116,30 @@ test('empty rows below the entries show no balance', () => {
 
 test('print sheets: blank and demo exist, unknown names do not', async () => {
   const { sheetFor } = await import('../js/app/print.js');
-  assert.equal(sheetFor('blank').page.rows.length, 25);
+  assert.equal(sheetFor('blank').page.minRows, 25);
   assert.ok(sheetFor('demo').page.rows.some((r) => r.ask));
+  assert.ok(sheetFor('demo').page.rows.every((r) => r.date), 'demo data has no filler rows');
   assert.equal(sheetFor('nope'), null);
+});
+
+test('cells to work out are announced, and revealed answers are marked for print', () => {
+  assert.match(ledgerHTML(saving), /<span class="ask"><span class="visually-hidden">to work out<\/span><\/span>/);
+  assert.match(ledgerHTML(saving, { showAnswers: true }), /<td class="[^"]*\banswer\b[^"]*">363.60<\/td>/);
+});
+
+test('minRows pads the drawing without padding the data', () => {
+  const page = { ...saving };
+  const html = ledgerHTML(page, { minRows: 6 });
+  assert.equal((html.match(/data-row=/g) || []).length, 6);
+  assert.equal(page.rows.length, 2);
+});
+
+test('impossible dates are shown as written', () => {
+  assert.ok(ledgerHTML({ ...saving, rows: [{ ...saving.rows[0], date: '2026-13-40' }] }).includes('2026-13-40'));
+});
+
+test('attribute values are escaped', () => {
+  const html = ledgerHTML({ ...saving, account: 'A"B', rows: [{ ...saving.rows[0], items: 'say "hi"' }] }, { editable: true });
+  assert.match(html, /aria-label="Ledger page: A&quot;B"/);
+  assert.match(html, /value="say &quot;hi&quot;"/);
 });

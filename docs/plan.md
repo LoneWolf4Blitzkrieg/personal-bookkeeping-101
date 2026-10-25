@@ -118,9 +118,10 @@ personal-bookkeeping-101/
   - `normalSide(type) -> 'Dr'|'Cr'`
   - `runningBalances(page) -> [{balance: number, side: 'Dr'|'Cr'}]` (one per row)
   - `entryBalances(entry) -> boolean` (journal entry: total debits = total credits, > 0)
-  - `postEntry(entry, pages) -> pages` (new objects; marks ✓ on posted lines; folio cross-references)
+  - `postEntry(entry, pages) -> {pages, entry}` (throws unless the entry balances; new objects; ✓ on posted ledger rows with the journal folio; returned entry lines carry the ledger account number as folio and `posted: true`)
+  - `readLedgerInputs(pairs: [name, value][]) -> {rows, errors}` (reads an editable sheet's `r{i}-{column}` fields back into rows)
   - `trialBalance(pages) -> {debits, credits, balanced}`
-  - `ledgerHTML(page, {highlightRow, editable, showAnswers}) -> string`
+  - `ledgerHTML(page, {highlightRow, editable, showAnswers, minRows}) -> string`; `blankPage(rows) -> page`
 
 - [ ] **Step 1: Write failing tests.**
   - `parseAmount`: "1,212.00"→121200; "$1212"→121200; " 75.14 "→7514; "75.1"→7510; "abc", "", "1.234" → `ok:false`.

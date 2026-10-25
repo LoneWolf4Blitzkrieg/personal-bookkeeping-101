@@ -36,3 +36,19 @@ test('percentOf rounds half-up to the cent without floating-point drift', () => 
   assert.equal(percentOf(121200, 0.15), 18180);
   assert.equal(percentOf(0, 0.062), 0);
 });
+
+test('parseAmount: trailing dot, leading-zero groups and oversized numbers', () => {
+  assert.deepEqual(parseAmount('75.'), { ok: true, cents: 7500 });
+  assert.equal(parseAmount('00,123').ok, false);
+  assert.equal(parseAmount('99999999999999999999').ok, false);
+  assert.equal(parseAmount('9007199254740993').ok, false);
+  assert.deepEqual(parseAmount('999,999,999,999.99'), { ok: true, cents: 99999999999999 });
+});
+
+test('percentOf and formatCents refuse inputs that are not whole cents or a decimal rate', () => {
+  assert.throws(() => percentOf(1.5, 0.1), TypeError);
+  assert.throws(() => percentOf(100, 6.2), RangeError);
+  assert.throws(() => percentOf(100, -0.1), RangeError);
+  assert.throws(() => formatCents(1.5), TypeError);
+  assert.throws(() => formatCents(NaN), TypeError);
+});
