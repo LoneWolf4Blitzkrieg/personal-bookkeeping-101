@@ -35,7 +35,7 @@ const adjustedBank = num('m10-adjusted-bank', 'interpreting', {
     prompt: `${p.name}'s books show three things this statement does not have yet: a ${money(p.dep)} deposit made on Jun 30, and checks 102 (${money(p.c1)}) and 103 (${money(p.c2)}) that have not been cashed. What is the adjusted bank balance?`,
     sourceDoc: doc,
     answer,
-    misconceptions: [{ cents: closing - p.dep + p.c1 + p.c2, explanation: 'Deposits not yet on the statement are added to its balance; payments not yet on it are subtracted.' }],
+    misconceptions: [{ cents: closing - p.dep + p.c1 + p.c2, explanation: 'Deposits not yet on the statement are added to its balance. Payments not yet on it are subtracted.' }],
     explanation: `${money(closing)} + ${money(p.dep)} − ${money(p.c1)} − ${money(p.c2)} = ${money(answer)}.`,
   };
 });
@@ -51,7 +51,7 @@ const adjustedBook = num('m10-adjusted-book', 'interpreting', {
     answer,
     misconceptions: [
       { cents: answer + p.cash, explanation: 'Cash is in the wallet, not at the bank, so it is left out.' },
-      { cents: book - p.interest + p.fee, explanation: 'Interest the bank paid is added to the book balance; a fee it charged is subtracted.' },
+      { cents: book - p.interest + p.fee, explanation: 'Interest the bank paid is added to the book balance. A fee it charged is subtracted.' },
     ],
     explanation: `${money(p.spending)} + ${money(p.saving)} = ${money(book)}. Then + ${money(p.interest)} interest − ${money(p.fee)} fee = ${money(answer)}.`,
   };
@@ -69,7 +69,7 @@ const BANK_EVENTS = {
     prompt: 'Write the journal entry for the interest on this statement. Interest goes into your Saving bucket.',
     sourceDoc: statement('July 2026', p.opening, [['Jul 3 Paycheck deposit', p.pay, 'in'], ['Jul 31 Interest paid', p.interest, 'in']]),
     answer: [{ account: 'saving', debit: p.interest, credit: 0 }, { account: 'interest-earned', debit: 0, credit: p.interest }],
-    explanation: 'The Saving bucket (an asset) goes up: debit. Interest earned (42, income) goes up: credit.',
+    explanation: 'The Saving bucket (an asset) goes up, so it is debited. Interest earned (42, income) goes up, so it is credited.',
   }),
 };
 const recordBank = {
@@ -91,13 +91,13 @@ const explainBank = explainTemplate({
       modelAnswer: 'The bank took the fee itself, so the statement is the source document that tells you about it. Recording it makes your books match the bank.',
       rubric: ['Says the statement is where you learn of the fee (its source document)', 'Says recording it makes the books match the bank'] },
     { prompt: 'In one or two sentences: what does it mean when the adjusted bank balance and the adjusted book balance agree?',
-      modelAnswer: 'Your books and the bank agree once timing differences are allowed for, so the money pages at that bank are right.',
+      modelAnswer: 'Your books and the bank agree once you allow for timing differences, so the money pages at that bank are right.',
       rubric: ['Says the books and the bank agree after the timing differences', 'Says this proves the pages for that bank are right'] },
   ],
 });
 
 const drill = [1, 2, 3].map((n) => num(`m10-drill-${n}`, 'interpreting', { a: { min: 30000, max: 150000, step: 1 }, b: { min: 500, max: 9000, step: 1 } }, (p) => ({
-  prompt: `Drill ${n} of 3: the statement shows ${money(p.a)}. A ${money(p.b)} check you wrote has not been cashed yet. Adjusted bank balance?`, answer: p.a - p.b,
+  prompt: `Drill ${n} of 3: the statement shows ${money(p.a)}. A ${money(p.b)} check you wrote has not been cashed yet. What is the adjusted bank balance?`, answer: p.a - p.b,
   misconceptions: [{ cents: p.a + p.b, explanation: 'A payment not yet on the statement is subtracted.' }],
   explanation: `${money(p.a)} − ${money(p.b)} = ${money(p.a - p.b)}.`,
 })));
@@ -157,7 +157,7 @@ export const M10_LESSON = {
       text: [
         'Each month your bank sends a statement: the money in and out of your account, and the balance. It is a source document.',
         'A bank reconciliation checks your books against it. Add up your pages for money held at that bank: Checking and the buckets kept there. That is your book balance. Cash in your wallet is left out, because it is not at the bank.',
-        'This month, Jordan\'s Spending bucket ($615.03) and Saving bucket ($755.02) add up to the statement\'s closing balance exactly.',
+        'This month, Jordan\'s Spending bucket ($615.03) and Saving bucket ($755.02) add up exactly to the statement\'s closing balance.',
       ],
       prompt: 'Why is Cash left out of the bank reconciliation?',
       promptAnswer: 'Cash is in your wallet, not at the bank, so it can never be on the bank\'s statement.',
@@ -168,13 +168,13 @@ export const M10_LESSON = {
       id: 'predict-book', kind: 'predict', title: 'Predict: the book balance', uses: ['bank-reconciliation', 'account-numbers'],
       text: ['Your pages show: Spending bucket $412.30 and Saving bucket $905.00, both held at the bank, and Cash (account 7) $38.00 in your wallet. What is your book balance for the bank?'],
       answer: 131730,
-      misconceptions: [{ cents: 135530, explanation: 'Leave out Cash: it is not at the bank.' }],
+      misconceptions: [{ cents: 135530, explanation: 'Leave out Cash. It is not at the bank.' }],
       explanation: '$412.30 + $905.00 = $1,317.30. Cash is not at the bank.',
     },
     {
       id: 'outstanding', kind: 'explain', title: 'Items not on the statement yet', uses: ['outstanding-items', 'bank-reconciliation'],
       text: [
-        'The statement and your books are rarely equal on the day. A deposit you have recorded may not have reached the bank yet. A check you wrote may not have been cashed yet. These are outstanding items.',
+        'The statement and your books are rarely the same on any given day. A deposit you have recorded may not have reached the bank yet. A check you wrote may not have been cashed yet. These are outstanding items.',
         'Start from the statement\'s closing balance. Add deposits not yet on it, and subtract payments not yet on it. That gives the adjusted bank balance, which should equal your book balance.',
         'On Jun 30 Jordan deposited $40.00 of birthday cash, and wrote check 102 for $60.00 to pay back a friend. Neither is on the statement yet.',
       ],
@@ -194,7 +194,7 @@ export const M10_LESSON = {
         pages: [page('spending', 44400), page('saving', 75000)], ask: ['adjusted-bank', 'book', 'adjusted-book', 'page-0', 'page-1'],
       }),
       answer: 119400,
-      misconceptions: [{ cents: 116680, explanation: 'Deposits not yet on the statement are added; payments not yet on it are subtracted.' }],
+      misconceptions: [{ cents: 116680, explanation: 'Deposits not yet on the statement are added. Payments not yet on it are subtracted.' }],
       explanation: '$1,180.40 + $75.00 − $42.50 − $18.90 = $1,194.00.',
     },
     {
@@ -222,7 +222,7 @@ export const M10_LESSON = {
       ledger: chartPage('spending', [['2026-07-30', 'Brought forward', '', 31240, 0], ['2026-07-31', 'Service fee', 'J7', 0, 500]], { askFrom: 1 }),
       highlightRow: 1,
       answer: 30740,
-      misconceptions: [{ cents: 31740, explanation: 'The fee comes out of the Spending bucket: a credit, so subtract.' }],
+      misconceptions: [{ cents: 31740, explanation: 'The fee comes out of the Spending bucket. That is a credit, so subtract.' }],
       explanation: '$312.40 − $5.00 = $307.40.',
     },
     {
@@ -252,7 +252,7 @@ export const M10_LESSON = {
       ledger: chartPage('saving', [['2026-07-30', 'Brought forward', '', 75502, 0], ['2026-07-31', 'Interest', 'J7', 85, 0]], { askFrom: 1 }),
       highlightRow: 1,
       answer: 75587,
-      misconceptions: [{ cents: 75417, explanation: 'Interest paid to you raises the Saving bucket: a debit, so add.' }],
+      misconceptions: [{ cents: 75417, explanation: 'Interest paid to you raises the Saving bucket. That is a debit, so add.' }],
       explanation: '$755.02 + $0.85 = $755.87.',
     },
     {

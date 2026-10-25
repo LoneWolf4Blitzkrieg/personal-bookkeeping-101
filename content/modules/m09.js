@@ -112,7 +112,7 @@ const slide = num('m09-slide', 'interpreting', { whole: { min: 1000, max: 9999, 
   const right = p.whole * 10; // whole dimes, so the slid amount is still whole cents
   const wrong = right / 10;
   return {
-    prompt: `A ${money(right)} amount was written as ${money(wrong)}: the decimal point slid one place. By how much is the trial balance off?`,
+    prompt: `A ${money(right)} amount was written as ${money(wrong)}. The decimal point slid one place. By how much is the trial balance off?`,
     answer: right - wrong,
     explanation: `${money(right)} − ${money(wrong)} = ${money(right - wrong)}, which divides evenly by 9.`,
   };
@@ -131,7 +131,7 @@ const SWAPPED = SMALL.map((a) => (a.no === CHART.groceries.no ? { ...a, debit: 8
 export const M09_LESSON = {
   id: 'm09',
   title: 'Proving your books',
-  coreIdea: 'A trial balance lists every page\'s balance; the debit and credit columns must have equal totals. When they do not, the size of the difference points to the error.',
+  coreIdea: 'A trial balance lists every page\'s balance. The debit and credit columns must have equal totals. When they do not, the size of the difference points to the error.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['card-entries'],
@@ -146,7 +146,7 @@ export const M09_LESSON = {
         'At the end of the month, list every page\'s balance in account-number order: debit balances in one column, credit balances in the other. This list is a trial balance.',
         'Every entry you posted had equal debits and credits, so the two columns must add up to the same total. When they do, your posting is very likely right. When they do not, there is an error to find.',
         'Here is Jordan\'s trial balance for June. Both columns total the same.',
-        'From this module on, you may use a calculator or a spreadsheet in practice sets. Checks are still done on your own.',
+        'From this module on, you may use a calculator or a spreadsheet in practice sets. In the checks, you still work on your own.',
       ],
       prompt: 'Why must the two columns add up to the same total?',
       promptAnswer: 'Every entry posted equal debits and credits, so all the debit balances together equal all the credit balances together.',
@@ -157,17 +157,17 @@ export const M09_LESSON = {
       text: ['This trial balance has its totals left blank. Add up the Debits column. What is its total?'],
       report: tb('Maya (example)', SMALL, { ask: ['total'] }),
       answer: total(SMALL, 'debit'),
-      misconceptions: [{ cents: total(SMALL, 'debit') + total(SMALL, 'credit'), explanation: 'Add only the debit balances; the credit balances have their own column.' }],
+      misconceptions: [{ cents: total(SMALL, 'debit') + total(SMALL, 'credit'), explanation: 'Add only the debit balances. The credit balances have their own column.' }],
       explanation: '$412.00 + $310.00 + $58.25 = $780.25. The Credits column gives the same total: $80.25 + $700.00.',
     },
     {
       id: 'errors', kind: 'explain', title: 'Common errors', uses: ['common-errors', 'trial-balance'],
       text: [
-        'Three errors cause most trial balances not to balance.',
+        'Three errors cause most trial balances to be off.',
         'A transposition: two digits swapped. $58.25 written as $85.25.',
         'A slide: the decimal point moved. $450.00 written as $45.00.',
         'A one-sided entry: only one side posted. A $27.40 grocery debit was posted, but the Cash credit was forgotten.',
-        'Some errors do not show at all: an entry left out completely, or posted to the wrong account on the right side. Debits still equal credits. The trial balance proves the two sides are equal, not that every entry is right.',
+        'Some errors do not show up at all: an entry left out completely, or posted to the wrong account on the right side. Debits still equal credits. The trial balance proves the two sides are equal, not that every entry is right.',
         'This trial balance has a transposition: Groceries was copied as $85.25 instead of $58.25.',
       ],
       prompt: 'Which kind of error would a trial balance not catch?',
@@ -178,9 +178,9 @@ export const M09_LESSON = {
       id: 'by-size', kind: 'explain', title: 'Finding an error by its size', uses: ['error-by-size', 'common-errors'],
       text: [
         'The size of the difference between the two totals is a clue.',
-        'Divide it by 9. If it divides evenly, look for a transposition or a slide: both always make a difference that divides evenly by 9. Here, $807.25 − $780.25 = $27.00, and $27.00 ÷ 9 = $3.00.',
+        'Divide it by 9. If it divides evenly, look for a transposition or a slide. Both always make a difference that divides evenly by 9. Here, $807.25 − $780.25 = $27.00, and $27.00 ÷ 9 = $3.00.',
         'Look for an amount equal to the difference. A one-sided entry leaves the totals apart by exactly its amount.',
-        'Halve it. An amount posted on the wrong side is taken off one side instead of added, so the totals end up apart by twice the amount. Look for an amount equal to half the difference.',
+        'Halve the difference. An amount posted on the wrong side is taken off one side instead of added, so the totals end up apart by twice the amount. Look for an amount equal to half the difference.',
       ],
       prompt: 'The trial balance is off by $63.00. Why might you check for swapped digits?',
       promptAnswer: '$63.00 ÷ 9 = $7.00 with nothing left over, and swapped digits always make a difference that divides evenly by 9.',
@@ -188,16 +188,16 @@ export const M09_LESSON = {
     },
     {
       id: 'predict-half', kind: 'predict', title: 'Predict: the wrong side', uses: ['error-by-size'],
-      text: ['A trial balance\'s credits are $91.50 more than its debits. The difference does not divide evenly by 9, and nothing was left out, so an amount was probably posted on the wrong side. What amount should you look for?'],
+      text: ['A trial balance\'s credits are $91.50 more than its debits. The difference does not divide evenly by 9, and nothing was left out. So an amount was probably posted on the wrong side. What amount should you look for?'],
       answer: 4575,
-      misconceptions: [{ cents: 9150, explanation: 'An amount on the wrong side throws the books off by twice the amount: halve the difference.' }],
+      misconceptions: [{ cents: 9150, explanation: 'An amount on the wrong side throws the books off by twice the amount. So halve the difference.' }],
       explanation: 'Half of $91.50 is $45.75.',
     },
     {
       id: 'guided', kind: 'predict', title: 'Finish the worked steps', uses: ['error-by-size', 'common-errors'],
-      text: ['Step 1 is done: the trial balance is off by $36.00. Step 2 is done: $36.00 ÷ 9 = $4.00, so a transposition is likely. Step 3 is done: the Groceries page shows $51.80, but the receipt shows its first two digits the other way round. Finish Step 4: what is the right Groceries amount?'],
+      text: ['Step 1 is done: the trial balance is off by $36.00. Step 2 is done: $36.00 ÷ 9 = $4.00, so a transposition is likely. Step 3 is done: the Groceries page shows $51.80, but the receipt shows its first two digits the other way around. Finish Step 4: what is the right Groceries amount?'],
       answer: 1580,
-      misconceptions: [{ cents: 8780, explanation: 'Swap the two digits, do not add the difference.' }],
+      misconceptions: [{ cents: 8780, explanation: 'Swap the two digits. Do not add the difference.' }],
       explanation: 'Swap the 5 and the 1: $15.80. Check: $51.80 − $15.80 = $36.00, the difference.',
     },
     {
@@ -217,7 +217,7 @@ export const M09_LESSON = {
       id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['common-errors', 'error-by-size'],
       text: ['A $360.00 amount was written as $36.00. By how much is the trial balance off?'],
       answer: 32400,
-      explanation: '$360.00 − $36.00 = $324.00, and $324.00 ÷ 9 = $36.00: a slide.',
+      explanation: '$360.00 − $36.00 = $324.00, and $324.00 ÷ 9 = $36.00. That is a slide.',
     },
     {
       id: 'exit-check-3', kind: 'predict', title: 'Exit check 3 of 3', uses: ['error-by-size'],

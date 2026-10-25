@@ -91,7 +91,7 @@ const explainMonthEnd = explainTemplate({
       modelAnswer: 'The month\'s income and expenses, and the difference: what the month added to, or took from, your net worth.',
       rubric: ['Says it lists the month\'s income and expenses', 'Says the difference is what the month added to (or took from) net worth'] },
     { prompt: 'In one or two sentences: why must the net-worth statement agree with the Net worth page after closing?',
-      modelAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so if the books are right the two match.',
+      modelAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so if the books are right, the two match.',
       rubric: ['Says both measure what you own minus what you owe', 'Says closing brings the month into the Net worth page, so a match proves the books'] },
     { prompt: 'In one or two sentences: why is an expense page credited when it is closed?',
       modelAnswer: 'An expense page has a debit balance. A credit of the same amount brings it to zero, and the matching debit goes to Net worth.',
@@ -152,7 +152,7 @@ const OTHER_ASSETS = [item('spending', 51240), item('saving', 98000), item('inve
 export const M12_LESSON = {
   id: 'm12',
   title: 'Month-end',
-  coreIdea: 'At month-end, close the income and expense pages into Net worth. The income statement shows what the month added; the net-worth statement shows what you own minus what you owe, and it must equal the Net worth page.',
+  coreIdea: 'At month-end, close the income and expense pages into Net worth. The income statement shows what the month added. The net-worth statement shows what you own minus what you owe. It must equal the Net worth page.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['budget-vs-actual'],
@@ -163,7 +163,7 @@ export const M12_LESSON = {
     {
       id: 'closing', kind: 'explain', title: 'Closing the month', uses: ['closing-entries', 'debit-credit-rules', 'journal-entry'],
       text: [
-        'Income and expense pages measure one month. At month-end, close them: move each balance into Net worth (30), so each page starts next month at zero.',
+        'Income and expense pages measure one month. At month-end, close them: move each balance into Net worth (30), so each page starts the next month at zero.',
         'An income page has a credit balance, so it is closed with a debit: debit Wages and credit Net worth. An expense page has a debit balance, so it is closed with a credit: credit each expense and debit Net worth for the total.',
         'These are Jordan\'s closing entries for June, from the trial balance in Module 9. Afterward, Net worth has grown by the month\'s income minus its expenses.',
       ],
@@ -211,7 +211,7 @@ export const M12_LESSON = {
         'Jordan: $804.36 owned − $49.05 owed = $755.31, the same as the Net worth page.',
       ],
       prompt: 'Why should the net-worth statement agree with the Net worth page after closing?',
-      promptAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so if the books are right they match.',
+      promptAnswer: 'Both show what you own minus what you owe. Closing brought the month\'s income and expenses into the Net worth page, so if the books are right, they match.',
       report: netWorthStatement('Jordan (example)', JUNE_ASSETS, JUNE_LIABILITIES),
       ledger: netWorthPage(),
       highlightRow: 2,

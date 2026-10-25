@@ -166,7 +166,7 @@ export const M11_LESSON = {
       text: [
         'At month-end, write the actual amount from each expense page beside its budget. Under means you spent less than planned. Over means you spent more.',
         'Look at each line, then at the totals. Jordan came in under on groceries and household supplies, but over on eating out.',
-        'A line that is often over tells you something: either the plan was unrealistic, or the spending needs a rule. That is how next month\'s plan gets better.',
+        'A line that is often over tells you something: either the plan did not fit real life, or the spending needs a rule. That is how next month\'s plan gets better.',
       ],
       prompt: 'Eating out went over, but the month as a whole came in under. Why still look at the line?',
       promptAnswer: 'The total can hide a problem: one line over is covered by another under. The line shows where the plan and the spending differ.',
@@ -182,7 +182,7 @@ export const M11_LESSON = {
     {
       id: 'rules', kind: 'explain', title: 'Rules decided in advance', uses: ['spending-rules', 'five-buckets'],
       text: [
-        'Logic works best when the rule is set before the moment of temptation. Two rules many people use:',
+        'Logic works best when the rule is set before the moment you want something. Two rules many people use:',
         'Needs come first. A need is something you must pay to live and work, such as rent, groceries or a bus pass to get to work. A want is something nice to have, such as takeout or a concert. The budget pays the needs before the wants.',
         'A waiting period for anything not in the budget. For example, wait a day for a small purchase and a week for a large one. If you still want it after the wait, and the money is there, buy it with Blow money.',
         'You choose your own rules. Write them down at the start of the month, next to the budget.',
