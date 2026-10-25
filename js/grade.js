@@ -67,15 +67,21 @@ function gradeEntry(item, lines) {
     { criterion: 'Uses the right amounts', met: sameList(amountsOn(want, 'debit'), amountsOn(got, 'debit')) && sameList(amountsOn(want, 'credit'), amountsOn(got, 'credit')) },
     { criterion: 'Debits equal credits', met: entryBalances({ lines: given }) },
   ];
-  const points = rubric.filter((r) => r.met).length * (item.points / rubric.length);
+  // Wrong accounts on both sides (most often debits and credits reversed)
+  // earn nothing, so reversing the entries cannot add up to a pass.
+  const bothSidesWrong = !rubric[0].met && !rubric[1].met;
+  const points = bothSidesWrong ? 0 : rubric.filter((r) => r.met).length * (item.points / rubric.length);
   const correct = rubric.every((r) => r.met);
   const missed = rubric.filter((r) => !r.met).map((r) => r.criterion.toLowerCase());
+  const check = bothSidesWrong
+    ? 'The accounts are wrong on both sides. Check whether the debits and credits are reversed. An entry like this earns no points.'
+    : `Check: ${missed.join('; ')}.`;
   return {
     points,
     max: item.points,
     correct,
     rubric,
-    feedback: correct ? `Correct. ${item.explanation ?? ''}`.trim() : `Check: ${missed.join('; ')}. ${item.explanation ?? ''}`.trim(),
+    feedback: correct ? `Correct. ${item.explanation ?? ''}`.trim() : `${check} ${item.explanation ?? ''}`.trim(),
   };
 }
 

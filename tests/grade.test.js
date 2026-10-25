@@ -52,11 +52,21 @@ test('an entry with the right accounts but a wrong amount loses the amount line 
   assert.deepEqual(r.rubric.map((x) => x.met), [true, true, false, true]);
 });
 
-test('an entry with debit and credit swapped keeps the amount and balance points only', () => {
+test('an entry with debits and credits reversed scores 0 (author\'s rule): the accounts are wrong on both sides', () => {
   const lines = answerLines().map((l) => ({ account: l.account, debit: l.credit, credit: l.debit }));
   const r = gradeItem(entry, lines);
-  assert.equal(r.points, 2);
-  assert.deepEqual(r.rubric.map((x) => x.met), [false, false, true, true]);
+  assert.equal(r.points, 0);
+  assert.equal(r.correct, false);
+  assert.deepEqual(r.rubric.map((x) => x.met), [false, false, true, true], 'the rubric still shows what was right');
+  assert.match(r.feedback, /reversed|both sides/i);
+});
+
+test('wrong accounts on both sides score 0 even when the amounts balance', () => {
+  const lines = answerLines().map((l) => ({ ...l, account: 'spending' === l.account ? 'checking' : 'spending' }));
+  lines.forEach((l) => { l.account = 'spending'; });
+  lines[1].account = 'nowhere';
+  const r = gradeItem(entry, lines);
+  assert.equal(r.points, 0);
 });
 
 test('the right amount on the wrong account loses only the account line', () => {

@@ -25,7 +25,7 @@ function entryRowHTML(item, i) {
 }
 
 function itemHTML(item, index, total) {
-  const head = `<p class="crumb">Question ${index + 1} of ${total} · ${PART_LABELS[item.part]} · ${item.points} points</p>
+  const head = `<p class="crumb">Question ${index + 1} of ${total} · ${PART_LABELS[item.part]} · ${item.points} ${item.points === 1 ? 'point' : 'points'}</p>
     <p class="item-prompt" id="prompt">${escapeHTML(item.prompt)}</p>
     ${ledgerPanelHTML({ ...item, highlightRow: item.highlightRow ?? 0 })}${citationHTML(item)}`;
   if (item.kind === 'numeric') {
