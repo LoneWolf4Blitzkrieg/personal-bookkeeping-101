@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson · Personal Bookkeeping 101</title>
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#lesson">Skip to the lesson</a>
+
+  <header class="topbar">
+    <button class="menu-button" type="button" aria-controls="course-map" aria-expanded="false">Course map</button>
+    <a class="brand" href="index.html">Personal Bookkeeping <span>101</span></a>
+    <span class="spacer"></span>
+    <button class="map-toggle" type="button" aria-controls="course-map" aria-pressed="false">Hide course map</button>
+  </header>
+
+  <div class="lesson-layout" id="layout">
+    <nav class="course-map" id="course-map" aria-label="Course map"></nav>
+
+    <main class="lesson-text" id="lesson">
+      <p class="crumb" id="crumb"></p>
+      <h1 id="module-title">Loading…</h1>
+      <div id="lesson-body">
+        <p>This module's lessons are being written. Use the course map to see where it fits in the course.</p>
+      </div>
+    </main>
+
+    <aside class="ledger-panel" aria-label="Ledger page">
+      <div class="ledger-pin">
+        <p class="ledger-caption">The ledger page stays here while you read.</p>
+        <div class="ledger-placeholder" id="ledger">The ledger page for this step will appear here.</div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="site-footer">
+    <p><i>Personal Bookkeeping 101</i> by Raul Bautista is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">CC BY-NC-SA 4.0</a> (free for non-commercial use).</p>
+  </footer>
+
+  <script type="module">
+    import { MODULES, PHASES } from './content/course.js';
+    import { renderCourseMap } from './js/app/nav.js';
+
+    const id = new URLSearchParams(location.search).get('m') || 'm01';
+    const module = MODULES.find((m) => m.id === id);
+    renderCourseMap(document.getElementById('course-map'), {}, module ? module.id : null);
+
+    const title = document.getElementById('module-title');
+    if (module) {
+      title.textContent = module.title;
+      document.getElementById('crumb').textContent = PHASES[module.phase];
+      document.title = `${module.title} · Personal Bookkeeping 101`;
+    } else {
+      title.textContent = 'Module not found';
+      document.getElementById('lesson-body').innerHTML =
+        '<p>There is no module with that name. Choose one from the course map.</p>';
+    }
+
+    const layout = document.getElementById('layout');
+    const menu = document.querySelector('.menu-button');
+    menu.addEventListener('click', () => {
+      const open = layout.classList.toggle('map-open');
+      menu.setAttribute('aria-expanded', String(open));
+    });
+    const toggle = document.querySelector('.map-toggle');
+    toggle.addEventListener('click', () => {
+      const hidden = layout.classList.toggle('map-hidden');
+      toggle.setAttribute('aria-pressed', String(hidden));
+      toggle.textContent = hidden ? 'Show course map' : 'Hide course map';
+    });
+  </script>
+</body>
+</html>
