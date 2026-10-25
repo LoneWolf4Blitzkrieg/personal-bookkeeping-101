@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   emptyProgress, isUnlocked, recordGate, recordCheckpoint, recordPlacement, recordExam, completeModule,
   failureStep, nextVersion, saveSession, openSession, clearSession, markStep, addTime, addErrorEntry,
-  saveLedger, recallDue, completePracticeSet, exportProgress, importProgress, recordOther, sessionMatches,
+  saveLedger, recallDue, completePracticeSet, exportProgress, importProgress, recordOther, sessionMatches, saveProject,
 } from '../js/progress.js';
 
 const T0 = '2026-07-01T12:00:00.000Z';
@@ -252,4 +252,19 @@ test('imported files with damaged module records are rejected', () => {
   const good = JSON.parse(exportProgress(emptyProgress(T0)));
   const r = importProgress(JSON.stringify({ ...good, modules: { m01: {} } }));
   assert.equal(r.ok, false);
+});
+
+test('the final project keeps its path, figures check and ticks, and survives export and import', () => {
+  let p = emptyProgress(T0);
+  p = saveProject(p, 'm15', { path: 'sample' });
+  p = saveProject(p, 'm15', { checklist: [2, 0, 2] });
+  assert.deepEqual(p.modules.m15.project, { path: 'sample', figuresOk: false, checklist: [0, 2], rubric: [] });
+  p = saveProject(p, 'm15', { figuresOk: true, rubric: [1] });
+  assert.deepEqual(p.modules.m15.project, { path: 'sample', figuresOk: true, checklist: [0, 2], rubric: [1] });
+  assert.equal(p.modules.m15.passed, false, 'ticking alone does not complete the module');
+  p = completeModule(p, 'm15', T0);
+  assert.equal(isUnlocked('m16', p).unlocked, true);
+  const back = importProgress(exportProgress(p));
+  assert.ok(back.ok);
+  assert.deepEqual(back.progress.modules.m15.project, p.modules.m15.project);
 });

@@ -138,6 +138,19 @@ function checkSteps(module, problems) {
     else seen.add(s.id);
     if (!Array.isArray(s.uses)) problems.push(`steps[${i}]: every step must list the ideas it uses ("uses").`);
     if (s.prompt && !s.promptAnswer) problems.push(`steps[${i}]: a self-explanation prompt needs a model answer ("promptAnswer") to compare with.`);
+    if (s.kind === 'project') {
+      if (!module.project || !module.next) problems.push(`steps[${i}]: a project step belongs in a final-project module, which needs project: true and a next module.`);
+      if (i !== steps.length - 1) problems.push(`steps[${i}]: the project step must be the last step.`);
+      for (const list of ['checklist', 'rubric']) {
+        if (!Array.isArray(s[list]) || s[list].length === 0 || s[list].some((x) => typeof x !== 'string' || !x)) problems.push(`steps[${i}]: a project step needs a ${list} of plain sentences.`);
+      }
+      if (!Array.isArray(s.figures) || s.figures.length === 0) problems.push(`steps[${i}]: a project step needs the sample month's figures.`);
+      const shown = ledgerPanelHTML(s, { revealed: false }) + (s.text ?? []).join(' ');
+      for (const f of s.figures ?? []) {
+        if (!Number.isSafeInteger(f.answer) || f.answer < 0) problems.push(`steps[${i}]: "${f.label}" needs an answer in whole cents, not below zero.`);
+        else if (shown.includes(formatCents(f.answer))) problems.push(`steps[${i}]: the page shows the figure "${f.label}" (${formatCents(f.answer)}).`);
+      }
+    }
     if (s.kind === 'predict') {
       if (!Number.isSafeInteger(s.answer)) { problems.push(`steps[${i}]: a predict step needs an answer in whole cents.`); return; }
       if (s.answer < 0) problems.push(`steps[${i}]: the answer is below zero, which a learner cannot type.`);

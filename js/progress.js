@@ -108,6 +108,22 @@ export function completeModule(progress, moduleId, at) {
   return p;
 }
 
+// The final project's working state for one module: which month the learner
+// keeps ('sample' or 'own'), whether the sample month's key figures were all
+// right, and the checklist and rubric items ticked (by index).
+export function saveProject(progress, moduleId, { path, figuresOk, checklist, rubric }) {
+  const p = clone(progress);
+  const m = moduleRecord(p, moduleId);
+  const before = m.project ?? { path: null, figuresOk: false, checklist: [], rubric: [] };
+  m.project = {
+    path: path ?? before.path,
+    figuresOk: figuresOk ?? before.figuresOk,
+    checklist: [...new Set(checklist ?? before.checklist)].sort((x, y) => x - y),
+    rubric: [...new Set(rubric ?? before.rubric)].sort((x, y) => x - y),
+  };
+  return p;
+}
+
 export function recordCheckpoint(progress, id, score, at, version, items = []) {
   const p = clone(progress);
   const c = (p.checkpoints[id] ??= { attempts: [], passed: false });

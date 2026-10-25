@@ -28,6 +28,11 @@ function formatDate(date) {
   return `${MONTHS[month - 1]} ${day}`;
 }
 
+// A blank journal page to print and fill in by hand.
+export function blankJournal(rowCount = 25) {
+  return { sheetNo: '', name: '', entries: [], minRows: rowCount };
+}
+
 export function blankPage(rowCount = 25) {
   return { blank: true, sheetNo: '', accountNo: '', name: '', account: '', rows: [], minRows: rowCount };
 }
@@ -172,7 +177,7 @@ ${notesHTML}
 // A journal page (book of original entry): Date, Items (debited accounts,
 // then credited accounts indented, then the explanation), Folio (ledger
 // account number once posted), Debits, Credits.
-export function journalHTML(page, { highlightEntry = null } = {}) {
+export function journalHTML(page, { highlightEntry = null, minRows = page.minRows ?? 0 } = {}) {
   const rows = page.entries.map((entry, e) => {
     const cls = e === highlightEntry ? ' class="highlight"' : '';
     const ordered = [...entry.lines.filter((l) => l.debit > 0), ...entry.lines.filter((l) => !(l.debit > 0))];
@@ -185,13 +190,15 @@ export function journalHTML(page, { highlightEntry = null } = {}) {
     const why = `<tr data-entry="${e}"${cls}><td class="col-date"></td><td class="col-items journal-explanation">${escapeHTML(entry.explanation ?? '')}</td><td></td><td class="money"></td><td class="money"></td></tr>`;
     return lines + why;
   }).join('\n');
+  const used = page.entries.reduce((n, e) => n + e.lines.length + 1, 0);
+  const blanks = Array.from({ length: Math.max(0, minRows - used) }, () => '<tr><td class="col-date"></td><td class="col-items"></td><td class="col-folio"></td><td class="col-debit money"></td><td class="col-credit money"></td></tr>').join('\n');
   return `<div class="ledger-sheet journal-sheet">
 <div class="ledger-head"><div class="ledger-head-row"><div class="ledger-field"><span class="ledger-field-label">Journal</span><span class="ledger-field-value">Page ${escapeHTML(page.sheetNo ?? '')}</span></div><div class="ledger-field"><span class="ledger-field-label">Name</span><span class="ledger-field-value">${escapeHTML(page.name ?? '')}</span></div></div></div>
 <div class="ledger-scroll">
 <table class="ledger journal" aria-label="Journal page ${escapeHTML(page.sheetNo ?? '')}">
 <thead><tr><th scope="col" class="col-date">Date</th><th scope="col" class="col-items">Items</th><th scope="col" class="col-folio">Folio</th><th scope="col" class="col-debit">Debits</th><th scope="col" class="col-credit">Credits</th></tr></thead>
 <tbody>
-${rows}
+${rows}${blanks ? `\n${blanks}` : ''}
 </tbody>
 </table>
 </div>

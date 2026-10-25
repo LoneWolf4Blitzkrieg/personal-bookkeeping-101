@@ -18,7 +18,7 @@
 
   <main class="home print-page" id="main">
     <h1 class="no-print" id="sheet-title">Print a ledger sheet</h1>
-    <p class="no-print">Use your browser's print command, or the button below. The sheet prints on one landscape page.</p>
+    <p class="no-print" id="sheet-note">Use your browser's print command, or the button below. The sheet prints on one landscape page.</p>
     <p class="no-print"><button class="button print-button" type="button" id="print-button">Print this sheet</button></p>
     <div id="sheet"></div>
   </main>
@@ -28,7 +28,7 @@
   </footer>
 
   <script type="module">
-    import { renderPrintPage, lessonSheet } from './js/app/print.js';
+    import { renderPrintPage, lessonSheet, sheetFor } from './js/app/print.js';
     const params = new URLSearchParams(location.search);
     let title;
     const fromLesson = params.has('lesson') ? lessonSheet(params.get('lesson'), params.get('step')) : null;
@@ -37,6 +37,8 @@
       title = fromLesson.title;
     } else {
       title = renderPrintPage(document.getElementById('sheet'), params.get('sheet') || 'blank');
+      const note = sheetFor(params.get('sheet') || 'blank')?.note;
+      if (note) document.getElementById('sheet-note').textContent = note;
     }
     if (title) {
       document.getElementById('sheet-title').textContent = title;

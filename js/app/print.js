@@ -1,9 +1,12 @@
 // print.html?sheet=blank — a blank ledger sheet to print and fill in by hand.
 // print.html?sheet=demo  — a filled example (answers hidden) for checking print layout.
+// print.html?sheet=journal — a blank journal page.
+// print.html?sheet=sample-month — the final project's sample month: what happened, the pay stubs and the bank statement.
 // Lesson sheets are added by id in later tasks.
 
-import { ledgerHTML, blankPage } from '../ledgerView.js';
-import { ledgerPanelHTML } from '../lessonView.js';
+import { ledgerHTML, blankPage, journalHTML, blankJournal } from '../ledgerView.js';
+import { ledgerPanelHTML, sourceDocHTML } from '../lessonView.js';
+import { EVENT_DOC, payStubs, STATEMENT } from '../../content/sampleMonth.js';
 import { MODULE_CONTENT } from '../../content/modules/index.js';
 import { DEMO_LESSON } from '../../content/modules/demo.js';
 
@@ -19,6 +22,8 @@ const DEMO = {
 export function sheetFor(name) {
   if (name === 'blank') return { title: 'Blank ledger sheet', page: blankPage(25) };
   if (name === 'demo') return { title: 'Example ledger sheet', page: DEMO };
+  if (name === 'journal') return { title: 'Blank journal page', html: journalHTML(blankJournal(25)) };
+  if (name === 'sample-month') return { title: 'Final project: the sample month (Riley, July 2026)', html: [EVENT_DOC, ...payStubs(), STATEMENT].map(sourceDocHTML).join(''), note: 'Use your browser\'s print command, or the button below. This pack prints on more than one page: keep it beside you while you record the month.' };
   return null;
 }
 
@@ -37,6 +42,6 @@ export function renderPrintPage(container, name) {
     container.innerHTML = '<p>There is no sheet with that name. <a href="print.html?sheet=blank">Print a blank ledger sheet</a> instead.</p>';
     return null;
   }
-  container.innerHTML = ledgerHTML(sheet.page);
+  container.innerHTML = sheet.html ?? ledgerHTML(sheet.page);
   return sheet.title;
 }

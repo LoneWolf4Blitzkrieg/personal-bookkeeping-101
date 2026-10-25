@@ -267,3 +267,35 @@ test('within a sitting, no question shows the answer to a later question', async
     }));
   }
 });
+
+test('the final project modules end with a project step whose figures are the answers of their own checks', async () => {
+  const { M15_FIGURES } = await import('../content/modules/m15.js');
+  const { M16_FIGURES } = await import('../content/modules/m16.js');
+  for (const [id, figures, next] of [['m15', M15_FIGURES, 'm16'], ['m16', M16_FIGURES, 'a1']]) {
+    const lesson = MODULE_CONTENT[id];
+    assert.equal(lesson.project, true, id);
+    assert.equal(lesson.next.id, next, id);
+    const last = lesson.steps.at(-1);
+    assert.equal(last.kind, 'project', id);
+    assert.equal(last.figures, figures, id);
+    const checked = new Set(lesson.steps.filter((s) => s.kind === 'predict').map((s) => s.answer));
+    for (const f of figures) assert.ok(checked.has(f.answer), `${id}: "${f.label}" is checked by a predict step first`);
+    assert.ok(!ASSESSMENTS[id], `${id} has no module check`);
+  }
+});
+
+test('content rules catch a project step that is misplaced, shows a figure, or lacks its lists', () => {
+  const project = { id: 'p', kind: 'project', uses: [], text: ['Your total should be $12.34.'], figures: [{ label: 'Total', answer: 1234 }], checklist: [], rubric: ['Done'] };
+  const lesson = { id: 'm15', title: 'x', steps: [project, { id: 'after', kind: 'explain', uses: [], text: ['x'] }] };
+  const problems = checkModule(lesson);
+  for (const pattern of [/final-project module/, /must be the last step/, /checklist/, /shows the figure/]) assert.ok(problems.some((p) => pattern.test(p)), `${pattern}: ${JSON.stringify(problems)}`);
+});
+
+test('the printable sheets include a blank journal page and the sample month', async () => {
+  const { sheetFor } = await import('../js/app/print.js');
+  const journal = sheetFor('journal');
+  assert.match(journal.html, /journal-sheet/);
+  assert.ok((journal.html.match(/<tr>/g) ?? []).length >= 25, 'at least 25 blank lines');
+  const sample = sheetFor('sample-month');
+  for (const part of ['What happened in July 2026', 'Pay stub', 'Bank statement']) assert.ok(sample.html.includes(part), part);
+});

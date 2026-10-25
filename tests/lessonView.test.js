@@ -97,3 +97,34 @@ test('reports are drawn beside a step with the other pages, and a statement show
   assert.match(doc, /\+\$50\.00/);
   assert.match(doc, /−\$20\.00/);
 });
+
+test('the final project step opens step by step: month, then figures, then the lists, then the button', async () => {
+  const { projectHTML } = await import('../js/lessonView.js');
+  const step = { kind: 'project', figures: [{ label: 'Net worth', answer: 1000 }], checklist: ['A', 'B'], rubric: ['C'], completeLabel: 'Final project I', sampleLabel: 'The sample' };
+  const none = projectHTML(step, {});
+  assert.match(none, /name="project-path"/);
+  assert.ok(!none.includes('data-kind="project-figures"') && !none.includes('data-list'), 'nothing else before the month is chosen');
+  const sample = projectHTML(step, { path: 'sample' });
+  assert.match(sample, /data-kind="project-figures"/);
+  assert.ok(!sample.includes('data-list'), 'the lists wait until the figures are right');
+  assert.ok(!sample.includes('10.00'), 'the figure is not shown');
+  const wrong = projectHTML(step, { path: 'sample', figureResults: [false] });
+  assert.match(wrong, /Not yet/);
+  const own = projectHTML(step, { path: 'own', checklist: [0], rubric: [] });
+  assert.ok(!own.includes('project-figures'), 'own-month learners skip the figures');
+  assert.match(own, /data-action="complete-project" disabled/);
+  const ready = projectHTML(step, { path: 'sample', figuresOk: true, checklist: [0, 1], rubric: [0] });
+  assert.match(ready, /data-action="complete-project">/);
+  const done = projectHTML(step, { path: 'own', checklist: [0, 1], rubric: [0], completed: true });
+  assert.match(done, /is marked complete/);
+  assert.ok(!done.includes('data-action="complete-project"'));
+});
+
+test('a final-project module ends with a link onward only once it is complete', () => {
+  const module = { id: 'm15', title: 'P', project: true, next: { id: 'm16', title: 'Final project II' }, resources: [],
+    steps: [{ id: 'p', kind: 'project', uses: [], figures: [{ label: 'x', answer: 1 }], checklist: ['a'], rubric: ['b'] }] };
+  const open = stepHTML(module, 0, { project: { path: 'own', completed: false } });
+  assert.ok(!open.includes('lesson.html?m=m16'));
+  assert.ok(!open.includes('Take the module check'), 'no module check');
+  assert.match(stepHTML(module, 0, { project: { path: 'own', completed: true } }), /href="lesson.html\?m=m16"/);
+});

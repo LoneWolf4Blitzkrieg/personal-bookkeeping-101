@@ -48,28 +48,79 @@ export function citationHTML(step) {
   return `<p class="citation">Source: ${items.join('; ')}</p>`;
 }
 
+const PRINT_SHEETS = { blank: 'a blank ledger sheet', journal: 'a blank journal page', 'sample-month': 'the sample month (what happened, pay stubs, bank statement)' };
+function printLinksHTML(ids) {
+  const links = ids.filter((id) => PRINT_SHEETS[id]).map((id) => `<a href="print.html?sheet=${escapeHTML(id)}">${escapeHTML(PRINT_SHEETS[id])}</a>`);
+  return links.length ? `<p class="print-links">Print: ${links.join(' · ')}</p>` : '';
+}
+
+const helpLinksHTML = (module) => {
+  const links = (module.resources ?? []).map((id) => RESOURCES[id]).filter(Boolean)
+    .map((r) => `<li><a href="${escapeHTML(r.url)}" rel="noopener">${escapeHTML(r.title)}</a> (${escapeHTML(r.publisher)})</li>`).join('');
+  return links ? `<h3>Free help from official sites</h3><p>Stuck? First reread the worked example and rework it by hand. Then try these:</p><ul class="help-links">${links}</ul>` : '';
+};
+
+// The end of a final-project module: no practice set or check; the next
+// module opens once the project is marked complete.
+function projectEndHTML(module, completed) {
+  const next = module.next ? `<a class="button" href="lesson.html?m=${escapeHTML(module.next.id)}">Go to ${escapeHTML(module.next.title)}</a>` : '';
+  const lead = completed
+    ? `<p><strong>This part of the final project is complete.</strong></p>${next ? `<p class="lesson-end-links">${next}</p>` : ''}`
+    : '<p><strong>You have reached the end of this part of the final project.</strong> Tick every item above, then mark it complete to open the next module.</p>';
+  return `<div class="lesson-end">${lead}${helpLinksHTML(module)}</div>`;
+}
+
+// The final project's last step: which month the learner kept, the sample
+// month's key figures (all must be right), then the checklist and rubric,
+// then the button that marks the module complete. state is the saved
+// project record plus { completed, figureResults }.
+export function projectHTML(step, state = {}) {
+  const { path = null, figuresOk = false, checklist = [], rubric = [], completed = false, figureResults = null } = state;
+  const radio = (value, label) => `<label><input type="radio" name="project-path" value="${value}"${path === value ? ' checked' : ''}${completed ? ' disabled' : ''}> ${escapeHTML(label)}</label>`;
+  let html = `<fieldset class="project-path"><legend>Which month did you keep?</legend>${radio('sample', step.sampleLabel ?? 'The sample month')}${radio('own', 'My own month')}</fieldset>`;
+  if (path === 'sample' && !figuresOk) {
+    const fields = step.figures.map((f, i) => {
+      const r = figureResults?.[i];
+      const note = r == null ? '' : r ? '<span class="figure-note figure-right">✓ Matches</span>' : '<span class="figure-note figure-wrong">Not yet: recheck this figure in your books</span>';
+      return `<div class="amount-field"><label for="figure-${i}">${escapeHTML(f.label)}</label><div class="answer-row"><span aria-hidden="true">$</span><input id="figure-${i}" name="figure" inputmode="decimal" autocomplete="off" required></div>${note}</div>`;
+    }).join('');
+    html += `<form class="answer-form project-figures" data-kind="project-figures"><p>Enter these figures from your own work on the sample month. All of them must match before the checklist opens.</p>${fields}<button class="button" type="submit">Check my figures</button></form>`;
+  }
+  if (path === 'sample' && figuresOk) html += '<p class="feedback feedback-right">All your figures match the sample month\'s books.</p>';
+  const ready = path === 'own' || (path === 'sample' && figuresOk);
+  if (ready) {
+    const box = (list, ticked, i, text) => `<li><label><input type="checkbox" data-list="${list}" value="${i}"${ticked.includes(i) ? ' checked' : ''}${completed ? ' disabled' : ''}> ${escapeHTML(text)}</label></li>`;
+    html += `<fieldset class="project-list"><legend>Checklist: tick each one you have done</legend><ul class="ticks">${step.checklist.map((c, i) => box('checklist', checklist, i, c)).join('')}</ul></fieldset>`;
+    html += `<fieldset class="project-list"><legend>Rubric: tick each one your work meets</legend><ul class="ticks">${step.rubric.map((c, i) => box('rubric', rubric, i, c)).join('')}</ul></fieldset>`;
+    const all = checklist.length === step.checklist.length && rubric.length === step.rubric.length;
+    html += completed
+      ? `<p class="feedback feedback-right" role="status" tabindex="-1">${escapeHTML(step.completeLabel ?? 'Project')} is marked complete.</p>`
+      : `<p><button class="button" type="button" data-action="complete-project"${all ? '' : ' disabled aria-describedby="complete-note"'}>Mark ${escapeHTML(step.completeLabel ?? 'the project')} complete</button></p>${all ? '' : '<p class="feedback-note" id="complete-note">Tick every item in the checklist and the rubric first.</p>'}`;
+  }
+  return `<div class="project-check">${html}</div>`;
+}
+
 export function lessonEndHTML(module) {
   const check = escapeHTML(module.checkId ?? module.id);
   const practice = escapeHTML(module.practiceId ?? `${module.id}-practice`);
-  const links = (module.resources ?? []).map((id) => RESOURCES[id]).filter(Boolean)
-    .map((r) => `<li><a href="${escapeHTML(r.url)}" rel="noopener">${escapeHTML(r.title)}</a> (${escapeHTML(r.publisher)})</li>`).join('');
   const next = module.practiceId === null ? 'Take the check again when you are ready.' : 'Next, do the practice set, then take the module check: 10 questions, and you need 80% of the points to move on.';
   return `<div class="lesson-end"><p><strong>You have finished the lesson.</strong> ${next}</p>
     <p class="lesson-end-links">${module.practiceId === null ? '' : `<a class="button" href="assess.html?id=${practice}">Do the practice set</a> `}<a class="button button-secondary" href="assess.html?id=${check}">${module.practiceId === null ? 'Take the check again' : 'Take the module check'}</a></p>
-    ${links ? `<h3>Free help from official sites</h3><p>Stuck? First reread the worked example and rework it by hand. Then try these:</p><ul class="help-links">${links}</ul>` : ''}</div>`;
+    ${helpLinksHTML(module)}</div>`;
 }
 
-export function stepHTML(module, index, { revealed = false, feedback = null } = {}) {
+export function stepHTML(module, index, { revealed = false, feedback = null, project = null } = {}) {
   const step = module.steps[index];
   const last = index === module.steps.length - 1;
   const core = index === 0 && module.coreIdea ? `<p class="core-idea"><strong>Core idea:</strong> ${escapeHTML(module.coreIdea)}</p>` : '';
   const text = (step.text ?? []).map((p) => `<p>${escapeHTML(p)}</p>`).join('');
   const title = step.title ? `<h2 class="step-title" id="step-title" tabindex="-1">${escapeHTML(step.title)}</h2>` : `<h2 class="visually-hidden" id="step-title" tabindex="-1">Step ${index + 1}</h2>`;
-  let body = core + text + citationHTML(step);
+  let body = core + text + citationHTML(step) + printLinksHTML(step.printLinks ?? []);
   if (step.prompt) {
     const model = step.promptAnswer ? `<details class="model-answer"><summary>Compare with a model answer</summary><p>${escapeHTML(step.promptAnswer)}</p></details>` : '';
     body += `<div class="self-explain"><label for="self-explain">${escapeHTML(step.prompt)}</label><textarea id="self-explain" rows="3" placeholder="Say it in your own words before you go on."></textarea>${model}</div>`;
   }
+  if (step.kind === 'project') body += projectHTML(step, project ?? {});
   const waiting = step.kind === 'predict' && !revealed;
   if (waiting) {
     const invalid = feedback?.invalid;
@@ -86,6 +137,6 @@ export function stepHTML(module, index, { revealed = false, feedback = null } = 
   const back = index > 0 ? '<button class="button button-secondary" type="button" data-action="back">◀ Back</button>' : '';
   const reread = '<button class="button button-secondary" type="button" data-action="reread">Reread this step</button>';
   const next = !last && !waiting ? '<button class="button" type="button" data-action="next">Next ▶</button>' : '';
-  const finish = last && !waiting ? lessonEndHTML(module) : '';
+  const finish = last && !waiting ? (module.project ? projectEndHTML(module, Boolean(project?.completed)) : lessonEndHTML(module)) : '';
   return `<p class="crumb">Step ${index + 1} of ${module.steps.length}</p>${title}${body}<div class="step-nav">${back}${reread}${next}</div>${finish}`;
 }

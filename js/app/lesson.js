@@ -3,7 +3,8 @@
 
 import { MODULES, PHASES, PREREQUISITE } from '../../content/course.js';
 import { renderCourseMap, moduleIdFromParam } from './nav.js';
-import { isUnlocked, markStep } from '../progress.js';
+import { isUnlocked, markStep, saveProject, completeModule } from '../progress.js';
+import { parseAmount } from '../money.js';
 import { escapeHTML } from '../html.js';
 import { MODULE_CONTENT } from '../../content/modules/index.js';
 import { DEMO_LESSON } from '../../content/modules/demo.js';
@@ -50,10 +51,17 @@ export function startLessonPage(search) {
   let index = null;
   const revealed = new Set();
   const feedback = {};
+  let figureResults = null;
+
+  // The saved final-project record, with whether the module is complete.
+  const projectState = () => {
+    const record = store.load().modules[module.id];
+    return { ...(record?.project ?? {}), completed: Boolean(record?.passed), figureResults };
+  };
 
   function drawStep(focus) {
     const step = content.steps[index];
-    body.innerHTML = stepHTML(content, index, { revealed: revealed.has(index), feedback: feedback[index] });
+    body.innerHTML = stepHTML(content, index, { revealed: revealed.has(index), feedback: feedback[index], project: step.kind === 'project' ? projectState() : null });
     const panel = ledgerPanelHTML(step, { revealed: revealed.has(index) });
     ledgerBox.className = panel ? 'ledger-content' : 'ledger-placeholder';
     ledgerBox.innerHTML = panel
@@ -75,14 +83,52 @@ export function startLessonPage(search) {
       drawStep(true);
     }
     if (action === 'back') { index -= 1; drawStep(true); }
+    if (action === 'complete-project') {
+      const step = content.steps[index];
+      const state = projectState();
+      const ready = (state.path === 'own' || state.figuresOk) && state.checklist?.length === step.checklist.length && state.rubric?.length === step.rubric.length;
+      if (ready && !state.completed) update((p) => completeModule(p, module.id, new Date().toISOString()));
+      renderCourseMap(mapBox, store.load(), module.id, { headingLevel: 3 });
+      drawStep(false);
+      body.querySelector('.project-check [role="status"]')?.focus();
+    }
     if (action === 'reread') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       body.querySelector('#step-title')?.focus();
     }
   });
 
+  // Final project: the month chosen and each tick are saved as they change.
+  body.addEventListener('change', (e) => {
+    if (index === null || isDemo || content.steps[index].kind !== 'project') return;
+    const input = e.target;
+    if (input.name === 'project-path') {
+      figureResults = null;
+      update((p) => saveProject(p, module.id, { path: input.value }));
+    } else if (input.dataset.list) {
+      const list = input.dataset.list;
+      const ticked = new Set(projectState()[list] ?? []);
+      if (input.checked) ticked.add(Number(input.value)); else ticked.delete(Number(input.value));
+      update((p) => saveProject(p, module.id, { [list]: [...ticked] }));
+    } else return;
+    drawStep(false);
+    // Redrawing replaced the control, so put the focus back on its copy.
+    body.querySelector(input.dataset.list ? `[data-list="${input.dataset.list}"][value="${input.value}"]` : `[name="${input.name}"][value="${input.value}"]`)?.focus();
+  });
+
   body.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (e.target.dataset.kind === 'project-figures') {
+      const step = content.steps[index];
+      const typed = [...e.target.querySelectorAll('[name="figure"]')].map((x) => parseAmount(x.value));
+      figureResults = step.figures.map((f, i) => typed[i].ok && typed[i].cents === f.answer);
+      if (figureResults.every(Boolean)) update((p) => saveProject(p, module.id, { figuresOk: true }));
+      const values = typed.map((t, i) => e.target.querySelectorAll('[name="figure"]')[i].value);
+      drawStep(false);
+      body.querySelectorAll('[name="figure"]').forEach((x, i) => { x.value = values[i]; });
+      (body.querySelector('.figure-wrong')?.closest('.amount-field')?.querySelector('input') ?? body.querySelector('.project-list input'))?.focus();
+      return;
+    }
     if (e.target.dataset.kind !== 'predict') return;
     const result = gradePrediction(content.steps[index], e.target.prediction.value);
     feedback[index] = result;
