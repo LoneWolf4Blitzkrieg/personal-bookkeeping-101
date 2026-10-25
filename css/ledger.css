@@ -26,9 +26,10 @@
 .ledger-head-minor { opacity: .75; }
 
 /* The ruled table */
-/* Wide enough that money is never cut off; scrolls sideways in narrow panes */
+/* Wide enough that money is never cut off (checked on every lesson step at
+   a 1366px screen); scrolls sideways in narrower panes */
 .ledger-scroll { overflow-x: auto; }
-.ledger { width: 100%; min-width: 34rem; border-collapse: collapse; table-layout: fixed; }
+.ledger { width: 100%; min-width: 29rem; border-collapse: collapse; table-layout: fixed; }
 .ledger th {
   font-size: .64rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
   border-top: 2px solid var(--rule-strong); border-bottom: 2px solid var(--rule-strong);
@@ -43,11 +44,12 @@
 /* Double rules mark off the money columns, as on printed ledger paper */
 .ledger .col-drTick, .ledger .col-crTick, .ledger .col-side { border-left: 3px double var(--rule-strong); }
 
-.ledger .col-date { width: 10%; }
-.ledger .col-items { width: 24%; }
+.ledger .col-date { width: 9.5%; }
+.ledger .col-items { width: 22%; }
+.ledger td.col-items { white-space: normal; height: auto; overflow-wrap: anywhere; } /* long items wrap rather than being cut */
 .ledger .col-folio { width: 7%; text-align: center; }
 .ledger .col-drTick, .ledger .col-crTick { width: 4%; text-align: center; }
-.ledger .col-debit, .ledger .col-credit, .ledger .col-balance { width: 15%; }
+.ledger .col-debit, .ledger .col-credit, .ledger .col-balance { width: 16%; }
 .ledger .col-side { width: 6.5%; text-align: center; }
 .ledger td.money { text-align: right; font-family: var(--money-font); font-size: .8rem; text-overflow: clip; }
 
