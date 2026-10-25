@@ -8,6 +8,10 @@
   <link rel="stylesheet" href="css/site.css">
   <link rel="stylesheet" href="css/print.css">
   <script>try { if (localStorage.getItem('pb101-large-text') === '1') document.documentElement.classList.add('large-text'); } catch (e) { /* storage blocked */ }</script>
+  <script>
+    // Opened straight from a file: the course runs inside index.html there (see offline/course.js).
+    if (location.protocol === 'file:') location.replace('index.html#/' + location.pathname.split('/').pop() + location.search);
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to the certificate</a>
@@ -28,12 +32,6 @@
   <script type="module">
     import { startCertificatePage } from './js/app/certificate.js';
     startCertificatePage(document.getElementById('certificate-root'));
-  </script>
-  <script>
-    // Module scripts do not run when a page is opened straight from a file.
-    if (location.protocol === 'file:') {
-      document.body.insertAdjacentHTML('afterbegin', '<p class="storage-banner">This course must be opened from its web address (or a local web server), not by opening the file directly. See the README for how to start it.</p>');
-    }
   </script>
 </body>
 </html>

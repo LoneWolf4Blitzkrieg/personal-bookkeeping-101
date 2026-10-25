@@ -16,15 +16,31 @@ Every real-world figure (tax rates, the minimum wage, interest and inflation rat
 
 ## Opening the course
 
-The course is a static website with no installation, no accounts and no tracking. It must be opened from a web address, not by double-clicking a file. To run it on your own computer, serve the folder with any static web server, for example:
+The course has no installation, no accounts and no tracking. There are three ways to open it:
 
-```bash
-python3 -m http.server 8000
-```
+- **On the web**, at its web address once it is published (see [Publishing on GitHub Pages](#publishing-on-github-pages)).
+- **By double-clicking**, with no internet needed: download the course (on GitHub, **Code → Download ZIP**), unzip it, open the folder and double-click `index.html`. It is tested only in Chrome and Firefox. See [Using the course without internet](#using-the-course-without-internet).
+- **From a local web server**, for example:
 
-then open <http://localhost:8000/>.
+  ```bash
+  python3 -m http.server 8000
+  ```
 
-Progress is saved in your own browser (local storage) and never leaves it. To move to another computer or keep a backup, use **Save a progress file** on the home page, then **Load a progress file** on the other computer.
+  then open <http://localhost:8000/>.
+
+Your progress is saved in your own browser (local storage) and never leaves it. To move to another computer or keep a backup, use **Save a progress file** on the home page, then **Load a progress file** on the other computer.
+
+### Using the course without internet
+
+A browser limits what a page opened straight from a file can do. So when you open `index.html` that way, the whole course runs inside that one page, using [`offline/course.js`](offline/course.js). Each page's address then includes `#/`, for example `index.html#/lesson.html?m=m03`. The lessons, the checks, printing, the certificate and the music all work.
+
+Good to know:
+
+- **Keep the whole folder together.** If you open `index.html` on its own, it shows a message that part of the course is missing.
+- **Progress in the downloaded copy is separate** from progress on the website. To carry it across, use **Save a progress file** in one, then **Load a progress file** in the other.
+- **In Firefox, progress belongs to the place where the folder is.** If you move or rename the folder, the course starts with no progress. Use **Save a progress file** first, then **Load a progress file** after the move.
+- **In Chrome, every copy of the course on the computer shares the same progress**, for example an old download and a new one.
+- In a private window, progress lasts only until you close the window, as on the web.
 
 ## Publishing on GitHub Pages
 
@@ -50,7 +66,17 @@ The tests use Node's built-in test runner (Node 18 or later) and have no depende
 node --test tests/
 ```
 
-They check the code and the content: every ledger balances, every running balance is right, every example uses only ideas already taught, every source and link resolves, every check has exactly 10 questions, and no question shows another question's answer.
+They check the code and the content, and that the double-click version is up to date: every ledger balances, every running balance is right, every example uses only ideas already taught, every source and link resolves, every check has exactly 10 questions, and no question shows another question's answer.
+
+## Changing the course
+
+After you change any file in `js/` or `content/`, or any of the five course pages (`index.html`, `lesson.html`, `assess.html`, `print.html`, `certificate.html`), rebuild the double-click version:
+
+```bash
+node tools/build-offline.mjs
+```
+
+Run the tests before you publish: they fail until you run this command, so you will notice when the downloaded copy is out of date.
 
 ## License
 

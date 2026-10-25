@@ -7,6 +7,11 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/site.css">
   <script>try { if (localStorage.getItem('pb101-large-text') === '1') document.documentElement.classList.add('large-text'); } catch (e) { /* storage blocked */ }</script>
+  <script>
+    // Browsers refuse module scripts in a page opened straight from a file, so
+    // there the whole course runs from one ordinary script instead.
+    if (location.protocol === 'file:') document.write('<script src="offline/course.js"><\/script>');
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to the main content</a>
@@ -44,7 +49,7 @@
     <nav class="course-map-overview" id="course-map" aria-label="Course map"></nav>
 
     <h2>Your progress</h2>
-    <p>Your progress saves automatically in this browser, including after you close it. Open the course from the same web address each time. In a private or incognito window, progress lasts only until that window is closed. To keep a backup, or to move to another device, save a progress file and load it there.</p>
+    <p>Your progress saves automatically in this browser, including after you close it. Open the course the same way each time: use the same web address, or double-click the same index.html file. In a private or incognito window, progress lasts only until that window is closed. To keep a backup, or to move to another device, save a progress file and load it there.</p>
     <p class="progress-tools">
       <button class="button" type="button" id="export-progress">Save a progress file</button>
       <input class="visually-hidden" type="file" id="import-progress" accept="application/json,.json">
@@ -65,9 +70,8 @@
     startHomePage();
   </script>
   <script>
-    // Module scripts do not run when a page is opened straight from a file.
-    if (location.protocol === 'file:') {
-      document.body.insertAdjacentHTML('afterbegin', '<p class="storage-banner">This course must be opened from its web address (or a local web server), not by opening the file directly. See the README for how to start it.</p>');
+    if (location.protocol === 'file:' && !window.pb101Offline) {
+      document.body.insertAdjacentHTML('afterbegin', '<p class="storage-banner">Part of the course is missing. Keep the whole course folder together (unzip it first if you downloaded a .zip file), then open index.html from inside that folder. See the README for other ways to start it.</p>');
     }
   </script>
 </body>
