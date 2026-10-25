@@ -17,6 +17,7 @@
 - Work split: Claude writes all code and drafts all content. Sonnet agents are used only to polish English wording and prose. Exactly one Opus reviewer checks each task when it is finished; its findings are fixed before the next task. No separate final review.
 - Every example is a double-entry ledger page with the columns, in order: Date, Items, Folio, ✓, Debits, ✓, Credits, Dr/Cr, Balance; header fields Sheet No., Account No., Name, Account. Source documents (pay stubs, checks, receipts, bank statements) may appear beside a ledger only as the thing being recorded.
 - All money is held as integer cents. Never use floating-point dollars in logic.
+- Rounding to the cent looks at the thousandths of a dollar: "4 and below, keep it below; 5 and above, give it a shove" ($75.144 → $75.14; $1.005 → $1.01). Later digits never matter.
 - Every real-world figure carries a `source` id that resolves in `content/sources.js` (title, publisher, URL, date accessed); the page shows the citation.
 - Standard paycheck: Arizona minimum wage $15.15/h × 80 h = $1,212.00 gross; 2026 Social Security 6.2%, Medicare 1.45%, federal withholding per IRS Pub. 15-T 2026 (single, standard), Arizona default withholding rate. Each figure verified against the official source before use.
 - Suggested bucket split: Spending 60%, Saving 15%, Investing 10%, Charity 5%, Blow money 10%.
@@ -30,7 +31,7 @@
 
 - **Browser storage blocked** (private window, storage full): the course still loads and teaches; a banner says progress will not be saved; nothing throws.
 - **Amounts typed loosely** ("1,212.00", "$1212", " 75.14 ", "75.1"): parsed to cents correctly; text that is not a number is rejected with a gentle message, not marked wrong.
-- **Cent rounding** on percentages (6.2% of $1,212.00 = $75.144): rounded half-up to the cent consistently in examples, generated items and grading.
+- **Cent rounding** on percentages (6.2% of $1,212.00 = $75.144): rounded by the thousandths digit (4 and below down, 5 and above up) consistently in examples, generated items and grading.
 - **Corrupt or outdated progress file imported**: rejected with an explanation; existing progress untouched.
 - **Locked module opened by URL** (`lesson.html?m=9` before Checkpoint B): shows the lock notice and the way to unlock, not the content.
 
@@ -114,7 +115,7 @@ personal-bookkeeping-101/
 - Produces:
   - `parseAmount(text: string) -> {ok: true, cents: number} | {ok: false, reason: string}`
   - `formatCents(cents: number) -> string` ("1,212.00")
-  - `percentOf(cents: number, rate: number) -> number` (rate as decimal, half-up to the cent)
+  - `percentOf(cents: number, rate: number) -> number` (rate as decimal; rounds to the cent by the thousandths digit: 4 and below down, 5 and above up)
   - `normalSide(type) -> 'Dr'|'Cr'`
   - `runningBalances(page) -> [{balance: number, side: 'Dr'|'Cr'}]` (one per row)
   - `entryBalances(entry) -> boolean` (journal entry: total debits = total credits, > 0)

@@ -52,3 +52,21 @@ test('percentOf and formatCents refuse inputs that are not whole cents or a deci
   assert.throws(() => formatCents(1.5), TypeError);
   assert.throws(() => formatCents(NaN), TypeError);
 });
+
+// Rounding rule: look at the thousandths of a dollar (tenths of a cent).
+// "4 and below, keep it below; 5 and above, give it a shove."
+test('percentOf rounds on the thousandths digit: 4 and below down, 5 and above up', () => {
+  assert.equal(percentOf(121200, 0.062), 7514);  // $75.144    -> 4 -> $75.14
+  assert.equal(percentOf(1005, 0.1), 101);       // $1.005     -> 5 -> $1.01
+  assert.equal(percentOf(9999, 0.0145), 145);    // $1.449855  -> 9 -> $1.45
+  assert.equal(percentOf(1001, 0.0145), 15);     // $0.145145  -> 5 -> $0.15
+  assert.equal(percentOf(3, 0.15), 0);           // $0.0045    -> 4 -> $0.00
+  assert.equal(percentOf(333, 0.15), 50);        // $0.4995    -> 9 -> $0.50
+  assert.equal(percentOf(121200, 0.0145), 1757); // $17.574    -> 4 -> $17.57
+});
+
+test('only the thousandths digit decides: later digits never push it up', () => {
+  assert.equal(percentOf(14999, 0.1), 1500);     // 1499.9 cents = $14.999 -> 9 -> $15.00
+  assert.equal(percentOf(4999, 0.0999), 499);    // 499.4001 cents = $4.994001 -> 4 -> $4.99
+  assert.equal(percentOf(10, 0.0449999), 0);     // 0.449999 cents = $0.00449999 -> 4 -> $0.00
+});

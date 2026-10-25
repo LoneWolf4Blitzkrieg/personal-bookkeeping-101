@@ -33,17 +33,22 @@ export function formatCents(cents) {
   return `${sign}${dollars}.${rest}`;
 }
 
-// rate is a decimal such as 0.062. Computed with integers so that
-// 121200 × 0.062 = 7514.4 rounds to 7514, and 5 × 0.5 = 2.5 rounds to 3.
+// rate is a decimal such as 0.062 (6.2%). The exact amount is worked out in
+// whole numbers, then rounded to the cent by the thousandths of a dollar
+// (the tenths of a cent): "4 and below, keep it below; 5 and above, give it
+// a shove." 121200 × 0.062 = $75.144 -> 4 -> $75.14; 1005 × 0.1 = $1.005 -> 5 -> $1.01.
+// Digits after the thousandths never matter. Negative amounts round the same
+// way on their size.
 const SCALE = 10_000_000_000n;
 
 export function percentOf(cents, rate) {
   assertCents(cents);
   if (!Number.isFinite(rate) || rate < 0 || rate > 1) throw new RangeError(`Rate must be a decimal between 0 and 1, got ${rate}`);
   const r = BigInt(Math.round(rate * Number(SCALE)));
-  const product = BigInt(cents) * r;
-  const sign = product < 0n ? -1n : 1n;
-  const abs = product * sign;
-  const rounded = (abs + SCALE / 2n) / SCALE;
-  return Number(rounded * sign);
+  const exact = BigInt(cents) * r; // the amount in cents, times SCALE
+  const sign = exact < 0n ? -1n : 1n;
+  const tenthsOfCents = (exact * sign * 10n) / SCALE; // truncated after the thousandths of a dollar
+  const thousandthsDigit = tenthsOfCents % 10n;
+  const wholeCents = tenthsOfCents / 10n + (thousandthsDigit >= 5n ? 1n : 0n);
+  return Number(wholeCents * sign);
 }
