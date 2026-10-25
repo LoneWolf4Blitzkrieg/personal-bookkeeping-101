@@ -91,7 +91,7 @@ Module outline **[Claude's call; content topics are Raul Bautista's]**. Each tea
 | 11 | Budgeting with logic | a budget as a planned ledger; budget versus actual; spending rules decided in advance (needs versus wants, a waiting period before unplanned purchases) |
 | 12 | Month-end | closing income and expense accounts to net worth; the monthly income statement; the net-worth statement |
 | — | Checkpoint C | |
-| 13 | The emergency fund | essential monthly expenses; sizing the fund (the commonly cited three to six months of essential expenses); rules for using and refilling it |
+| 13 | The emergency fund | essential monthly expenses; sizing the fund (rule of thumb: at least three months of essential expenses, as a minimum **[Raul Bautista, October 25, 2026]**); rules for using and refilling it |
 | 14 | Planning ahead | inflation and buying power (cash in a safe versus a savings account earning interest); compound interest; sinking funds for known future costs |
 | 15 | Final project I | plan one full month of books |
 | 16 | Final project II | keep, prove, reconcile and report the month |
@@ -110,6 +110,8 @@ Module outline **[Claude's call; content topics are Raul Bautista's]**. Each tea
 **Celebration after the final exam [Raul Bautista, October 25, 2026]**: passing the final exam shows a fireworks animation with Beethoven's Ode to Joy and the author's message (adapted by a Sonnet agent). The music is the author's own 50-second edit (from about 7:20 to the end) of a downloaded recording, `media/ode-to-joy-finale.mp3`. **[Raul Bautista, October 25, 2026]**: the author chose this recording over the AI re-recordings and takes responsibility for it. Beethoven's music and Schiller's words are public domain, but the recording is not, and its performers are not identified; `media/NOTICE.md` and the README say that the file is excluded from the course's CC BY-NC-SA licence. It starts from the learner's click, can be stopped or muted, and reduced-motion settings get calm sparkles instead of fireworks.
 
 **Estimated time [Claude's call]**: 40 hours main course + 7.5 hours add-on + 1.5 hours exam = about 49 hours, plus retakes (the proposal estimates 4 to 8 hours of retakes).
+
+**Emergency fund and final project [Raul Bautista, October 25, 2026]**: Module 13 teaches the rule of thumb of **at least three months of essential expenses: three months is the minimum**, and more is safer. No official US site sets a figure: the CFPB says the amount depends on your situation, and the Federal Reserve measures whether adults have three months of emergency savings (55% did in 2025); both are cited. Graded questions always state the number of months. The final project (Modules 15 and 16) has no module check: learners using the sample month must enter its key figures correctly, then every learner ticks the project checklist and rubric and marks the module complete, which opens the next module.
 
 **Final project [Claude's call]**: one full month of books. Learners may use their own real month or a provided realistic sample month (for privacy, or for learners without income yet). The sample month is a fictional young adult with a part-time job.
 

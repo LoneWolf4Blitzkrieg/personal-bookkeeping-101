@@ -42,6 +42,26 @@ export const RESOURCES = {
     publisher: 'Consumer Financial Protection Bureau',
     url: 'https://www.consumerfinance.gov/consumer-tools/bank-accounts/',
   },
+  'cfpb-emergency-fund': {
+    title: 'An essential guide to building an emergency fund',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/',
+  },
+  'cfpb-start-small': {
+    title: 'Start small, save up',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/start-small-save-up/',
+  },
+  'investor-compound-calculator': {
+    title: 'Compound interest calculator',
+    publisher: 'Investor.gov (U.S. Securities and Exchange Commission)',
+    url: 'https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator',
+  },
+  'fdic-national-rates': {
+    title: 'National rates and rate caps (average deposit rates)',
+    publisher: 'Federal Deposit Insurance Corporation',
+    url: 'https://www.fdic.gov/national-rates-and-rate-caps',
+  },
 };
 
 // True when a URL is https and on an official domain (or a subdomain of one).

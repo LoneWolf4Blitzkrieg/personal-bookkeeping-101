@@ -125,6 +125,9 @@ export const CHART = {
   charity: { no: 5, name: 'Charity bucket', type: 'asset' },
   blow: { no: 6, name: 'Blow money', type: 'asset' },
   cash: { no: 7, name: 'Cash', type: 'asset' },
+  // Named sub-pages of the Saving bucket (Modules 13 and 14).
+  emergency: { no: 8, name: 'Emergency fund', type: 'asset' },
+  sinking: { no: 9, name: 'Sinking fund', type: 'asset' },
   'owed-friend': { no: 20, name: 'Owed to a friend', type: 'liability' },
   card: { no: 21, name: 'Credit card', type: 'liability' },
   'net-worth': { no: 30, name: 'Net worth', type: 'networth' },
@@ -142,6 +145,8 @@ export const CHART = {
   'card-interest': { no: 58, name: 'Card interest', type: 'expense' },
   household: { no: 59, name: 'Household supplies', type: 'expense' },
   'bank-fees': { no: 60, name: 'Bank fees', type: 'expense' },
+  insurance: { no: 61, name: 'Insurance', type: 'expense' },
+  utilities: { no: 62, name: 'Utilities', type: 'expense' },
 };
 
 // Labels give the number and name only: from Module 5 the learner tells the

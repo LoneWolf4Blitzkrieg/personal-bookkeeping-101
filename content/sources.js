@@ -62,4 +62,28 @@ export const SOURCES = {
     url: 'https://www.consumerfinance.gov/ask-cfpb/what-is-a-grace-period-for-a-credit-card-en-47/',
     accessed: '2026-10-24',
   },
+  'cfpb-emergency-fund': {
+    title: 'An essential guide to building an emergency fund (the amount "depends on your situation")',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/',
+    accessed: '2026-10-25',
+  },
+  'fed-shed-2025-emergency': {
+    title: 'Economic Well-Being of U.S. Households in 2025 (May 2026): adults who have 3 months of emergency savings, 55%',
+    publisher: 'Board of Governors of the Federal Reserve System',
+    url: 'https://www.federalreserve.gov/consumerscommunities/sheddataviz/emergency-savings-table.html',
+    accessed: '2026-10-25',
+  },
+  'bls-cpi-2026-09': {
+    title: 'Consumer Price Index News Release, October 14, 2026: all items up 3.7% over the 12 months to September 2026',
+    publisher: 'U.S. Bureau of Labor Statistics',
+    url: 'https://www.bls.gov/news.release/archives/cpi_10142026.htm',
+    accessed: '2026-10-25',
+  },
+  'fdic-rates-2026-10': {
+    title: 'National Rates and Rate Caps, October 2026: savings 0.38%, 12-month CD 1.76%',
+    publisher: 'Federal Deposit Insurance Corporation',
+    url: 'https://www.fdic.gov/national-rates-and-rate-caps',
+    accessed: '2026-10-25',
+  },
 };

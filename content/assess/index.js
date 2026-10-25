@@ -15,6 +15,8 @@ import { M09_GATE, M09_PRACTICE, M09_EXTRA, M09_REMEDIAL } from '../modules/m09.
 import { M10_GATE, M10_PRACTICE, M10_EXTRA, M10_REMEDIAL } from '../modules/m10.js';
 import { M11_GATE, M11_PRACTICE, M11_EXTRA, M11_REMEDIAL } from '../modules/m11.js';
 import { M12_GATE, M12_PRACTICE, M12_EXTRA, M12_REMEDIAL } from '../modules/m12.js';
+import { M13_GATE, M13_PRACTICE, M13_EXTRA, M13_REMEDIAL } from '../modules/m13.js';
+import { M14_GATE, M14_PRACTICE, M14_EXTRA, M14_REMEDIAL } from '../modules/m14.js';
 import { CHECKPOINT_A } from './ca.js';
 import { CHECKPOINT_B } from './cb.js';
 import { CHECKPOINT_C } from './cc.js';
@@ -39,4 +41,6 @@ export const ASSESSMENTS = byId(
   M11_GATE, M11_PRACTICE, M11_EXTRA, M11_REMEDIAL,
   M12_GATE, M12_PRACTICE, M12_EXTRA, M12_REMEDIAL,
   CHECKPOINT_C,
+  M13_GATE, M13_PRACTICE, M13_EXTRA, M13_REMEDIAL,
+  M14_GATE, M14_PRACTICE, M14_EXTRA, M14_REMEDIAL,
 );
