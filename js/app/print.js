@@ -3,6 +3,9 @@
 // Lesson sheets are added by id in later tasks.
 
 import { ledgerHTML, blankPage } from '../ledgerView.js';
+import { ledgerPanelHTML } from '../lessonView.js';
+import { MODULE_CONTENT } from '../../content/modules/index.js';
+import { DEMO_LESSON } from '../../content/modules/demo.js';
 
 const DEMO = {
   sheetNo: 1, accountNo: 3, name: 'Jordan (example)', account: 'Saving bucket', type: 'asset',
@@ -17,6 +20,15 @@ export function sheetFor(name) {
   if (name === 'blank') return { title: 'Blank ledger sheet', page: blankPage(25) };
   if (name === 'demo') return { title: 'Example ledger sheet', page: DEMO };
   return null;
+}
+
+// The ledger pages of one lesson step, ready to print with answers hidden.
+export function lessonSheet(moduleId, stepId) {
+  const lesson = moduleId === 'demo' ? DEMO_LESSON : MODULE_CONTENT[moduleId];
+  const step = lesson?.steps.find((s) => s.id === stepId);
+  if (!step) return null;
+  const html = ledgerPanelHTML(step, { revealed: false });
+  return html ? { title: `${lesson.title}: ${step.title ?? 'ledger page'}`, html } : null;
 }
 
 export function renderPrintPage(container, name) {

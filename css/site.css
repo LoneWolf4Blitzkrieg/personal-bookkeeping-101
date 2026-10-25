@@ -193,3 +193,8 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8r
 .source-doc th { text-align: left; font-weight: 400; color: var(--ink-soft); padding: .1rem .4rem .1rem 0; }
 .source-doc td { text-align: right; font-family: "Courier New", ui-monospace, monospace; }
 .source-note { font-size: .78rem; color: var(--ink-soft); margin: .4rem 0 0; }
+.core-idea { background: var(--accent-soft); border-radius: 6px; padding: .5rem .75rem; }
+.citation { font-size: .85rem; color: var(--ink-soft); border-left: 3px solid var(--rule); padding-left: .6rem; }
+.lesson-end-links { display: flex; flex-wrap: wrap; gap: .5rem; }
+.help-links { padding-left: 1.2rem; }
+.print-link { font-size: .85rem; margin: .5rem 0 0; }

@@ -8,6 +8,7 @@ import { percentOf, divideRound } from './money.js';
 // Married Filing Separately, nothing entered in Steps 2–4).
 export function federalWithholding(grossCents, tax, period = 'biweekly') {
   const periods = tax.federal.payPeriodsPerYear[period];
+  if (!periods) throw new RangeError(`Unknown pay period "${period}"; use weekly, biweekly, semimonthly or monthly.`);
   const annual = grossCents * periods;
   const adjusted = Math.max(0, annual - tax.federal.line1gCents);
   let row = tax.federal.singleSchedule[0];
@@ -21,6 +22,7 @@ export function federalWithholding(grossCents, tax, period = 'biweekly') {
 // here: course examples stay far below the yearly wage base.
 export function paycheck({ rateCents, hours, tax, period = 'biweekly' }) {
   const hundredths = Math.round(hours * 100);
+  if (Math.abs(hours * 100 - hundredths) > 1e-6) throw new RangeError(`Hours must be given to the hundredth of an hour, got ${hours}.`);
   const gross = divideRound(rateCents * hundredths, 100);
   const socialSecurity = percentOf(gross, tax.socialSecurityRate);
   const medicare = percentOf(gross, tax.medicareRate);

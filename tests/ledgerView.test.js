@@ -81,7 +81,7 @@ test('readLedgerInputs turns named input values back into rows, reporting bad am
 
 test('inactive columns are empty in both modes', () => {
   const page = { ...saving, activeColumns: ['date', 'items', 'balance'] };
-  const html = ledgerHTML(page, { showAnswers: true }).split('<tbody>')[1];
+  const html = ledgerHTML(page, { showAnswers: true }).split('<tbody>')[1].split('</tbody>')[0];
   for (const hidden of ['J1', '✓', '>Dr<']) assert.ok(!html.includes(hidden), `${hidden} hidden`);
   assert.equal((html.match(/181\.80/g) || []).length, 1, 'balance shown, debit hidden');
   const edit = ledgerHTML(page, { editable: true });
@@ -114,6 +114,15 @@ test('empty rows below the entries show no balance', () => {
   assert.equal((html.match(/>Dr</g) || []).length, 1);
 });
 
+test('a lesson step\'s ledgers can be printed, with answers hidden', async () => {
+  const { lessonSheet } = await import('../js/app/print.js');
+  const sheet = lessonSheet('demo', 'predict');
+  assert.ok(sheet);
+  assert.ok(sheet.html.includes('Saving bucket'));
+  assert.ok(!sheet.html.includes('363.60'));
+  assert.equal(lessonSheet('demo', 'nope'), null);
+});
+
 test('print sheets: blank and demo exist, unknown names do not', async () => {
   const { sheetFor } = await import('../js/app/print.js');
   assert.equal(sheetFor('blank').page.minRows, 25);
@@ -142,6 +151,17 @@ test('attribute values are escaped', () => {
   const html = ledgerHTML({ ...saving, account: 'A"B', rows: [{ ...saving.rows[0], items: 'say "hi"' }] }, { editable: true });
   assert.match(html, /aria-label="Ledger page: A&quot;B"/);
   assert.match(html, /value="say &quot;hi&quot;"/);
+});
+
+test('modules 1–2 sheets say money in and money out beside the page', () => {
+  const html = ledgerHTML({ ...saving, activeColumns: ['date', 'items', 'balance'], rows: [saving.rows[0], { date: '2026-06-09', items: 'Lunch', folio: '', debit: 0, credit: 1250, posted: [false, false] }] });
+  assert.match(html, /class="money-notes"/);
+  assert.match(html, /Jun 6[^<]*money in \$181\.80/);
+  assert.match(html, /Jun 9[^<]*money out \$12\.50/);
+});
+
+test('the highlighted row is announced to screen readers', () => {
+  assert.match(ledgerHTML(saving, { highlightRow: 0 }), /<span class="visually-hidden">\(this line\) <\/span>/);
 });
 
 test('a journal page shows date, accounts with credits indented, folio, debits and credits', async () => {

@@ -22,6 +22,16 @@ const expectations = {
   askGivesAwayAnswer: /gives away/,
   earlyColumnsInModule1: /activeColumns/,
   stepWithoutUses: /uses/,
+  stepWithoutId: /id/,
+  duplicateStepIds: /duplicate/,
+  noSteps: /no steps/,
+  predictAnswerShown: /shows the answer/,
+  predictWithoutAnswer: /answer/,
+  askBalanceThenLaterShown: /gives away/,
+  journalInModule1: /journal/,
+  emptyActiveColumnsModule1: /activeColumns/,
+  untaughtIdeaInPractice: /trial-balance.*not taught yet/,
+  sourceDocNotCents: /cents/,
 };
 
 for (const [name, pattern] of Object.entries(expectations)) {
@@ -31,9 +41,21 @@ for (const [name, pattern] of Object.entries(expectations)) {
   });
 }
 
+test('a gate\'s questions must belong to that module', () => {
+  const stray = gateTemplates.map((t) => ({ ...t, module: 'm03' }));
+  stray[0] = { ...stray[0], module: 'm09' };
+  const problems = checkAssessment({ id: 'm03', kind: 'gate', templates: stray });
+  assert.ok(problems.some((p) => /m09/.test(p)), JSON.stringify(problems));
+});
+
+test('prerequisite ideas are usable from the prerequisite check onward', () => {
+  const m = { id: 'prereq', position: 'prereq', steps: [{ id: 'd', kind: 'explain', text: ['x'], uses: ['decimals', 'percentages'] }] };
+  assert.deepEqual(checkModule(m), []);
+});
+
 test('a gate must have interpreting, producing and explaining templates', () => {
-  assert.deepEqual(checkAssessment({ id: 'm03', kind: 'gate', templates: gateTemplates }), []);
-  const problems = checkAssessment({ id: 'm03', kind: 'gate', templates: gateTemplates.slice(0, 3) });
+  assert.deepEqual(checkAssessment({ id: 'fx-gate', kind: 'gate', templates: gateTemplates }), []);
+  const problems = checkAssessment({ id: 'fx-gate', kind: 'gate', templates: gateTemplates.slice(0, 3) });
   assert.ok(problems.some((p) => /explaining/.test(p)));
 });
 

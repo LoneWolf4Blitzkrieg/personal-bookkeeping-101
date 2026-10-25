@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stepHTML, gradePrediction } from '../js/lessonView.js';
+import { stepHTML, gradePrediction, ledgerPanelHTML, lessonEndHTML } from '../js/lessonView.js';
 import { goodModule } from './fixtures/modules.js';
 
 const predict = {
   ...goodModule,
   steps: [
     goodModule.steps[0],
-    { kind: 'predict', text: ['What will the balance read after the second deposit?'], uses: ['debit-credit-rules'],
+    { id: 'predict', kind: 'predict', text: ['What will the balance read after the second deposit?'], uses: ['debit-credit-rules'],
       ledger: { ...goodModule.steps[0].ledger, rows: [goodModule.steps[0].ledger.rows[0], { date: '2026-06-20', items: 'From paycheck', folio: 'J2', debit: 18180, credit: 0, posted: [true, false], ask: ['balance', 'side'] }] },
       highlightRow: 1, answer: 36360, explanation: 'Each debit adds to an asset: 181.80 + 181.80 = 363.60.' },
   ],
@@ -21,9 +21,41 @@ test('a step shows its position, text and a reread button', () => {
 });
 
 test('a predict step asks for a prediction before showing the answer', () => {
-  const html = stepHTML(predict, 1);
+  const html = stepHTML(predict, 1) + ledgerPanelHTML(predict.steps[1], { revealed: false });
   assert.match(html, /<form[^>]*data-kind="predict"/);
   assert.ok(!html.includes('363.60'), 'the answer is not on the page before the prediction');
+  assert.ok(ledgerPanelHTML(predict.steps[1], { revealed: true }).includes('363.60'));
+});
+
+test('prediction feedback is announced and invalid input is tied to the field', () => {
+  const after = stepHTML(predict, 1, { revealed: true, feedback: gradePrediction(predict.steps[1], '181.80') });
+  assert.match(after, /class="feedback[^"]*"[^>]*role="status"/);
+  const invalid = stepHTML(predict, 1, { feedback: gradePrediction(predict.steps[1], 'abc') });
+  assert.match(invalid, /<input[^>]*aria-invalid="true"[^>]*aria-describedby="prediction-note"/);
+  assert.match(invalid, /id="prediction-note"/);
+});
+
+test('a step shows the source of its real-world figures', () => {
+  const html = stepHTML(goodModule, 0);
+  assert.match(html, /Source:.*Internal Revenue Service/);
+  assert.match(html, /href="https:\/\/www\.irs\.gov\/publications\/p15t"/);
+});
+
+test('the first step states the module\'s core idea', () => {
+  assert.ok(stepHTML(goodModule, 0).includes(goodModule.coreIdea));
+});
+
+test('a step can show several ledger pages', () => {
+  const step = { ...goodModule.steps[0], ledger: undefined, journalPage: undefined, ledgers: [goodModule.steps[0].ledger, { ...goodModule.steps[0].ledger, account: 'Checking', id: 'checking' }] };
+  const html = ledgerPanelHTML(step);
+  assert.equal((html.match(/<table class="ledger"/g) || []).length, 2);
+});
+
+test('the lesson end links the practice set, the module check and official help', () => {
+  const html = lessonEndHTML(goodModule);
+  assert.match(html, /href="assess.html\?id=m03-practice"/);
+  assert.match(html, /href="assess.html\?id=m03"/);
+  assert.match(html, /consumerfinance\.gov/);
 });
 
 test('a prediction is checked like a numeric question', () => {
@@ -40,4 +72,5 @@ test('step text is escaped', () => {
 test('the last step leads to the practice set and the module check', () => {
   const html = stepHTML(predict, 1, { revealed: true });
   assert.match(html, /href="assess.html\?id=m03"/);
+  assert.match(html, /href="assess.html\?id=m03-practice"/);
 });

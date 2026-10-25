@@ -121,6 +121,21 @@ test('an open session is saved and resumed, then cleared', () => {
   assert.equal(openSession(p, 'm03'), null);
 });
 
+test('practice sets are recorded and count down scheduled recall', async () => {
+  const { recordPractice } = await import('../js/progress.js');
+  let p = recordGate(emptyProgress(T0), 'm03', fail, T0, 1);
+  p = recordPractice(p, 'm04', { percent: 75 }, T0);
+  assert.equal(p.modules.m04.practice.length, 1);
+  assert.deepEqual(recallDue(p), ['m03']);
+  p = recordPractice(recordPractice(p, 'm04', { percent: 80 }, T0), 'm04', { percent: 90 }, T0);
+  assert.deepEqual(recallDue(p), []);
+});
+
+test('steps can be stored by id', () => {
+  const p = markStep(markStep(emptyProgress(T0), 'm01', 'warm-up'), 'm01', 'warm-up');
+  assert.deepEqual(p.modules.m01.steps, ['warm-up']);
+});
+
 test('steps, time, error log and ledgers are recorded', () => {
   let p = markStep(emptyProgress(T0), 'm01', 2);
   p = markStep(p, 'm01', 2);

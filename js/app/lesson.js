@@ -53,19 +53,21 @@ export function startLessonPage(search) {
     body.innerHTML = stepHTML(content, index, { revealed: revealed.has(index), feedback: feedback[index] });
     const panel = ledgerPanelHTML(step, { revealed: revealed.has(index) });
     ledgerBox.className = panel ? 'ledger-content' : 'ledger-placeholder';
-    ledgerBox.innerHTML = panel || 'No ledger page for this step.';
-    if (focus) (body.querySelector('#prediction') ?? body.querySelector('#step-title'))?.focus();
+    ledgerBox.innerHTML = panel
+      ? `${panel}<p class="print-link"><a href="print.html?lesson=${encodeURIComponent(content.id)}&amp;step=${encodeURIComponent(step.id)}">Print this page</a></p>`
+      : 'No ledger page for this step.';
+    if (focus) (body.querySelector('#prediction-feedback') ?? body.querySelector('#prediction') ?? body.querySelector('#step-title'))?.focus();
     // Reaching the end of the lesson counts the last step as done.
     const last = index === content.steps.length - 1;
     const waiting = step.kind === 'predict' && !revealed.has(index);
-    if (!isDemo && last && !waiting && !store.load().modules[module.id]?.steps.includes(index)) update((p) => markStep(p, module.id, index));
+    if (!isDemo && last && !waiting && !store.load().modules[module.id]?.steps.includes(step.id)) update((p) => markStep(p, module.id, step.id));
   }
 
   body.addEventListener('click', (e) => {
     const action = e.target.closest('[data-action]')?.dataset.action;
     if (!action || index === null) return;
     if (action === 'next') {
-      if (!isDemo) update((p) => markStep(p, module.id, index));
+      if (!isDemo) update((p) => markStep(p, module.id, content.steps[index].id));
       index += 1;
       drawStep(true);
     }
@@ -101,9 +103,10 @@ export function startLessonPage(search) {
       return true;
     }
     if (index === null) {
-      // Pick up at the first step not yet done.
+      // Pick up at the first step not yet done (steps are saved by id, so
+      // a step added later is not skipped).
       const done = new Set(progress.modules[module.id]?.steps ?? []);
-      index = content.steps.findIndex((_, i) => !done.has(i));
+      index = content.steps.findIndex((s) => !done.has(s.id));
       if (index === -1) index = 0;
     }
     drawStep(false);

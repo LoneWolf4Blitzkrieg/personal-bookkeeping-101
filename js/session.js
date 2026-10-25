@@ -41,7 +41,7 @@ export function submit(session, response) {
   return { ...session, results: [...session.results, recorded], last: recorded };
 }
 
-const SCORERS = { gate: scoreGate, checkpoint: scoreCheckpoint, placement: scoreCheckpoint, exam: scoreExam, retention: scoreExam };
+const SCORERS = { gate: scoreGate, checkpoint: scoreCheckpoint, placement: scoreCheckpoint, exam: scoreExam, retention: scoreExam, prereq: scoreExam, practice: scoreExam };
 
 export function summary(session) {
   return (SCORERS[session.meta?.kind] ?? scoreGate)(session.results);

@@ -2,11 +2,12 @@
 // before seeing feedback, then sees results with explanations.
 
 import { escapeHTML } from '../html.js';
-import { ledgerHTML } from '../ledgerView.js';
+import { ledgerPanelHTML } from '../lessonView.js';
+import { MODULE_CONTENT } from '../../content/modules/index.js';
 import { parseAmount } from '../money.js';
 import { assessmentVersions } from '../items.js';
 import { createSession, resumeSession, submit, currentItem, isComplete, summary } from '../session.js';
-import { isUnlocked, nextVersion, attemptsFor, openSession, saveSession, sessionMatches, recordGate, recordCheckpoint, recordExam, recordPlacement, recordOther, failureStep, addErrorEntry } from '../progress.js';
+import { isUnlocked, nextVersion, attemptsFor, openSession, saveSession, sessionMatches, recordGate, recordCheckpoint, recordExam, recordPlacement, recordOther, recordPractice, recallDue, failureStep, addErrorEntry } from '../progress.js';
 import { store, update, mountChrome, trackTime } from './chrome.js';
 import { ASSESSMENTS } from '../../content/assess/index.js';
 
@@ -24,7 +25,7 @@ function entryRowHTML(item, i) {
 function itemHTML(item, index, total) {
   const head = `<p class="crumb">Question ${index + 1} of ${total} · ${PART_LABELS[item.part]} · ${item.points} points</p>
     <p class="item-prompt" id="prompt">${escapeHTML(item.prompt)}</p>
-    ${item.ledger ? ledgerHTML(item.ledger, { highlightRow: 0 }) : ''}`;
+    ${ledgerPanelHTML({ ...item, highlightRow: item.highlightRow ?? 0 })}`;
   if (item.kind === 'numeric') {
     return `${head}
       <form class="answer-form" data-kind="numeric">
@@ -84,6 +85,7 @@ const VERDICTS = {
     retry: 'Not yet. You need 80%. Go back to the earliest module listed below, redo its practice set and gate, then try this checkpoint again.',
   },
   exam: { pass: 'Passed. You have completed the course.', retry: 'Not yet. You need 80%. Review the modules you found hardest and try again.' },
+  practice: { pass: 'Practice set done. When you are ready, take the module check.', retry: 'Practice set done. Look over the explanations for the questions you missed, then take the module check when you are ready.' },
 };
 
 function resultsHTML(session) {
@@ -151,6 +153,7 @@ function recordResult(progress, session, at) {
   if (kind === 'checkpoint') return recordCheckpoint(progress, assessmentId, score, at, version, items);
   if (kind === 'placement') return recordPlacement(progress, session.meta.checkpointId, score, at, version, items);
   if (kind === 'exam') return recordExam(progress, score, at, version, items);
+  if (kind === 'practice') return recordPractice(progress, session.meta.module, score, at);
   return recordOther(progress, assessmentId, score, at, version, items);
 }
 
@@ -174,15 +177,21 @@ export function startAssessment(root, id, requestedVersion) {
     root.innerHTML = '<h1>Check not found</h1><p>There is no check with that name. Return to the course map to find your next step.</p>';
     return;
   }
-  const access = assessment.alwaysOpen ? { unlocked: true } : isUnlocked(assessment.id, progress);
+  // Practice sets open with their module.
+  const access = assessment.alwaysOpen ? { unlocked: true } : isUnlocked(assessment.kind === 'practice' ? assessment.module : assessment.id, progress);
   if (!access.unlocked) {
     root.innerHTML = `<h1>${escapeHTML(assessment.title)}</h1><div class="lock-notice"><p><strong>Not open yet.</strong> ${escapeHTML(access.reason)}</p></div>`;
     return;
   }
   // The demonstration gate lets ?v= choose a version; real checks use the learner's attempt count.
   const version = assessment.alwaysOpen && requestedVersion ? safeAttempt(requestedVersion) : nextVersion(progress, assessment.id);
-  const items = itemsFor(assessment, version);
-  const meta = { assessmentId: assessment.id, kind: assessment.kind, version, ...(assessment.checkpointId ? { checkpointId: assessment.checkpointId } : {}) };
+  // A module's practice set also carries recall questions from any module
+  // whose gate was failed recently (proposal: "Passing and retaking").
+  const recall = assessment.kind === 'practice'
+    ? recallDue(progress).filter((m) => m !== assessment.module).flatMap((m) => MODULE_CONTENT[m]?.recallTemplates ?? [])
+    : [];
+  const items = itemsFor(recall.length ? { ...assessment, templates: [...recall, ...assessment.templates] } : assessment, version);
+  const meta = { assessmentId: assessment.id, kind: assessment.kind, version, ...(assessment.checkpointId ? { checkpointId: assessment.checkpointId } : {}), ...(assessment.module ? { module: assessment.module } : {}) };
   const saved = openSession(progress, assessment.id);
   let session = saved && saved.meta.version === version ? resumeSession(items, meta, saved.results) : createSession(items, meta);
   const attemptsAtStart = attemptsFor(progress, assessment.id);

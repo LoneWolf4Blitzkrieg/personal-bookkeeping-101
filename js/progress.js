@@ -203,7 +203,7 @@ export function markStep(progress, moduleId, step) {
   const p = clone(progress);
   const m = moduleRecord(p, moduleId);
   if (!m.steps.includes(step)) m.steps.push(step);
-  m.steps.sort((a, b) => a - b);
+  if (m.steps.every((s) => typeof s === 'number')) m.steps.sort((a, b) => a - b);
   return p;
 }
 
@@ -223,6 +223,15 @@ export function saveLedger(progress, pageId, rows) {
   const p = clone(progress);
   p.ledgers[pageId] = structuredClone(rows);
   return p;
+}
+
+// A finished practice set: kept for the evaluation plan, and it counts down
+// any recall questions scheduled after a failed gate.
+export function recordPractice(progress, moduleId, score, at) {
+  const p = clone(progress);
+  const m = moduleRecord(p, moduleId);
+  (m.practice ??= []).push({ at, percent: score.percent });
+  return completePracticeSet(p);
 }
 
 // Modules whose recall questions should be added to the next practice sets.

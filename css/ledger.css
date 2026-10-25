@@ -78,3 +78,7 @@
 .ledger.journal .col-debit, .ledger.journal .col-credit { width: 17%; border-left: 3px double var(--rule-strong); }
 .ledger.journal .journal-credit { padding-left: 1.6em; }
 .ledger.journal .journal-explanation { font-style: italic; padding-left: .8em; }
+
+/* Modules 1–2: amounts written beside the sheet */
+.money-notes { margin: .4rem 0 0; padding-left: 1.1rem; font-family: var(--money-font); font-size: .78rem; }
+.ledger .visually-hidden, .money-notes .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -42,3 +42,11 @@ test('checkpoints follow modules 4, 8 and 12', () => {
     { id: 'cc', after: 'm12' },
   ]);
 });
+
+test('the prerequisite check has its own ideas, outside the 42-idea budget', async () => {
+  const { PREREQUISITE } = await import('../content/course.js');
+  assert.equal(PREREQUISITE.id, 'prereq');
+  assert.ok(PREREQUISITE.ideas.includes('decimals'));
+  const coreIdeas = new Set(MODULES.flatMap((m) => m.ideas));
+  assert.ok(PREREQUISITE.ideas.every((i) => !coreIdeas.has(i)));
+});

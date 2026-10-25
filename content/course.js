@@ -52,6 +52,15 @@ export const MODULES = [
     ideas: ['what-an-ira-is', 'traditional-vs-roth', 'limits-and-growth'] },
 ];
 
+// The prerequisite check and its remedial unit teach the arithmetic the
+// course assumes. These ideas sit outside the 42-idea budget and may be used
+// anywhere in the course.
+export const PREREQUISITE = {
+  id: 'prereq',
+  title: 'Before you start: money arithmetic',
+  ideas: ['decimals', 'percentages', 'adding-money'],
+};
+
 export const CHECKPOINTS = [
   { id: 'ca', after: 'm04' },
   { id: 'cb', after: 'm08' },

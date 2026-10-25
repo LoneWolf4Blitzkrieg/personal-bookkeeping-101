@@ -143,10 +143,18 @@ export function ledgerHTML(page, { highlightRow = null, editable = false, showAn
       }
       return `<td class="${classes.join(' ')}">${escapeHTML(values[c.key])}</td>`;
     }).join('');
-    const rowClass = i === highlightRow ? ' class="highlight"' : '';
-    return `<tr data-row="${i}"${rowClass}>${cells}</tr>`;
+    const highlighted = i === highlightRow;
+    const rowClass = highlighted ? ' class="highlight"' : '';
+    const marked = highlighted ? cells.replace(/^(<td[^>]*>)/, '$1<span class="visually-hidden">(this line) </span>') : cells;
+    return `<tr data-row="${i}"${rowClass}>${marked}</tr>`;
   }).join('\n');
 
+  // Modules 1–2 hide the debit and credit columns; the amounts are written
+  // beside the sheet as money in and money out instead.
+  const notes = active && !active.has('debit') && !active.has('credit')
+    ? page.rows.filter((r) => r.debit || r.credit).map((r) => `<li>${escapeHTML(formatDate(r.date))}: ${r.debit ? `money in $${formatCents(r.debit)}` : `money out $${formatCents(r.credit)}`}</li>`).join('')
+    : '';
+  const notesHTML = notes ? `<ul class="money-notes" aria-label="Money in and out">${notes}</ul>` : '';
   return `<div class="ledger-sheet">
 ${headerFields(page)}
 <div class="ledger-scroll">
@@ -157,6 +165,7 @@ ${body}
 </tbody>
 </table>
 </div>
+${notesHTML}
 </div>`;
 }
 
