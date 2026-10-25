@@ -7,7 +7,7 @@
 // only. People and everyday amounts are fictional (illustrative).
 
 import { percentOf } from '../../js/money.js';
-import { money, NAMES, explainTemplate, accountOptions, chartPage } from '../helpers.js';
+import { money, NAMES, explainTemplate, accountOptions, chartPage, per100 } from '../helpers.js';
 import { RATES_2026 } from '../rates2026.js';
 import { IRA_2026 } from '../addonData.js';
 import { M14_LESSON } from './m14.js';
@@ -44,7 +44,7 @@ const maxContribution = num('a3-max-contribution', 'interpreting', { earned: { m
   const earned = p.over ? p.earned + 750000 : p.earned;
   const answer = Math.min(LIMIT, earned);
   return {
-    prompt: `${p.name} is 24 and earned ${money(earned)} from work in 2026. What is the most ${p.name} can put into IRAs for 2026?`,
+    prompt: `${p.name} is 24, single, and earned ${money(earned)} from work in 2026. What is the most ${p.name} can put into IRAs for 2026?`,
     source: IRA_2026.source,
     answer,
     misconceptions: [{ cents: answer === LIMIT ? earned : LIMIT, explanation: answer === LIMIT ? 'You cannot put in more than the 2026 limit, $7,500.00, however much you earn.' : 'You cannot put in more than you earned from work that year.' }],
@@ -160,7 +160,7 @@ const explainIra = explainTemplate({
       modelAnswer: 'A traditional IRA can lower your taxes now, but withdrawals are taxed later. A Roth uses money that was already taxed, and qualified withdrawals are not taxed.',
       rubric: ['Says traditional withdrawals are taxed later (contributions may be deductible)', 'Says Roth contributions are after tax and qualified withdrawals are tax-free'] },
     { prompt: 'In one or two sentences: why is the most you can put in the smaller of the yearly limit and what you earned?',
-      modelAnswer: 'IRA contributions must come from pay for work. You cannot put in more than you earned that year, or more than the yearly limit.',
+      modelAnswer: 'The limit protects the tax advantage for people saving from their work. You cannot put in more than you earned from work that year, or more than the yearly limit.',
       rubric: ['Says contributions cannot be more than you earned from work', 'Says they cannot be more than the yearly limit'] },
     { prompt: 'In one or two sentences: why does starting an IRA early make a difference, even at a low rate?',
       modelAnswer: 'Each year\'s interest is added and then earns interest too. The more years it has, the more interest on interest builds up.',
@@ -173,6 +173,16 @@ const explainIra = explainTemplate({
 const MAYA = 100000; // $1,000.00 a year (illustrative)
 const mayaPage = (years, askFrom = null) => chartPage('ira', iraRows(MAYA, years).rows, { name: 'Maya (example)', askFrom });
 const FORTY = iraBalance(MAYA, 40);
+// Interest on the contributions alone: each $1,000.00 earns $17.60 a year for
+// the years it stays (40 + 39 + ... + 1 = 820 years in all).
+const SIMPLE_FORTY = percentOf(MAYA, CD) * 820;
+// The 40 years on one page: years 1 and 2 and year 40 line by line, the
+// years between on one summary line.
+function fortyYearPage() {
+  const { rows } = iraRows(MAYA, 40);
+  const middle = rows.slice(4, -2).reduce((s, r) => s + r[3], 0);
+  return chartPage('ira', [...rows.slice(0, 4), ['2065-12-31', 'Years 3 to 39: contributions and interest', '', middle, 0], ...rows.slice(-2)], { name: 'Maya (example)' });
+}
 
 export const A3_LESSON = {
   id: 'a3',
@@ -184,13 +194,13 @@ export const A3_LESSON = {
       text: ['From Add-on A2: a company had sales of $3,000 million and profit of $240 million. How much profit per $100.00 of sales?'],
       answer: 800,
       misconceptions: [{ cents: 9200, explanation: 'That is the costs per $100.00. Divide profit by sales.' }],
-      explanation: '$240 million ÷ $3,000 million × 100 = $8.00.',
+      explanation: '$240 million ÷ $3,000 million × $100.00 = $8.00.',
     },
     {
       id: 'what', kind: 'explain', title: 'What an IRA is', uses: ['what-an-ira-is', 'transfers', 'compound-interest'],
       text: [
         'An IRA (individual retirement account) is an account for saving for retirement, with tax advantages. You open it with a bank, a credit union or an investment firm.',
-        'An IRA can hold savings, such as a CD. Bank deposits in IRAs, CDs included, are insured by the FDIC up to $250,000 per owner at each bank. An IRA can also hold investments such as mutual funds. Those are not insured. Their value goes up and down, and they "may lose value."',
+        'An IRA can hold savings, such as a CD. At a bank, deposits in IRAs, CDs included, are insured by the FDIC up to $250,000 per owner. An IRA can also hold investments such as mutual funds. Those are not insured. Their value goes up and down, and they "may lose value."',
         'In your books, the IRA is a page of its own, IRA (account 10). It is a home for Investing bucket money. Moving money in is a transfer: debit IRA, credit Investing bucket. Maya puts in $1,000.00 each January. Her IRA holds a CD at 1.76% a year, the October 2026 average, and its interest is added each December.',
         'This course explains how IRAs work. It does not tell you what to buy.',
       ],
@@ -241,17 +251,19 @@ export const A3_LESSON = {
     {
       id: 'limits', kind: 'explain', title: 'Limits and decades of growth', uses: ['limits-and-growth', 'compound-interest'],
       text: [
-        'For 2026, the most anyone can put into all their IRAs together is $7,500.00, or $8,600.00 at age 50 or older ($1,100.00 more). It can never be more than you earned from work that year. Roth IRAs also have an income limit. For a single person in 2026, it phases out between $153,000.00 and $168,000.00.',
-        `Time does a lot of the work. If Maya keeps putting in $1,000.00 a year at 1.76% for 40 years, she puts in $40,000.00 and her IRA holds ${money(FORTY)}. The rest is interest, much of it interest on interest.`,
+        'For 2026, the most anyone can put into all their IRAs together is $7,500.00, or $8,600.00 at age 50 or older ($1,100.00 more). For a single person, it can never be more than they earned from work that year. (A married couple filing a joint tax return can count the working spouse\'s pay; the IRS page explains this.) Roth IRAs also have an income limit. For a single person in 2026, it phases out between $153,000.00 and $168,000.00.',
+        `Time does a lot of the work. If Maya keeps putting in $1,000.00 a year at 1.76% for 40 years, she puts in $40,000.00 and her IRA holds ${money(FORTY)}. The rest, ${money(FORTY - 40 * MAYA)}, is interest. About ${money(FORTY - 40 * MAYA - SIMPLE_FORTY)} of it is interest earned on earlier interest, and that part grows faster the longer the money stays.`,
         'Investments such as stock and bond funds can grow faster than a CD or lose value. Nobody can promise either. The course uses the CD rate because it is a real, published figure.',
       ],
       prompt: 'Why does the interest grow faster in the later years?',
       promptAnswer: 'Each year adds a contribution and that year\'s interest, so there is more money earning interest every year.',
       sources: [IRA_2026.source, DEPOSIT_SOURCE, 'fdic-not-insured'],
+      ledger: fortyYearPage(),
+      highlightRow: 6,
     },
     {
       id: 'predict-limit', kind: 'predict', title: 'Predict: the most you can put in', uses: ['limits-and-growth'],
-      text: ['Kai is 20, earned $5,240.00 from a part-time job in 2026, and has already put $3,000.00 into a Roth IRA for 2026. How much more can Kai put in for 2026?'],
+      text: ['Kai is 20, single, earned $5,240.00 from a part-time job in 2026, and has already put $3,000.00 into a Roth IRA for 2026. How much more can Kai put in for 2026?'],
       answer: 224000,
       misconceptions: [{ cents: LIMIT - 300000, explanation: 'Kai earned less than $7,500.00, so his limit is what he earned, $5,240.00.' }],
       explanation: 'The most is the smaller of $7,500.00 and $5,240.00, which is $5,240.00. $5,240.00 − $3,000.00 = $2,240.00 more.',
@@ -259,10 +271,10 @@ export const A3_LESSON = {
     },
     {
       id: 'guided', kind: 'predict', title: 'Finish the worked steps', uses: ['limits-and-growth', 'compound-interest'],
-      text: [`After 40 years of $1,000.00 a year at 1.76%, Maya's IRA holds ${money(FORTY)}. Step 1 is done: she put in 40 × $1,000.00 = $40,000.00. Finish Step 2: how much of the IRA is interest?`],
-      answer: FORTY - 40 * MAYA,
-      misconceptions: [{ cents: FORTY, explanation: 'That is the whole IRA. Subtract what Maya put in.' }],
-      explanation: `${money(FORTY)} − $40,000.00 = ${money(FORTY - 40 * MAYA)}.`,
+      text: [`After 40 years, Maya put in $40,000.00 and earned ${money(FORTY - 40 * MAYA)} of interest. Step 1 is done: interest ÷ what she put in = ${money(FORTY - 40 * MAYA)} ÷ $40,000.00. Finish Step 2: multiply by $100.00. How much interest did she earn for every $100.00 she put in? Round to the cent.`],
+      answer: per100(FORTY - 40 * MAYA, 40 * MAYA),
+      misconceptions: [{ cents: per100(FORTY, 40 * MAYA), explanation: 'That counts the whole IRA. Use the interest only.' }],
+      explanation: `${money(FORTY - 40 * MAYA)} ÷ $40,000.00 × $100.00 = ${money(per100(FORTY - 40 * MAYA, 40 * MAYA))}.`,
       source: DEPOSIT_SOURCE,
     },
     {
@@ -283,7 +295,7 @@ export const A3_LESSON = {
     },
     {
       id: 'exit-check-2', kind: 'predict', title: 'Exit check 2 of 3', uses: ['limits-and-growth'],
-      text: ['Someone aged 23 earned $6,300.00 from work in 2026 and has already put $1,500.00 into an IRA for 2026. How much more can they put in?'],
+      text: ['Someone aged 23 and single earned $6,300.00 from work in 2026 and has already put $1,500.00 into an IRA for 2026. How much more can they put in?'],
       answer: 480000,
       misconceptions: [{ cents: LIMIT - 150000, explanation: 'They earned less than $7,500.00, so the limit is what they earned.' }],
       explanation: 'The smaller of $7,500.00 and $6,300.00 is $6,300.00. $6,300.00 − $1,500.00 = $4,800.00 more.',

@@ -73,8 +73,12 @@ const fedSells = num('a1-fed-sells', 'interpreting', { reserves: { min: 30000000
 
 // Three real pairs of months, each asked two ways: the new money per $100.00,
 // or what each $100.00 became.
-const m2Growth = num('a1-m2-growth', 'interpreting', { pair: { pick: M2_PAIRS }, ask: { pick: ['new', 'became'] } }, (p) => {
-  const [from, to] = p.pair;
+// The lesson's guided step asks December's new money, so the check asks the
+// other four ways (and December only as "became").
+const M2_ASKS = [[M2_PAIRS[0], 'new'], [M2_PAIRS[0], 'became'], [M2_PAIRS[1], 'new'], [M2_PAIRS[1], 'became'], [M2_PAIRS[2], 'became']];
+const m2Growth = num('a1-m2-growth', 'interpreting', { which: { pick: M2_ASKS } }, (p) => {
+  const [[from, to], ask] = p.which;
+  p = { ...p, ask };
   const growth = per100(M2[to] - M2[from], M2[from]);
   const became = per100(M2[to], M2[from]);
   const isNew = p.ask === 'new';
@@ -87,7 +91,7 @@ const m2Growth = num('a1-m2-growth', 'interpreting', { pair: { pick: M2_PAIRS },
     misconceptions: [isNew
       ? { cents: became, explanation: 'That is what each $100.00 grew to. The new money is the part above $100.00.' }
       : { cents: growth, explanation: 'That is the new money alone. Add the $100.00 you started with.' }],
-    explanation: `${billions(M2[to])} ÷ ${billions(M2[from])} × 100 = ${money(became)} (rounded to the cent), so each $100.00 grew by ${money(growth)}.`,
+    explanation: `${billions(M2[to])} ÷ ${billions(M2[from])} × $100.00 = ${money(became)} (rounded to the cent), so each $100.00 grew by ${money(growth)}.`,
   };
 });
 
@@ -155,9 +159,9 @@ const explainFed = explainTemplate({
     { prompt: 'In one or two sentences: when you pay a tax from your checking account, why does your bank\'s Customers\' deposits page go down?',
       modelAnswer: 'Deposits are what the bank owes you. After the payment it owes you less, so the liability is debited. The money moves on to the Treasury\'s account at the Fed.',
       rubric: ['Says deposits are what the bank owes its customers (a liability)', 'Says the payment lowers what it owes, as the money moves to the Treasury'] },
-    { prompt: 'In one or two sentences: what did the Federal Reserve Act of 1913 mean by an "elastic currency"?',
+    { prompt: 'In one or two sentences: what did the Federal Reserve Act of 1913 mean by an "elastic currency", and how does the Fed make the amount of money grow or shrink today?',
       modelAnswer: 'It means money whose amount can grow or shrink as the country needs. The Fed can add money by buying securities and take it out by selling them.',
-      rubric: ['Says the amount of money can grow or shrink with the country\'s needs', 'Names a way the Fed does it (buying or selling securities)'] },
+      rubric: ['Says the amount of money can grow or shrink with the country\'s needs', 'Names a way the Fed does it (buying or selling securities, or lending to banks)'] },
   ],
 });
 
@@ -172,6 +176,7 @@ const flowPages = () => [
   page('bankReserves', [['2026-07-01', 'Brought forward', '', BANK_OPENING, 0], ['2026-07-15', 'Ana\'s tax to the Treasury', 'R1', 0, TAX]]),
   page('fedReserves', [['2026-07-01', 'Brought forward', '', 0, FED_RESERVES], ['2026-07-15', 'Tax paid from Desert Bank', 'F7', TAX, 0]]),
   page('fedTreasury', [['2026-07-01', 'Brought forward', '', 0, 75000000], ['2026-07-15', 'Tax from Desert Bank', 'F7', 0, TAX]]),
+  page('treasuryAccount', [['2026-07-01', 'Brought forward', '', 75000000, 0], ['2026-07-15', 'Tax received', 'T3', TAX, 0]]),
 ];
 const PURCHASE = 200000000;
 const purchasePages = () => [
@@ -220,8 +225,8 @@ export const A1_LESSON = {
       text: [
         'Ana pays $300.00 of federal tax from her checking account at Desert Bank. Follow it through every set of books.',
         'Ana: credit Checking, debit her tax expense. Desert Bank: debit Customers\' deposits, because it now owes Ana less, and credit Reserves at the Fed, because its reserves go to pay the tax.',
-        'The Fed: debit Banks\' reserves, because Desert Bank\'s account goes down, and credit the Treasury\'s account. The Treasury: debit its Account at the Fed.',
-        'Every set of books balances. When the government pays someone, the same path runs the other way.',
+        'The Fed: debit Banks\' reserves, because Desert Bank\'s account goes down, and credit the Treasury\'s account. The Treasury: debit its Account at the Fed and credit its tax receipts (its income).',
+        'The amounts here are made small to read easily. Real reserves at the Fed are in the trillions of dollars. Every set of books balances. When the government pays someone, the same path runs the other way.',
       ],
       prompt: 'Why does Desert Bank debit Customers\' deposits when Ana pays her tax?',
       promptAnswer: 'Deposits are what the bank owes its customers. They are a liability. After the payment it owes Ana $300.00 less, so the page is debited.',
@@ -240,10 +245,10 @@ export const A1_LESSON = {
     {
       id: 'money', kind: 'explain', title: 'How the Fed changes the amount of money', uses: ['fed-money-supply', 'money-flows'],
       text: [
-        'The Fed adds money by buying Treasury securities, which are the government\'s IOUs. In the words of the Fed\'s chair, it does so "by purchasing Treasury securities in the open market and crediting the reserve accounts of the banks involved." Those reserves are new. They do not come out of anyone else\'s account.',
+        'The Fed adds money by buying Treasury securities, which are the government\'s IOUs. In an October 2025 speech, Jerome Powell, then the Fed\'s chair, said it does so "by purchasing Treasury securities in the open market and crediting the reserve accounts of the banks involved in the transaction with the seller." Those reserves are new. They do not come out of anyone else\'s account.',
         'In the Fed\'s books: debit Treasury securities (an asset) and credit Banks\' reserves (what it owes the banks). If a bank\'s customer sold the securities, the bank also credits that customer\'s deposit, so the money in people\'s and companies\' accounts grows too.',
         'Selling securities does the reverse and takes money out. The Fed also sets a target for the federal funds rate, the rate banks charge each other overnight, which affects what loans cost.',
-        `The amount of money can change quickly. The money supply called M2 (cash, checking and savings deposits, and similar accounts) was ${billions(M2[M2_FROM])} in ${monthName(M2_FROM)} and ${billions(M2[M2_TO])} a year later.`,
+        `The amount of money can change quickly. The money supply called M2 (cash, checking and savings deposits, and similar accounts) was ${billions(M2[M2_FROM])} in ${monthName(M2_FROM)} and ${billions(M2[M2_TO])} a year later. Both the Fed\'s purchases and government payments, like the ones earlier in this module, add money to people\'s and companies\' accounts.`,
       ],
       prompt: 'Why does the Fed\'s purchase add to the amount of money, while a payment from one person to another does not?',
       promptAnswer: 'A payment only moves existing money between accounts. The Fed pays for securities with newly created reserves, so the total grows.',
@@ -265,7 +270,7 @@ export const A1_LESSON = {
       text: [`M2 was ${billions(M2[M2_FROM])} in ${monthName(M2_FROM)} and ${billions(M2[M2_TO])} in ${monthName(M2_TO)}. Step 1 is done: ${billions(M2[M2_TO])} − ${billions(M2[M2_FROM])} = ${billions(M2[M2_TO] - M2[M2_FROM])} of new money. Finish Step 2: for every $100.00 that existed in ${monthName(M2_FROM)}, how many dollars of new money were there? Round to the cent.`],
       answer: per100(M2[M2_TO] - M2[M2_FROM], M2[M2_FROM]),
       misconceptions: [{ cents: per100(M2[M2_TO], M2[M2_FROM]), explanation: 'That is what each $100.00 grew to. The new money is the part above $100.00.' }],
-      explanation: `${billions(M2[M2_TO] - M2[M2_FROM])} ÷ ${billions(M2[M2_FROM])} × 100 = ${money(per100(M2[M2_TO] - M2[M2_FROM], M2[M2_FROM]))}. That is about a quarter more money in one year.`,
+      explanation: `${billions(M2[M2_TO] - M2[M2_FROM])} ÷ ${billions(M2[M2_FROM])} × $100.00 = ${money(per100(M2[M2_TO] - M2[M2_FROM], M2[M2_FROM]))}. That is about a quarter more money in one year.`,
       source: M2_SOURCE,
     },
     {

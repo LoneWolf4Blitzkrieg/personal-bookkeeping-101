@@ -33,10 +33,20 @@ const RISERS = COMPANIES.filter((c) => profit(c, 2022) > profit(c, 2019));
 // profit question uses three drug companies, the costs question three
 // insurers, and the production table four other companies.
 const picks = (ids) => ids.flatMap((id) => COMPANY_YEARS.map((y) => [id, y]));
-const PROFIT_PICKS = picks(['jnj', 'abbvie', 'bms']);
-const COSTS_PICKS = picks(['cigna', 'elevance', 'humana']);
-const EARLY_PAIRS = CPI_YEAR_PAIRS.filter(([from]) => from < '2022');
-const LATE_PAIRS = CPI_YEAR_PAIRS.filter(([from]) => from >= '2022');
+// The lesson works J&J 2019 and 2022, Pfizer 2019, AbbVie 2021, Humana 2019
+// and Merck 2022, so the checks leave those out.
+const LESSON_PICKS = [['jnj', 2019], ['jnj', 2022], ['pfizer', 2019], ['abbvie', 2021], ['humana', 2019], ['merck', 2022]];
+const notInLesson = (list) => list.filter(([id, y]) => !LESSON_PICKS.some(([i, yy]) => i === id && yy === y));
+const PROFIT_PICKS = notInLesson(picks(['jnj', 'abbvie', 'pfizer', 'merck']));
+const COSTS_PICKS = notInLesson(picks(['cigna', 'humana']));
+const TABLE_COMPANIES = ['unitedhealth', 'centene', 'elevance', 'bms'];
+// CPI pairs, split three ways so no two questions in a check use the same
+// pair, and leaving out the pairs the lesson works through.
+const LESSON_PAIRS = ['2021-06', '2025-09', '2020-12', '2021-12'];
+const usable = CPI_YEAR_PAIRS.filter(([from]) => !LESSON_PAIRS.includes(from));
+const EARLY_PAIRS = usable.filter(([from]) => from < '2022');
+const MID_PAIRS = usable.filter(([from]) => from >= '2022' && from < '2024');
+const LATE_PAIRS = usable.filter(([from]) => from >= '2024');
 const ALL_COMPANY_SOURCES = COMPANIES.map((c) => c.source);
 
 // --- Question templates -----------------------------------------------------
@@ -53,7 +63,7 @@ const cpiPer100 = num('a2-cpi-per-100', 'interpreting', { pair: { pick: EARLY_PA
   };
 });
 
-const cpiRise = num('a2-cpi-rise', 'interpreting', { pair: { pick: LATE_PAIRS } }, (p) => {
+const cpiRise = num('a2-cpi-rise', 'interpreting', { pair: { pick: MID_PAIRS } }, (p) => {
   const [from, to] = p.pair;
   const answer = per100(CPI[to] - CPI[from], CPI[from]);
   return {
@@ -65,7 +75,7 @@ const cpiRise = num('a2-cpi-rise', 'interpreting', { pair: { pick: LATE_PAIRS } 
   };
 });
 
-const priceNow = num('a2-price-now', 'interpreting', { pair: { pick: CPI_YEAR_PAIRS }, price: { min: 1500, max: 25000, step: 1 } }, (p) => {
+const priceNow = num('a2-price-now', 'interpreting', { pair: { pick: LATE_PAIRS }, price: { min: 1500, max: 25000, step: 1 } }, (p) => {
   const [from, to] = p.pair;
   const answer = priceAt(p.price, from, to);
   return {
@@ -77,7 +87,8 @@ const priceNow = num('a2-price-now', 'interpreting', { pair: { pick: CPI_YEAR_PA
   };
 });
 
-const borrowedPer100 = num('a2-borrowed-per-100', 'interpreting', { year: { pick: [2019, 2020, 2021, 2022] } }, (p) => {
+// Each version asks a different year from the budget table's (below).
+const borrowedPer100 = num('a2-borrowed-per-100', 'interpreting', { year: { byVersion: [2020, 2021, 2022, 2019] } }, (p) => {
   const b = BUDGET[p.year];
   const answer = per100(deficit(p.year), b.outlays);
   return {
@@ -85,7 +96,7 @@ const borrowedPer100 = num('a2-borrowed-per-100', 'interpreting', { year: { pick
     source: BUDGET_SOURCE,
     answer,
     misconceptions: [{ cents: per100(deficit(p.year), b.receipts), explanation: 'Compare the deficit with what was spent, not with what came in.' }],
-    explanation: `Deficit: ${billions(b.outlays)} − ${billions(b.receipts)} = ${billions(deficit(p.year))}. Per $100.00 spent: ${billions(deficit(p.year))} ÷ ${billions(b.outlays)} × 100 = ${money(answer)}.`,
+    explanation: `Deficit: ${billions(b.outlays)} − ${billions(b.receipts)} = ${billions(deficit(p.year))}. Per $100.00 spent: ${billions(deficit(p.year))} ÷ ${billions(b.outlays)} × $100.00 = ${money(answer)}.`,
   };
 });
 
@@ -99,7 +110,7 @@ const profitPer100 = num('a2-profit-per-100', 'interpreting', { pick: { pick: PR
     source: c.source,
     answer,
     misconceptions: [{ cents: 10000 - answer, explanation: 'That is the costs per $100.00. Profit is net income divided by revenue, times 100.' }],
-    explanation: `${millions(c.years[y][1])} ÷ ${millions(c.years[y][0])} × 100 = ${money(answer)} (rounded to the cent).`,
+    explanation: `${millions(c.years[y][1])} ÷ ${millions(c.years[y][0])} × $100.00 = ${money(answer)} (rounded to the cent).`,
   };
 });
 
@@ -132,7 +143,7 @@ const profitRise = num('a2-profit-rise', 'interpreting', { id: { pick: RISERS.ma
 // Production: one company's three years. Four companies, one per version.
 const companyTable = {
   id: 'a2-company-table', module: 'a2', kind: 'amounts', part: 'producing', points: 4,
-  params: { id: { byVersion: ['pfizer', 'merck', 'unitedhealth', 'centene'] } },
+  params: { id: { byVersion: TABLE_COMPANIES } },
   build: (p) => {
     const c = company(p.id);
     return {
@@ -140,7 +151,7 @@ const companyTable = {
       source: c.source,
       fields: [['Profit per $100.00 of sales, 2019', profit(c, 2019)], ['Profit per $100.00 of sales, 2021', profit(c, 2021)], ['Profit per $100.00 of sales, 2022', profit(c, 2022)], ['Costs and other expenses per $100.00 of sales, 2022', 10000 - profit(c, 2022)]]
         .map(([label, answer]) => ({ label, answer })),
-      explanation: COMPANY_YEARS.map((y) => `${y}: ${millions(c.years[y][1])} ÷ ${millions(c.years[y][0])} × 100 = ${money(profit(c, y))}`).join('. ') + `. Costs in 2022: $100.00 − ${money(profit(c, 2022))} = ${money(10000 - profit(c, 2022))}.`,
+      explanation: COMPANY_YEARS.map((y) => `${y}: ${millions(c.years[y][1])} ÷ ${millions(c.years[y][0])} × $100.00 = ${money(profit(c, y))}`).join('. ') + `. Costs in 2022: $100.00 − ${money(profit(c, 2022))} = ${money(10000 - profit(c, 2022))}.`,
     };
   },
 };
@@ -156,12 +167,12 @@ const budgetTable = {
       prompt: `In fiscal year ${p.year} the federal government took in ${billions(b.receipts)} and spent ${billions(b.outlays)}. Work out the deficit, and three figures per $100.00. Round to the cent.`,
       source: BUDGET_SOURCE,
       fields: [
-        ['Deficit, in billions of dollars (type 984.40 for $984.4 billion)', d * 10],
+        ['Deficit, in billions of dollars (type 1,234.50 for $1,234.5 billion)', d * 10],
         ['Borrowed per $100.00 spent', per100(d, b.outlays)],
         ['Paid for by receipts per $100.00 spent', per100(b.receipts, b.outlays)],
         ['Spent per $100.00 taken in', per100(b.outlays, b.receipts)],
       ].map(([label, answer]) => ({ label, answer })),
-      explanation: `Deficit: ${billions(b.outlays)} − ${billions(b.receipts)} = ${billions(d)}. Borrowed: ${billions(d)} ÷ ${billions(b.outlays)} × 100 = ${money(per100(d, b.outlays))}. Receipts: ${billions(b.receipts)} ÷ ${billions(b.outlays)} × 100 = ${money(per100(b.receipts, b.outlays))}. Spent per $100.00 taken in: ${billions(b.outlays)} ÷ ${billions(b.receipts)} × 100 = ${money(per100(b.outlays, b.receipts))}.`,
+      explanation: `Deficit: ${billions(b.outlays)} − ${billions(b.receipts)} = ${billions(d)}. Borrowed: ${billions(d)} ÷ ${billions(b.outlays)} × $100.00 = ${money(per100(d, b.outlays))}. Receipts: ${billions(b.receipts)} ÷ ${billions(b.outlays)} × $100.00 = ${money(per100(b.receipts, b.outlays))}. Spent per $100.00 taken in: ${billions(b.outlays)} ÷ ${billions(b.receipts)} × $100.00 = ${money(per100(b.outlays, b.receipts))}.`,
     };
   },
 };
@@ -205,7 +216,7 @@ const BUDGET_DOC = (y) => ({
 export const A2_LESSON = {
   id: 'a2',
   title: 'Inflation and its causes',
-  coreIdea: 'Inflation is measured by the Consumer Price Index. Economists broadly accept three causes: faster growth in money, government deficit spending, and rising costs. Whether company pricing added to inflation is debated, so this module shows the numbers and the evidence on each side.',
+  coreIdea: 'Inflation is measured by the Consumer Price Index. Economists broadly accept three causes: faster growth in money, government deficit spending, and rising costs. How much company pricing added to inflation is debated, so this module shows the numbers and the evidence on each side.',
   steps: [
     {
       id: 'warm-up', kind: 'predict', title: 'Warm-up', uses: ['fed-money-supply'],
@@ -244,7 +255,7 @@ export const A2_LESSON = {
       id: 'causes', kind: 'explain', title: 'Causes economists broadly accept', uses: ['accepted-causes', 'fed-money-supply'],
       text: [
         `More money. In Add-on A1, the money supply (M2) grew from ${billions(M2['2019-12'])} in December 2019 to ${billions(M2['2020-12'])} in December 2020, about a quarter in one year. When money grows much faster than the things there are to buy, prices tend to rise.`,
-        `Deficit spending. In fiscal year 2020 the federal government spent ${billions(BUDGET[2020].outlays)} and took in ${billions(BUDGET[2020].receipts)}: it borrowed ${money(per100(deficit(2020), BUDGET[2020].outlays))} of every $100.00 it spent. Economists at the San Francisco Fed estimated that U.S. income support during the pandemic may have added about 3 percentage points to inflation by the end of 2021, an estimate they call uncertain.`,
+        `Deficit spending. In fiscal year 2020 the federal government spent ${billions(BUDGET[2020].outlays)} and took in ${billions(BUDGET[2020].receipts)}: it borrowed ${money(per100(deficit(2020), BUDGET[2020].outlays))} of every $100.00 it spent. Economists at the San Francisco Fed estimated that U.S. income support during the pandemic may have added about 3 percentage points to inflation by the end of 2021 (for example, prices rising 7% in a year instead of 4%), an estimate they call uncertain.`,
         'Rising costs. When energy, shipping and materials cost more, businesses pay more to make and deliver what they sell. Energy prices rose 41.6% in the year to June 2022.',
         'Economists broadly agree that all three played a part. They disagree about how much each one mattered.',
       ],
@@ -259,7 +270,7 @@ export const A2_LESSON = {
       sourceDoc: BUDGET_DOC(2021),
       answer: per100(deficit(2021), BUDGET[2021].outlays),
       misconceptions: [{ cents: per100(deficit(2021), BUDGET[2021].receipts), explanation: 'Divide the deficit by what was spent, not by what came in.' }],
-      explanation: `${billions(deficit(2021))} ÷ ${billions(BUDGET[2021].outlays)} × 100 = ${money(per100(deficit(2021), BUDGET[2021].outlays))}.`,
+      explanation: `${billions(deficit(2021))} ÷ ${billions(BUDGET[2021].outlays)} × $100.00 = ${money(per100(deficit(2021), BUDGET[2021].outlays))}.`,
       source: BUDGET_SOURCE,
     },
     {
@@ -267,7 +278,7 @@ export const A2_LESSON = {
       text: [
         'Some people argue that companies raised prices more than their costs rose, adding to inflation. You can check part of that question with numbers anyone can read, in companies\' annual reports.',
         'To avoid picking only the examples that fit one view, the course uses a fixed rule. It takes the five largest U.S. drug companies and the five largest U.S. health insurers by 2019 revenue. It compares 2019, before the pandemic, with 2021 and 2022.',
-        `Each annual report has an income statement, like yours from Module 12. Divide net income (profit) by revenue (sales) and multiply by 100: that is profit per $100.00 of sales. Johnson & Johnson: ${millions(JNJ.years[2019][1])} ÷ ${millions(JNJ.years[2019][0])} × 100 = ${money(profit(JNJ, 2019))} in 2019, and ${money(profit(JNJ, 2022))} in 2022.`,
+        `Each annual report has an income statement, like yours from Module 12. Divide net income (profit) by revenue (sales) and multiply by 100: that is profit per $100.00 of sales. Johnson & Johnson: ${millions(JNJ.years[2019][1])} ÷ ${millions(JNJ.years[2019][0])} × $100.00 = ${money(profit(JNJ, 2019))} in 2019, and ${money(profit(JNJ, 2022))} in 2022.`,
       ],
       prompt: 'Why compare profit per $100.00 of sales, not just total profit?',
       promptAnswer: 'A company that sells more makes more profit even at the same prices. Profit per $100.00 of sales shows whether it kept a bigger share of each sale.',
@@ -280,14 +291,14 @@ export const A2_LESSON = {
       report: companyStatement(PFIZER, 2019),
       answer: profit(PFIZER, 2019),
       misconceptions: [{ cents: 10000 - profit(PFIZER, 2019), explanation: 'That is the costs per $100.00. Divide net income by revenue.' }],
-      explanation: `${millions(PFIZER.years[2019][1])} ÷ ${millions(PFIZER.years[2019][0])} × 100 = ${money(profit(PFIZER, 2019))}.`,
+      explanation: `${millions(PFIZER.years[2019][1])} ÷ ${millions(PFIZER.years[2019][0])} × $100.00 = ${money(profit(PFIZER, 2019))}.`,
       source: PFIZER.source,
     },
     {
       id: 'ten-companies', kind: 'explain', title: 'All ten companies', uses: ['corporate-pricing'],
       text: [
         `From 2019 to 2022, profit per $100.00 of sales rose at ${RISERS.length} of the ten companies and fell at the other ${COMPANIES.length - RISERS.length}. Drug companies kept far more of each $100.00 than insurers, whose payments for their members' care take up most of what they collect.`,
-        'Most of the companies sold much more in 2022 than in 2019, so their profits in dollars grew even where profit per $100.00 did not.',
+        'Most of the companies sold much more in 2022 than in 2019, so at most of them profits in dollars grew even where profit per $100.00 did not.',
         'These numbers show what the companies kept. By themselves they cannot show whether their prices caused inflation. That needs evidence about prices and costs across the whole economy.',
       ],
       prompt: 'Why can\'t these ten companies\' numbers settle whether company pricing caused inflation?',
@@ -299,8 +310,9 @@ export const A2_LESSON = {
       id: 'debate', kind: 'explain', title: 'The evidence on each side (not graded)', tags: ['debated'], uses: ['corporate-pricing', 'accepted-causes'],
       text: [
         'How much company pricing added to recent inflation is debated among economists. This course shows the evidence and does not grade an opinion on it.',
-        'Evidence that it added a lot: Kansas City Fed economists found that companies\' markups (price over cost) grew 3.4% in 2021, when inflation was 5.8%, so markups could explain more than half of that year\'s inflation, which they link to companies raising prices ahead of expected cost increases. A Federal Trade Commission staff report found grocery retailers\' revenues ran more than 6% over their total costs in 2021, above their 2015 peak of 5.6%, and 7% over total costs in the first three quarters of 2023.',
-        'Evidence that it was not a main driver: San Francisco Fed economists found that markups across the whole economy "have stayed essentially flat" since the recovery began, and that rising markups "have not been a main driver" of the surge in inflation. A later Kansas City Fed study found that profits\' share of inflation fell after the first half of 2021. Over the first two years of the recovery, that share (41%) was below the average of past recoveries (59%).',
+        'Evidence that it added a lot: Kansas City Fed economists found that companies\' markups (price over cost) grew 3.4% in 2021, while prices measured by another government index (the PCE price index) rose 5.8%, so markups could explain more than half of that year\'s inflation. They link it to companies raising prices ahead of expected cost increases. A Federal Trade Commission staff report found grocery retailers\' revenues ran more than 6% over their total costs in 2021, above their 2015 peak of 5.6%, and 7% over total costs in the first three quarters of 2023.',
+        'Evidence that it was not a main driver: San Francisco Fed economists found that markups across the whole economy "have stayed essentially flat" since the recovery began, and that rising markups "have not been a main driver" of the recent surge and later fall in inflation, though markups did rise a lot in a few industries, such as motor vehicles and petroleum.',
+        'A study that found some of each: a later Kansas City Fed study found that profits contributed a lot to inflation in the first half of 2021 and little after that, a pattern seen in past recoveries. Over the first two years of the recovery, profits\' share of inflation (41%) was below the average of past recoveries (59%).',
         'What both sides agree on: profits rose fast in 2021, and costs and demand also rose. The disagreement is over how much of the price rise came from each.',
       ],
       prompt: 'What evidence would you want to see before deciding how much company pricing added to inflation?',
@@ -310,7 +322,7 @@ export const A2_LESSON = {
     {
       id: 'insulin', kind: 'explain', title: 'A documented case: insulin prices', uses: ['corporate-pricing', 'measuring-inflation'],
       text: [
-        'Prices can also fall. In 2023 the three largest insulin makers announced cuts to U.S. list prices. Eli Lilly cut the list prices of Humalog and Humulin by 70% (effective late 2023). Sanofi cut the list price of Lantus by 78%, and Novo Nordisk cut some insulins by up to 75% (both effective January 2024).',
+        'A documented case, with dates you can check. In 2023 the three largest insulin makers announced cuts to U.S. list prices. Eli Lilly cut the list prices of Humalog and Humulin by 70% (effective late 2023). Sanofi cut the list price of Lantus by 78%, and Novo Nordisk cut some insulins by up to 75% (both effective January 2024). These were cuts to list prices, the starting price before any discounts or insurance.',
         'Medicare capped what people pay at $35 for a month\'s supply of each covered insulin. The cap began January 1, 2023 under Part D, and July 1, 2023 for insulin used with a pump under Part B.',
       ],
       prompt: 'Why is a price cut announced by the maker a documented fact, while the cause of inflation is debated?',
@@ -322,7 +334,7 @@ export const A2_LESSON = {
       text: [`AbbVie, 2021: revenue ${millions(ABBVIE.years[2021][0])}, net income ${millions(ABBVIE.years[2021][1])}. Step 1 is done: ${millions(ABBVIE.years[2021][1])} ÷ ${millions(ABBVIE.years[2021][0])}. Finish Step 2: multiply by 100 and round to the cent. How much profit per $100.00 of sales?`],
       answer: profit(ABBVIE, 2021),
       misconceptions: [{ cents: 10000 - profit(ABBVIE, 2021), explanation: 'That is the costs per $100.00.' }],
-      explanation: `${millions(ABBVIE.years[2021][1])} ÷ ${millions(ABBVIE.years[2021][0])} × 100 = ${money(profit(ABBVIE, 2021))}.`,
+      explanation: `${millions(ABBVIE.years[2021][1])} ÷ ${millions(ABBVIE.years[2021][0])} × $100.00 = ${money(profit(ABBVIE, 2021))}.`,
       source: ABBVIE.source,
     },
     {
@@ -330,7 +342,7 @@ export const A2_LESSON = {
       text: [`Humana, 2019: revenue ${millions(HUMANA.years[2019][0])}, net income ${millions(HUMANA.years[2019][1])}. How much profit per $100.00 of sales?`],
       answer: profit(HUMANA, 2019),
       misconceptions: [{ cents: 10000 - profit(HUMANA, 2019), explanation: 'That is the costs per $100.00.' }],
-      explanation: `${millions(HUMANA.years[2019][1])} ÷ ${millions(HUMANA.years[2019][0])} × 100 = ${money(profit(HUMANA, 2019))}.`,
+      explanation: `${millions(HUMANA.years[2019][1])} ÷ ${millions(HUMANA.years[2019][0])} × $100.00 = ${money(profit(HUMANA, 2019))}.`,
       source: HUMANA.source,
     },
     {
@@ -346,7 +358,7 @@ export const A2_LESSON = {
       text: [`In fiscal year 2019 the government took in ${billions(BUDGET[2019].receipts)} and spent ${billions(BUDGET[2019].outlays)}. Of every $100.00 it spent, how much was borrowed?`],
       answer: per100(deficit(2019), BUDGET[2019].outlays),
       misconceptions: [{ cents: per100(deficit(2019), BUDGET[2019].receipts), explanation: 'Divide by what was spent.' }],
-      explanation: `${billions(deficit(2019))} ÷ ${billions(BUDGET[2019].outlays)} × 100 = ${money(per100(deficit(2019), BUDGET[2019].outlays))}.`,
+      explanation: `${billions(deficit(2019))} ÷ ${billions(BUDGET[2019].outlays)} × $100.00 = ${money(per100(deficit(2019), BUDGET[2019].outlays))}.`,
       source: BUDGET_SOURCE,
     },
     {
@@ -354,7 +366,7 @@ export const A2_LESSON = {
       text: [`Merck, 2022: revenue ${millions(MERCK.years[2022][0])}, net income ${millions(MERCK.years[2022][1])}. How much profit per $100.00 of sales?`],
       answer: profit(MERCK, 2022),
       misconceptions: [{ cents: 10000 - profit(MERCK, 2022), explanation: 'That is the costs per $100.00.' }],
-      explanation: `${millions(MERCK.years[2022][1])} ÷ ${millions(MERCK.years[2022][0])} × 100 = ${money(profit(MERCK, 2022))}.`,
+      explanation: `${millions(MERCK.years[2022][1])} ÷ ${millions(MERCK.years[2022][0])} × $100.00 = ${money(profit(MERCK, 2022))}.`,
       source: MERCK.source,
     },
   ],
@@ -365,12 +377,12 @@ export const A2_LESSON = {
 // --- Checks ---------------------------------------------------------------------
 
 // Fluency drill on the core operation: profit per $100.00 of sales.
-const drill = [1, 2, 3].map((n) => num(`a2-drill-${n}`, 'interpreting', { sales: { min: 100, max: 900, step: 1 }, share: { min: 2, max: 30, step: 1 } }, (p) => {
+const drill = [1, 2, 3].map((n) => num(`a2-drill-${n}`, 'interpreting', { sales: { min: 10, max: 300, step: 1 }, share: { min: 2, max: 25, step: 1 } }, (p) => {
   const sales = p.sales * 1000;
   const net = Math.round((sales * p.share) / 100) + p.sales;
   return {
     prompt: `Drill ${n} of 3: sales of ${millions(sales)} and profit of ${millions(net)}. How much profit per $100.00 of sales?`, answer: per100(net, sales),
-    explanation: `${millions(net)} ÷ ${millions(sales)} × 100 = ${money(per100(net, sales))}.`,
+    explanation: `${millions(net)} ÷ ${millions(sales)} × $100.00 = ${money(per100(net, sales))}.`,
   };
 }));
 

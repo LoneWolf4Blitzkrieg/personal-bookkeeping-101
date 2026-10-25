@@ -46,9 +46,11 @@ export const BUDGET = {
 // Form 10-K, millions of dollars. The five largest U.S. drug companies and
 // the five largest U.S. health insurers by 2019 revenue (author's ruling,
 // October 25, 2026: Johnson & Johnson counted as a drug company; CVS Health,
-// mostly a pharmacy business, left out).
+// whose largest business is its drugstores, left out). Fiscal years are
+// matched by the period each report covers: J&J's years end in early January
+// (2022 as first reported, before the 2023 Kenvue separation restated it).
 export const COMPANIES = [
-  { id: 'jnj', name: 'Johnson & Johnson', kind: 'drug', source: 'sec-10k-jnj', years: { 2019: [82059, 15119], 2021: [82584, 14714], 2022: [93775, 20878] } },
+  { id: 'jnj', name: 'Johnson & Johnson', kind: 'drug', source: 'sec-10k-jnj', years: { 2019: [82059, 15119], 2021: [93775, 20878], 2022: [94943, 17941] } },
   { id: 'pfizer', name: 'Pfizer', kind: 'drug', source: 'sec-10k-pfizer', years: { 2019: [51750, 16273], 2021: [81288, 21979], 2022: [100330, 31372] } },
   { id: 'merck', name: 'Merck', kind: 'drug', source: 'sec-10k-merck', years: { 2019: [46840, 9843], 2021: [48704, 13049], 2022: [59283, 14519] } },
   { id: 'abbvie', name: 'AbbVie', kind: 'drug', source: 'sec-10k-abbvie', years: { 2019: [33266, 7882], 2021: [56197, 11542], 2022: [58054, 11836] } },

@@ -314,3 +314,24 @@ test('Add-on A2 never grades the debated question, and shows evidence from each 
     for (const t of a.templates) assert.ok(!(t.tags ?? []).includes('debated'), `${id}: ${t.id} is a graded item tagged debated`);
   }
 });
+
+test('no question\'s answer appears in its own field labels, in any version of any check', async () => {
+  const { assessmentVersions } = await import('../js/items.js');
+  const { formatCents } = await import('../js/money.js');
+  for (const [id, a] of Object.entries(ASSESSMENTS)) {
+    const count = a.kind === 'gate' ? 4 : 2;
+    const versions = assessmentVersions(a.templates, id, { count, shape: a.kind === 'gate' ? 'gate' : null });
+    for (const item of versions.flat().filter((x) => x.kind === 'amounts')) {
+      const labels = item.fields.map((f) => f.label).join(' ');
+      for (const f of item.fields) assert.ok(!labels.includes(formatCents(f.answer)), `${id} ${item.templateId}: a label shows ${formatCents(f.answer)}`);
+    }
+  }
+});
+
+test('company figures follow each report\'s own period (J&J\'s year ends in early January)', async () => {
+  const { COMPANIES } = await import('../content/addonData.js');
+  const { per100 } = await import('../content/helpers.js');
+  const jnj = COMPANIES.find((c) => c.id === 'jnj');
+  assert.deepEqual(jnj.years, { 2019: [82059, 15119], 2021: [93775, 20878], 2022: [94943, 17941] });
+  assert.equal(per100(jnj.years[2022][1], jnj.years[2022][0]), 1890);
+});
