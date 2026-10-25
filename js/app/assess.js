@@ -34,6 +34,14 @@ function itemHTML(item, index, total) {
         <button class="button" type="submit">Check my answer</button>
       </form>`;
   }
+  if (item.kind === 'amounts') {
+    const fields = item.fields.map((f, i) => `<div class="amount-field"><label for="amount-${i}">${escapeHTML(f.label)}</label><div class="answer-row"><span aria-hidden="true">$</span><input id="amount-${i}" name="amount" inputmode="decimal" autocomplete="off" required></div></div>`).join('');
+    return `${head}
+      <form class="answer-form" data-kind="amounts" aria-describedby="prompt">
+        ${fields}
+        <button class="button" type="submit">Check my amounts</button>
+      </form>`;
+  }
   if (item.kind === 'entry') {
     return `${head}
       <form class="answer-form" data-kind="entry">
@@ -85,6 +93,10 @@ const VERDICTS = {
     retry: 'Not yet. You need 80%. Go back to the earliest module listed below, redo its practice set and gate, then try this checkpoint again.',
   },
   exam: { pass: 'Passed. You have completed the course.', retry: 'Not yet. You need 80%. Review the modules you found hardest and try again.' },
+  prereq: {
+    pass: 'Passed. You have the money arithmetic this course uses. Start Module 1 whenever you are ready.',
+    retry: 'Not yet. Work through the <a href="lesson.html?m=prereq">money arithmetic refresher</a>, then take this check again. It only takes a few minutes.',
+  },
   practice: { pass: 'Practice set done. When you are ready, take the module check.', retry: 'Practice set done. Look over the explanations for the questions you missed, then take the module check when you are ready.' },
 };
 
@@ -257,6 +269,7 @@ export function startAssessment(root, id, requestedVersion) {
     if (stale) return;
     let response;
     if (kind === 'numeric') response = form.answer.value;
+    if (kind === 'amounts') response = [...form.querySelectorAll('[name=amount]')].map((el) => el.value);
     if (kind === 'entry') {
       const { lines, errors } = readEntry(form);
       if (errors.length) {

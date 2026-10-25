@@ -152,7 +152,7 @@ export function ledgerHTML(page, { highlightRow = null, editable = false, showAn
   // Modules 1–2 hide the debit and credit columns; the amounts are written
   // beside the sheet as money in and money out instead.
   const notes = active && !active.has('debit') && !active.has('credit')
-    ? page.rows.filter((r) => r.debit || r.credit).map((r) => `<li>${escapeHTML(formatDate(r.date))}: ${r.debit ? `money in $${formatCents(r.debit)}` : `money out $${formatCents(r.credit)}`}</li>`).join('')
+    ? page.rows.filter((r) => r.debit || r.credit).map((r) => `<li>${escapeHTML(formatDate(r.date))}: ${r.broughtForward ? `brought forward $${formatCents(r.debit || r.credit)}` : r.debit ? `money in $${formatCents(r.debit)}` : `money out $${formatCents(r.credit)}`}</li>`).join('')
     : '';
   const notesHTML = notes ? `<ul class="money-notes" aria-label="Money in and out">${notes}</ul>` : '';
   return `<div class="ledger-sheet">

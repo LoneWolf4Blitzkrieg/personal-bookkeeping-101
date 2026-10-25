@@ -180,3 +180,9 @@ test('a journal page shows date, accounts with credits indented, folio, debits a
   assert.ok(html.includes('Paycheck split into buckets'));
   assert.equal((html.match(/181\.80/g) || []).length, 2);
 });
+
+test('a brought-forward line is described as brought forward, not money in', () => {
+  const html = ledgerHTML({ ...saving, activeColumns: ['date', 'items', 'balance'], rows: [{ date: '2026-07-01', items: 'Brought forward', folio: '', debit: 124016, credit: 0, posted: [false, false], broughtForward: true }] });
+  assert.match(html, /Jul 1[^<]*brought forward \$1,240\.16/);
+  assert.doesNotMatch(html, /money in \$1,240\.16/);
+});

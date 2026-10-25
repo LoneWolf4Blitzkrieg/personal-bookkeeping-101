@@ -88,3 +88,9 @@ test('a gate needs two 2-point interpreting items and rejects unknown parts', ()
   assert.throws(() => gateVersions([{ ...a, points: 4 }, c, d], 'm03'), /interpreting/);
   assert.throws(() => gateVersions([a, { ...b, part: 'interpretting' }, c, d], 'm03'), /interpretting/);
 });
+
+test('an amounts template must have one field per point', () => {
+  const t = { id: 'amt', module: 'm01', kind: 'amounts', part: 'producing', points: 4, params: { p: { min: 1000, max: 9000, step: 100 } },
+    build: (p) => ({ prompt: 'x', fields: [{ label: 'a', answer: p.p }, { label: 'b', answer: p.p + 1 }, { label: 'c', answer: p.p + 2 }] }) };
+  assert.throws(() => assessmentVersions([t], 'x', { count: 2 }), /field/);
+});

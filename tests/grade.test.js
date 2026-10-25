@@ -148,3 +148,33 @@ test('scoreExam uses the same 80% pass mark', () => {
   assert.deepEqual(scoreExam([cp('m01', 32, 40)]), { percent: 80, passed: true });
   assert.equal(scoreExam([cp('m01', 31, 40)]).passed, false);
 });
+
+const amounts = {
+  kind: 'amounts', points: 4, module: 'm01', part: 'producing',
+  fields: [
+    { label: 'Saving (15%)', answer: 15502 },
+    { label: 'Investing (10%)', answer: 10335 },
+    { label: 'Charity (5%)', answer: 5167 },
+    { label: 'Spending (what is left)', answer: 62007 },
+  ],
+  explanation: 'Work out the four percentage buckets, then Spending gets what is left so the buckets add up exactly.',
+};
+
+test('an amounts question scores one point per correct field', () => {
+  const r = gradeItem(amounts, ['155.02', '103.35', '51.67', '620.08']);
+  assert.equal(r.points, 3);
+  assert.equal(r.max, 4);
+  assert.equal(r.correct, false);
+  assert.deepEqual(r.rubric.map((x) => x.met), [true, true, true, false]);
+  assert.ok(r.feedback.includes('620.07'));
+});
+
+test('an amounts question is fully correct only when every field is', () => {
+  assert.equal(gradeItem(amounts, ['155.02', '$103.35', '51.67', '620.07']).correct, true);
+});
+
+test('an amounts question with a blank or non-number field is not marked', () => {
+  const r = gradeItem(amounts, ['155.02', '', '51.67', '620.07']);
+  assert.equal(r.invalid, true);
+  assert.match(r.feedback, /Investing/);
+});

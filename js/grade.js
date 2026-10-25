@@ -4,8 +4,10 @@
 //   numeric: { prompt, answer: cents, misconceptions?: [{ cents, explanation }], explanation }
 //   entry:   { prompt, accounts: [{ id, label }], answer: [{ account, debit, credit }], explanation }
 //   explain: { prompt, modelAnswer, rubric: [criterion, ...] }
+//   amounts: { prompt, fields: [{ label, answer: cents }], explanation } — one point per field
 // Responses: numeric -> typed text; entry -> [{ account, debit, credit }] in cents;
-// explain -> { text, ticks?: [bool, ...] } (ticks are the learner's self-marking).
+// explain -> { text, ticks?: [bool, ...] } (ticks are the learner's self-marking);
+// amounts -> [typed text, ...] in field order.
 
 import { parseAmount, formatCents } from './money.js';
 import { entryBalances } from './ledger.js';
@@ -85,8 +87,28 @@ function gradeExplain(item, response) {
   return { ...shown, points: Math.floor((met * item.points) / item.rubric.length) };
 }
 
+// Several labelled amounts (bucket shares, running balances), one point each.
+// A blank or non-number field is not marked: the learner is asked to fix it.
+function gradeAmounts(item, typed) {
+  const parsed = item.fields.map((f, i) => ({ field: f, result: parseAmount(typed?.[i]) }));
+  const bad = parsed.find((p) => !p.result.ok);
+  if (bad) return { invalid: true, feedback: `Check "${bad.field.label}": ${INVALID_MESSAGES[bad.result.reason] ?? INVALID_MESSAGES['not-an-amount']}` };
+  const rubric = parsed.map(({ field, result }) => ({ criterion: field.label, met: result.cents === field.answer, answer: field.answer }));
+  const each = item.points / item.fields.length;
+  const correct = rubric.every((r) => r.met);
+  const misses = rubric.filter((r) => !r.met).map((r) => `${r.criterion}: $${formatCents(r.answer)}`);
+  return {
+    points: rubric.filter((r) => r.met).length * each,
+    max: item.points,
+    correct,
+    rubric,
+    feedback: correct ? `Correct. ${item.explanation ?? ''}`.trim() : `The right amounts: ${misses.join('; ')}. ${item.explanation ?? ''}`.trim(),
+  };
+}
+
 export function gradeItem(item, response) {
   if (item.kind === 'numeric') return gradeNumeric(item, response);
+  if (item.kind === 'amounts') return gradeAmounts(item, response);
   if (item.kind === 'entry') return gradeEntry(item, response);
   if (item.kind === 'explain') return gradeExplain(item, response);
   throw new Error(`Unknown item kind: ${item.kind}`);

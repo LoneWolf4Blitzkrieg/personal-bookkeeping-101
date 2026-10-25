@@ -83,7 +83,7 @@ function checkGateShape(templates, id) {
 }
 
 // What must differ between versions: the answer, or for explanation items the prompt.
-const versionKey = (item) => JSON.stringify(item.answer ?? item.prompt);
+const versionKey = (item) => JSON.stringify(item.answer ?? item.fields?.map((f) => f.answer) ?? item.prompt);
 
 // count versions of an assessment. Every version of every item has a
 // different answer, unless its template is marked fixed. Seeds come from
@@ -102,6 +102,7 @@ export function assessmentVersions(templates, id, { count = 4, shape = null } = 
         if (template.fixed || !used.has(versionKey(item))) chosen = item;
       }
       if (!chosen) throw new Error(`Template ${template.id} gives the same answer too often to make ${count} versions; widen its parameter ranges or mark it fixed.`);
+      if (chosen.kind === 'amounts' && chosen.fields?.length !== template.points) throw new Error(`Amounts template ${template.id} needs one field per point (${template.points} fields).`);
       used.add(versionKey(chosen));
       versions[v][t] = chosen;
     }

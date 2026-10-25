@@ -75,3 +75,18 @@ test('the sample lesson passes the content rules', async () => {
   const { DEMO_LESSON } = await import('../content/modules/demo.js');
   assert.deepEqual(checkModule(DEMO_LESSON), []);
 });
+
+test('Modules 1–4 each have a lesson, a gate, a practice set, extra and remedial practice, and recall questions', async () => {
+  for (const id of ['m01', 'm02', 'm03', 'm04']) {
+    assert.ok(MODULE_CONTENT[id], `${id} lesson`);
+    assert.ok(MODULE_CONTENT[id].recallTemplates?.length >= 1, `${id} recall`);
+    for (const suffix of ['', '-practice', '-extra', '-remedial']) assert.ok(ASSESSMENTS[id + suffix], `${id}${suffix}`);
+  }
+});
+
+test('Checkpoint A covers every module from 1 to 4 and has two versions', async () => {
+  const { assessmentVersions } = await import('../js/items.js');
+  const ca = ASSESSMENTS.ca;
+  assert.deepEqual([...new Set(ca.templates.map((t) => t.module))], ['m01', 'm02', 'm03', 'm04']);
+  assert.equal(assessmentVersions(ca.templates, 'ca', { count: 2 }).length, 2);
+});

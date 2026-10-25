@@ -1,7 +1,7 @@
 // The lesson page controller: course map, lock notice, the lesson's steps
 // with the ledger pinned beside them, step progress and time on the module.
 
-import { MODULES, PHASES } from '../../content/course.js';
+import { MODULES, PHASES, PREREQUISITE } from '../../content/course.js';
 import { renderCourseMap, moduleIdFromParam } from './nav.js';
 import { isUnlocked, markStep } from '../progress.js';
 import { escapeHTML } from '../html.js';
@@ -26,8 +26,11 @@ export function startLessonPage(search) {
 
   const param = new URLSearchParams(search).get('m');
   const isDemo = param === 'demo';
-  const id = param === null ? 'm01' : isDemo ? 'demo' : moduleIdFromParam(param);
-  const module = isDemo ? { id: 'demo', title: DEMO_LESSON.title, phase: null } : MODULES.find((m) => m.id === id);
+  const isPrereq = param === 'prereq';
+  const id = param === null ? 'm01' : isDemo || isPrereq ? param : moduleIdFromParam(param);
+  const module = isDemo ? { id: 'demo', title: DEMO_LESSON.title, phase: null }
+    : isPrereq ? { id: 'prereq', title: PREREQUISITE.title, phase: null }
+      : MODULES.find((m) => m.id === id);
   const content = isDemo ? DEMO_LESSON : MODULE_CONTENT[id];
   const mapBox = document.getElementById('course-map');
   const title = document.getElementById('module-title');
@@ -40,7 +43,7 @@ export function startLessonPage(search) {
     return;
   }
   title.textContent = module.title;
-  document.getElementById('crumb').textContent = isDemo ? 'Sample lesson' : PHASES[module.phase];
+  document.getElementById('crumb').textContent = isDemo ? 'Sample lesson' : isPrereq ? 'Before you start' : PHASES[module.phase];
   document.title = `${module.title} · Personal Bookkeeping 101`;
 
   const ledgerBox = document.getElementById('ledger');
@@ -90,7 +93,7 @@ export function startLessonPage(search) {
 
   function draw() {
     const progress = store.load();
-    renderCourseMap(mapBox, progress, isDemo ? null : module.id, { headingLevel: 3 });
+    renderCourseMap(mapBox, progress, isDemo || isPrereq ? null : module.id, { headingLevel: 3 });
     const access = isDemo ? { unlocked: true } : isUnlocked(module.id, progress);
     if (!access.unlocked) {
       body.innerHTML = `<div class="lock-notice"><p><strong>This module is locked.</strong> ${escapeHTML(access.reason)}</p>
