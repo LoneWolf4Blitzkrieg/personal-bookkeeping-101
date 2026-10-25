@@ -126,3 +126,36 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
 }
 
 button.button { border: none; font: inherit; font-weight: 600; cursor: pointer; }
+
+/* Assessment page */
+.assess .lede-small { color: var(--ink-soft); }
+.item-prompt { font-size: 1.1rem; }
+.answer-form { margin-top: 1rem; display: grid; gap: .6rem; max-width: 40rem; }
+.answer-form label { font-weight: 600; }
+.answer-row { display: flex; align-items: center; gap: .4rem; max-width: 14rem; }
+.answer-form input, .answer-form select, .answer-form textarea {
+  font: inherit; padding: .45rem .55rem; border: 1px solid #b9b3a3; border-radius: 6px; background: #fff; color: var(--ink);
+}
+.answer-form input:focus, .answer-form select:focus, .answer-form textarea:focus { outline: 3px solid var(--focus); outline-offset: 1px; }
+.answer-form .button { justify-self: start; }
+.entry-table { border-collapse: collapse; width: 100%; }
+.entry-table th { text-align: left; font-size: .85rem; color: var(--ink-soft); padding: .2rem .3rem; }
+.entry-table td { padding: .2rem .3rem; }
+.entry-table input { width: 100%; text-align: right; }
+.entry-table select { width: 100%; }
+.link-button { background: none; border: none; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
+.feedback { margin-top: 1rem; padding: .8rem 1rem; border-radius: 8px; background: #fff; border: 1px solid var(--rule); max-width: 40rem; }
+.feedback-right { border-left: 5px solid var(--accent); }
+.feedback-wrong { border-left: 5px solid #b45309; }
+.feedback-note { border-left: 5px solid #2f6fde; }
+.rubric, .ticks { list-style: none; padding: 0; margin: .5rem 0; }
+.rubric .met { color: var(--accent); }
+.rubric .missed { color: #9a3412; }
+.ticks label { font-weight: 400; }
+fieldset { border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .8rem; }
+.verdict { font-size: 1.1rem; padding: .7rem 1rem; border-radius: 8px; }
+.verdict.pass { background: var(--accent-soft); }
+.verdict.retry { background: #fdf0e1; }
+.results { border-collapse: collapse; }
+.results th, .results td { border-bottom: 1px solid var(--rule); padding: .3rem .8rem; text-align: left; }
+.assess .ledger-sheet { max-width: 40rem; margin: .8rem 0; }

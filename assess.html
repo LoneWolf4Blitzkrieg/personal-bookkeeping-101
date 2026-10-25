@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Check your understanding · Personal Bookkeeping 101</title>
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/ledger.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the questions</a>
+
+  <header class="topbar">
+    <a class="brand" href="index.html">Personal Bookkeeping <span>101</span></a>
+  </header>
+
+  <main class="home assess" id="main"></main>
+
+  <footer class="site-footer">
+    <p><i>Personal Bookkeeping 101</i> by Raul Bautista is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">CC BY-NC-SA 4.0</a> (free for non-commercial use).</p>
+  </footer>
+
+  <script type="module">
+    import { startAssessment } from './js/app/assess.js';
+    const params = new URLSearchParams(location.search);
+    startAssessment(document.getElementById('main'), params.get('id') || 'demo', Number(params.get('v') || 1));
+  </script>
+</body>
+</html>
