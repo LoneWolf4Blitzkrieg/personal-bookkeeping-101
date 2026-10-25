@@ -23,6 +23,7 @@
 - Gates: 10 points (interpreting 4, producing 4, explaining 2); pass = 8/10 with producing 4/4; four versions per gate. Checkpoints: pass 80%, items tagged by module, two versions. Final exam: about 40 items, pass 80%, add-on items ≤ 20% of items and of points.
 - Tone: calm, no shame. Debated claims never appear as graded questions.
 - Official help links only (`.gov` sites, consumerfinance.gov, federalreserve.gov, investor.gov, bls.gov, azdor.gov, azica.gov, irs.gov, ssa.gov); no forum.
+- Saving: progress autosaves to `localStorage` after every change, shows a "Saved" indicator, survives closing and reopening the browser, and must work in current Firefox and Chrome. Verified in Firefox (installed, 158) and in Chromium (the built-in browser pane, Chrome's engine).
 - Accessibility: ledgers are real `<table>` elements with headers; keyboard operable; contrast meets WCAG AA; large-text toggle; nothing timed.
 
 ## Review Focus
@@ -184,9 +185,10 @@ personal-bookkeeping-101/
   - Export then import round-trips exactly; importing invalid JSON, a wrong `version`, or a missing field returns `ok:false` and leaves the caller's progress untouched.
   - A failed gate schedules that module's recall questions into the next three practice sets.
 - [ ] **Step 2:** Run `npm test`. Expected: FAIL.
-- [ ] **Step 3:** Implement; wire nav (ticks, locks), the lock notice on `lesson.html` for locked ids, the storage-unavailable banner, export/import buttons, and the error log page section.
+- [ ] **Step 3:** Implement; autosave progress after every change with a brief "Saved" indicator in the top bar; wire nav (ticks, locks), the lock notice on `lesson.html` for locked ids, the storage-unavailable banner, export/import buttons, and the error log page section.
 - [ ] **Step 4:** Run `npm test`. Expected: PASS. Check a locked URL and a private-window load in the browser pane.
-- [ ] **Step 5:** Commit; Opus review; fix; commit.
+- [ ] **Step 5: Cross-browser save check.** Create `tests/browser/save-check.html`: it writes a progress record through `createStorage(localStorage)`, reloads itself, reads the record back, and reports the result by requesting `/save-check-result?engine=<name>&ok=<true|false>` from the local server. Run it in Chromium (browser pane) and in Firefox (`firefox --headless http://127.0.0.1:8101/tests/browser/save-check.html`, using a fresh profile via `-profile` in the workspace), and read both result requests in the server log. Expected: `ok=true` from both. Then, in the browser pane, complete a step, close the tab, reopen the lesson, and confirm the step is still marked done and the "Saved" indicator appeared.
+- [ ] **Step 6:** Commit; Opus review; fix; commit.
 
 ### Task 5: Content validation and the lesson renderer
 
