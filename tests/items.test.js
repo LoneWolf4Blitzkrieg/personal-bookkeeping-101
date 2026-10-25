@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generateItem, gateVersions, seedFor } from '../js/items.js';
-import { splitBalance, gateTemplates } from './fixtures/templates.js';
+import { generateItem, gateVersions, assessmentVersions, seedFor } from '../js/items.js';
+import { splitBalance, gateTemplates, explainDebit } from './fixtures/templates.js';
 
 test('the same template and seed always give the same item', () => {
   assert.deepEqual(generateItem(splitBalance, 12345), generateItem(splitBalance, 12345));
@@ -38,13 +38,41 @@ test('a gate has exactly four versions with the same structure', () => {
   }
 });
 
-test('every pair of versions differs in at least one amount for each varying template', () => {
+test('every version of every item has a different answer (or prompt, for explanations)', () => {
   const versions = gateVersions(gateTemplates, 'm03');
   for (let t = 0; t < gateTemplates.length; t++) {
-    if (Object.keys(gateTemplates[t].params).length === 0) continue;
-    const params = versions.map((v) => JSON.stringify(v[t].params));
-    assert.equal(new Set(params).size, 4, `${gateTemplates[t].id} has 4 distinct versions`);
+    const keys = versions.map((v) => JSON.stringify(v[t].answer ?? v[t].prompt));
+    assert.equal(new Set(keys).size, 4, `${gateTemplates[t].id} has 4 distinct versions`);
   }
+});
+
+test('a template that cannot vary its answer is refused, unless marked fixed', () => {
+  const sameAnswer = { ...splitBalance, id: 'same', params: { name: { pick: ['A', 'B', 'C', 'D', 'E'] } }, build: (p) => ({ prompt: p.name, answer: 100 }) };
+  assert.throws(() => assessmentVersions([sameAnswer], 'x', { count: 4 }), /same/);
+  assert.equal(assessmentVersions([{ ...sameAnswer, fixed: true }], 'x', { count: 4 }).length, 4);
+});
+
+test('reordering templates does not change their versions', () => {
+  const a = gateVersions(gateTemplates, 'm03');
+  const b = gateVersions([gateTemplates[1], gateTemplates[0], ...gateTemplates.slice(2)], 'm03');
+  assert.deepEqual(b[2][0].params, a[2][1].params);
+});
+
+test('checkpoints can ask for two versions without the gate shape', () => {
+  const v = assessmentVersions([splitBalance, explainDebit], 'ca', { count: 2 });
+  assert.equal(v.length, 2);
+  assert.equal(v[0].length, 2);
+});
+
+test('template metadata cannot be overwritten by build()', () => {
+  const sneaky = { ...splitBalance, build: (p) => ({ ...splitBalance.build(p), points: 99, module: 'zz' }) };
+  const item = generateItem(sneaky, 1);
+  assert.equal(item.points, 2);
+  assert.equal(item.module, 'm01');
+});
+
+test('parameter ranges must be whole numbers', () => {
+  assert.throws(() => generateItem({ ...splitBalance, params: { r: { min: 0.1, max: 0.5, step: 0.1 } } }, 1), /whole/);
 });
 
 test('gate versions are deterministic', () => {
@@ -53,4 +81,10 @@ test('gate versions are deterministic', () => {
 
 test('a gate must total 10 points: interpreting 4, producing 4, explaining 2', () => {
   assert.throws(() => gateVersions(gateTemplates.slice(0, 3), 'm03'), /explaining/);
+});
+
+test('a gate needs two 2-point interpreting items and rejects unknown parts', () => {
+  const [a, b, c, d] = gateTemplates;
+  assert.throws(() => gateVersions([{ ...a, points: 4 }, c, d], 'm03'), /interpreting/);
+  assert.throws(() => gateVersions([a, { ...b, part: 'interpretting' }, c, d], 'm03'), /interpretting/);
 });

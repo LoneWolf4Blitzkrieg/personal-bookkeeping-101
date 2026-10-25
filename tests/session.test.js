@@ -17,6 +17,24 @@ function answerAllCorrectly(session) {
   return s;
 }
 
+test('a session remembers which assessment and version it is', () => {
+  const s = createSession(items, { assessmentId: 'm03', kind: 'gate', version: 2 });
+  assert.deepEqual(s.meta, { assessmentId: 'm03', kind: 'gate', version: 2 });
+});
+
+test('checkpoint and exam sessions are scored with their own rules', () => {
+  let s = createSession(items, { assessmentId: 'ca', kind: 'checkpoint', version: 1 });
+  s = submit(s, formatCents(items[0].answer));
+  s = submit(s, '0.01'); // valid but wrong
+  s = submit(s, items[2].answer);
+  s = submit(s, { text: 'x' });
+  s = submit(s, { text: 'x', ticks: [true, true] });
+  const r = summary(s);
+  assert.equal(r.percent, 80);
+  assert.equal(r.passed, true);
+  assert.deepEqual(r.missedModules, ['m01']);
+});
+
 test('a session walks through the items in order', () => {
   let s = createSession(items);
   assert.equal(currentItem(s), items[0]);

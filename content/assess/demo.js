@@ -7,17 +7,23 @@ const money = (cents) => `$${formatCents(cents)}`;
 
 const savingShare = {
   id: 'demo-saving-share', module: 'm01', kind: 'numeric', part: 'interpreting', points: 2,
-  params: { pay: { min: 90000, max: 130000, step: 100 }, name: { pick: ['Jordan', 'Maya', 'Luis', 'Ana'] } },
-  build: (p) => ({
-    prompt: `${p.name} is paid ${money(p.pay)} and puts 15% into the Saving bucket on payday. What does the Saving page balance read after this line?`,
-    ledger: {
-      sheetNo: 1, accountNo: 3, name: p.name, account: 'Saving bucket', type: 'asset',
-      rows: [{ date: '2026-06-06', items: 'From paycheck, 15%', folio: 'J1', debit: percentOf(p.pay, 0.15), credit: 0, posted: [true, false], ask: ['balance', 'side'] }],
-    },
-    answer: percentOf(p.pay, 0.15),
-    misconceptions: [{ cents: p.pay - percentOf(p.pay, 0.15), explanation: 'That is what is left for the other buckets.' }],
-    explanation: `15% of ${money(p.pay)} is ${money(percentOf(p.pay, 0.15))}, and it is the only line on the page.`,
-  }),
+  params: { pay: { min: 90000, max: 130000, step: 100 }, opening: { min: 5000, max: 40000, step: 500 }, name: { pick: ['Jordan', 'Maya', 'Luis', 'Ana'] } },
+  build: (p) => {
+    const share = percentOf(p.pay, 0.15);
+    return {
+      prompt: `${p.name}'s Saving bucket already holds ${money(p.opening)}. On payday, 15% of a ${money(p.pay)} paycheck goes in. What does the Saving page balance read after the payday line?`,
+      ledger: {
+        sheetNo: 1, accountNo: 3, name: p.name, account: 'Saving bucket', type: 'asset',
+        rows: [
+          { date: '2026-06-01', items: 'Brought forward', folio: '', debit: p.opening, credit: 0, posted: [true, false] },
+          { date: '2026-06-06', items: 'From paycheck, 15%', folio: 'J1', debit: share, credit: 0, posted: [true, false], ask: ['balance', 'side'] },
+        ],
+      },
+      answer: p.opening + share,
+      misconceptions: [{ cents: share, explanation: 'That is only the new deposit; the balance also includes what was already there.' }],
+      explanation: `${money(p.opening)} + ${money(share)} (15% of ${money(p.pay)}) = ${money(p.opening + share)}.`,
+    };
+  },
 };
 
 const blowMoney = {
@@ -47,11 +53,11 @@ const recordTransfer = {
 
 const explainDebit = {
   id: 'demo-explain-debit', module: 'm03', kind: 'explain', part: 'explaining', points: 2,
-  params: {},
-  build: () => ({
-    prompt: 'In one or two sentences: why is the Saving bucket debited when money moves into it?',
-    modelAnswer: 'The Saving bucket is an asset, and an asset increases on the debit side, so money coming in is written as a debit.',
-    rubric: ['Says the Saving bucket is an asset', 'Says an asset increases with a debit'],
+  params: { bucket: { pick: ['Saving', 'Spending', 'Charity', 'Investing'] } },
+  build: (p) => ({
+    prompt: `In one or two sentences: why is the ${p.bucket} bucket debited when money moves into it?`,
+    modelAnswer: `The ${p.bucket} bucket is an asset, and an asset increases on the debit side, so money coming in is written as a debit.`,
+    rubric: [`Says the ${p.bucket} bucket is an asset`, 'Says an asset increases with a debit'],
   }),
 };
 

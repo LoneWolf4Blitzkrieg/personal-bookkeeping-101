@@ -1,10 +1,11 @@
 // One sitting of a gate, checkpoint or exam: the learner answers the items in
 // order. Pure and immutable so it can be tested and saved.
 
-import { gradeItem, scoreGate } from './grade.js';
+import { gradeItem, scoreGate, scoreCheckpoint, scoreExam } from './grade.js';
 
-export function createSession(items) {
-  return { items, results: [], last: null };
+// meta: { assessmentId, kind: 'gate'|'checkpoint'|'exam'|'placement'|'retention', version }
+export function createSession(items, meta = { kind: 'gate' }) {
+  return { items, meta, results: [], last: null };
 }
 
 export function currentItem(session) {
@@ -29,6 +30,8 @@ export function submit(session, response) {
   return { ...session, results: [...session.results, recorded], last: recorded };
 }
 
+const SCORERS = { gate: scoreGate, checkpoint: scoreCheckpoint, placement: scoreCheckpoint, exam: scoreExam, retention: scoreExam };
+
 export function summary(session) {
-  return scoreGate(session.results);
+  return (SCORERS[session.meta?.kind] ?? scoreGate)(session.results);
 }

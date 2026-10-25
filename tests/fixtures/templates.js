@@ -35,9 +35,9 @@ export const recordSplit = {
 
 export const explainDebit = {
   id: 'fx-explain-debit', module: 'm03', kind: 'explain', part: 'explaining', points: 2,
-  params: {},
-  build: () => ({
-    prompt: 'Why is the Saving bucket debited when money moves into it?',
+  params: { bucket: { pick: ['Saving', 'Spending', 'Charity', 'Investing'] } },
+  build: (p) => ({
+    prompt: `Why is the ${p.bucket} bucket debited when money moves into it?`,
     modelAnswer: 'Saving is an asset, and assets increase on the debit side, so the transfer is recorded as a debit to Saving.',
     rubric: ['Says Saving is an asset', 'Says assets increase with a debit'],
   }),

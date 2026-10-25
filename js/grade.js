@@ -48,26 +48,21 @@ function totalsByAccount(lines) {
 
 const sameSet = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
 const accountsOn = (totals, side) => new Set([...totals].filter(([, t]) => t[side] > 0).map(([a]) => a));
+// The amounts written on one side, per account, ignoring which account.
+const amountsOn = (totals, side) => [...totals.values()].map((t) => t[side]).filter((n) => n > 0).sort((a, b) => a - b);
+const sameList = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
 
-function sameTotals(a, b) {
-  const keys = new Set([...a.keys(), ...b.keys()]);
-  for (const k of keys) {
-    const x = a.get(k) ?? { debit: 0, credit: 0 };
-    const y = b.get(k) ?? { debit: 0, credit: 0 };
-    if (x.debit !== y.debit || x.credit !== y.credit) return false;
-  }
-  return true;
-}
-
-// Four rubric lines, one point each.
+// Four rubric lines, one point each (entry items are worth 4 points).
 function gradeEntry(item, lines) {
-  const given = lines.filter((l) => l.account || l.debit || l.credit);
+  const given = lines.filter((l) => l.debit || l.credit);
+  if (given.length === 0) return { invalid: true, feedback: 'Write at least one line with an account and an amount.' };
+  if (given.some((l) => !l.account)) return { invalid: true, feedback: 'Every line with an amount needs an account. Choose one for each line.' };
   const want = totalsByAccount(item.answer);
   const got = totalsByAccount(given);
   const rubric = [
     { criterion: 'Debits the right accounts', met: sameSet(accountsOn(want, 'debit'), accountsOn(got, 'debit')) },
     { criterion: 'Credits the right accounts', met: sameSet(accountsOn(want, 'credit'), accountsOn(got, 'credit')) },
-    { criterion: 'Uses the right amounts', met: sameTotals(want, got) },
+    { criterion: 'Uses the right amounts', met: sameList(amountsOn(want, 'debit'), amountsOn(got, 'debit')) && sameList(amountsOn(want, 'credit'), amountsOn(got, 'credit')) },
     { criterion: 'Debits equal credits', met: entryBalances({ lines: given }) },
   ];
   const points = rubric.filter((r) => r.met).length * (item.points / rubric.length);
@@ -83,10 +78,11 @@ function gradeEntry(item, lines) {
 }
 
 function gradeExplain(item, response) {
+  if (!String(response?.text ?? '').trim()) return { invalid: true, feedback: 'Write your explanation first, then compare it with the model answer.' };
   const shown = { selfMarked: true, max: item.points, modelAnswer: item.modelAnswer, rubric: item.rubric };
-  if (!Array.isArray(response?.ticks)) return shown;
-  const met = response.ticks.filter(Boolean).length;
-  return { ...shown, points: Math.round((met * item.points) / item.rubric.length) };
+  if (!Array.isArray(response.ticks)) return shown;
+  const met = response.ticks.slice(0, item.rubric.length).filter(Boolean).length;
+  return { ...shown, points: Math.floor((met * item.points) / item.rubric.length) };
 }
 
 export function gradeItem(item, response) {

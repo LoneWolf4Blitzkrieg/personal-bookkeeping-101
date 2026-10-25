@@ -52,11 +52,33 @@ test('an entry with the right accounts but a wrong amount loses the amount line 
   assert.deepEqual(r.rubric.map((x) => x.met), [true, true, false, true]);
 });
 
-test('an entry with debit and credit swapped scores only for balancing', () => {
+test('an entry with debit and credit swapped keeps the amount and balance points only', () => {
   const lines = answerLines().map((l) => ({ account: l.account, debit: l.credit, credit: l.debit }));
   const r = gradeItem(entry, lines);
-  assert.equal(r.points, 1);
-  assert.deepEqual(r.rubric.map((x) => x.met), [false, false, false, true]);
+  assert.equal(r.points, 2);
+  assert.deepEqual(r.rubric.map((x) => x.met), [false, false, true, true]);
+});
+
+test('the right amount on the wrong account loses only the account line', () => {
+  const lines = answerLines();
+  lines[0].account = 'spending';
+  const r = gradeItem(entry, lines);
+  assert.deepEqual(r.rubric.map((x) => x.met), [false, true, true, true]);
+});
+
+test('one amount split across two lines for the same account still counts', () => {
+  const [dr, cr] = answerLines();
+  const half = Math.floor(dr.debit / 2);
+  const r = gradeItem(entry, [{ ...dr, debit: half }, { ...dr, debit: dr.debit - half }, cr]);
+  assert.equal(r.points, 4);
+});
+
+test('an empty entry, or an amount without an account, is not marked', () => {
+  assert.equal(gradeItem(entry, []).invalid, true);
+  assert.equal(gradeItem(entry, [{ account: 'saving', debit: 0, credit: 0 }]).invalid, true);
+  const r = gradeItem(entry, [{ account: '', debit: 500, credit: 0 }, { account: 'checking', debit: 0, credit: 500 }]);
+  assert.equal(r.invalid, true);
+  assert.match(r.feedback, /account/i);
 });
 
 test('a one-sided entry fails the balance line', () => {
@@ -78,6 +100,16 @@ test('explanation items are self-marked from the learner\'s ticks', () => {
   assert.equal(shown.points, undefined, 'not scored until ticked');
   assert.equal(gradeItem(explain, { text: 'x', ticks: [true, false] }).points, 1);
   assert.equal(gradeItem(explain, { text: 'x', ticks: [true, true] }).points, 2);
+});
+
+test('self-marking never exceeds the maximum and rounds down', () => {
+  assert.equal(gradeItem(explain, { text: 'x', ticks: [true, true, true, true] }).points, 2);
+  const four = { ...explain, rubric: ['a', 'b', 'c', 'd'] };
+  assert.deepEqual([0, 1, 2, 3, 4].map((n) => gradeItem(four, { text: 'x', ticks: [0, 1, 2, 3].map((i) => i < n) }).points), [0, 0, 1, 1, 2]);
+});
+
+test('a blank explanation is not accepted', () => {
+  assert.equal(gradeItem(explain, { text: '   ' }).invalid, true);
 });
 
 const part = (p, points, max) => ({ part: p, points, max });
