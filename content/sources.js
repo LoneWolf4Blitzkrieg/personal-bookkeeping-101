@@ -32,4 +32,28 @@ export const SOURCES = {
     url: 'https://azdor.gov/sites/default/files/document/FORMS_WITHHOLDING_2026_A-4i.pdf',
     accessed: '2026-10-24',
   },
+  'fed-g19-2026q2': {
+    title: 'Consumer Credit (G.19), released October 7, 2026: interest rate on credit card plans, accounts assessed interest, 2026 Q2 (revised): 22.15%',
+    publisher: 'Board of Governors of the Federal Reserve System',
+    url: 'https://www.federalreserve.gov/releases/g19/20261007/',
+    accessed: '2026-10-24',
+  },
+  'cfpb-apr': {
+    title: 'What is a credit card interest rate? What does APR mean?',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-card-interest-rate-what-does-apr-mean-en-44/',
+    accessed: '2026-10-24',
+  },
+  'cfpb-minimum-warning': {
+    title: 'A box on my credit card bill says that I will pay off the balance in three years if I pay a certain amount. What does that mean?',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/ask-cfpb/a-box-on-my-credit-card-bill-says-that-i-will-pay-off-the-balance-in-three-years-if-i-pay-a-certain-amount-what-does-that-mean-do-i-have-to-pay-that-much-if-i-pay-that-much-and-make-new-purchases-will-i-still-owe-nothing-after-three-years-en-36/',
+    accessed: '2026-10-24',
+  },
+  'cfpb-daily-rate': {
+    title: 'What is a "daily periodic rate" on a credit card?',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/ask-cfpb/what-is-a-daily-periodic-rate-on-a-credit-card-en-46/',
+    accessed: '2026-10-24',
+  },
 };

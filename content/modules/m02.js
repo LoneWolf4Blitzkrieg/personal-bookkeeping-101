@@ -155,7 +155,7 @@ export const M02_LESSON = {
     {
       id: 'predict-in', kind: 'predict', title: 'Predict: money in again', uses: ['running-balance'],
       text: ['The Blow money page got $103.35 on payday. Then a movie cost $18.75. On the next payday, another $103.35 comes in. What is the balance after that line?'],
-      ledger: page('Blow money', [['2026-06-06', 'From paycheck', 10335, 0], ['2026-06-13', 'Movie', 0, 1875], ['2026-06-20', 'From paycheck', 10335, 0]], { askFrom: 1, accountNo: 5 }),
+      ledger: page('Blow money', [['2026-06-06', 'From paycheck', 10335, 0], ['2026-06-13', 'Movie', 0, 1875], ['2026-06-20', 'From paycheck', 10335, 0]], { askFrom: 1, accountNo: 6 }),
       highlightRow: 2,
       answer: 18795,
       misconceptions: [{ cents: 20670, explanation: 'The movie took $18.75 out before the second payday, so subtract it first.' }],
@@ -191,7 +191,7 @@ export const M02_LESSON = {
     {
       id: 'independent', kind: 'predict', title: 'On your own', uses: ['running-balance'],
       text: ['A Charity bucket page shows $50.00 in, then $35.40 out, then $12.99 out, then $51.67 in. What is the balance after the last line?'],
-      ledger: page('Charity bucket', [['2026-06-06', 'From paycheck', 5000, 0], ['2026-06-09', 'Food bank', 0, 3540], ['2026-06-14', 'Fundraiser', 0, 1299], ['2026-06-20', 'From paycheck', 5167, 0]], { askFrom: 0, accountNo: 4 }),
+      ledger: page('Charity bucket', [['2026-06-06', 'From paycheck', 5000, 0], ['2026-06-09', 'Food bank', 0, 3540], ['2026-06-14', 'Fundraiser', 0, 1299], ['2026-06-20', 'From paycheck', 5167, 0]], { askFrom: 0, accountNo: 5 }),
       highlightRow: 3,
       answer: 5328,
       explanation: '$50.00 − $35.40 = $14.60; − $12.99 = $1.61; + $51.67 = $53.28.',

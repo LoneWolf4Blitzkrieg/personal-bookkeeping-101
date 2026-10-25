@@ -102,10 +102,20 @@ const VERDICTS = {
   practice: { pass: 'Practice set done. When you are ready, take the module check.', retry: 'Practice set done. Look over the explanations for the questions you missed, then take the module check when you are ready.' },
 };
 
+// Placement results name the module the learner may start at.
+const PLACEMENT_START = { ca: 'm05', cb: 'm09' };
+function placementWords(checkpointId) {
+  const start = PLACEMENT_START[checkpointId];
+  return {
+    pass: `Passed. You can start at <a href="lesson.html?m=${start}">Module ${Number(start.slice(1))}</a>. The earlier modules stay open if you want to review them.`,
+    retry: 'Not yet. You need 80%. Start at Module 1 and work through the modules listed below; nothing is lost by starting at the beginning. You can try the placement test again later.',
+  };
+}
+
 function resultsHTML(session) {
   const s = summary(session);
   const kind = session.meta?.kind ?? 'gate';
-  const words = VERDICTS[kind] ?? VERDICTS.gate;
+  const words = kind === 'placement' ? placementWords(session.meta.checkpointId) : VERDICTS[kind] ?? VERDICTS.gate;
   const score = s.max !== undefined ? `${s.points} of ${s.max}` : `${s.percent}%`;
   const missed = s.missedModules?.length ? `<p>Review these first: ${s.missedModules.map((id) => `<a href="lesson.html?m=${escapeHTML(id)}">${escapeHTML(moduleName(id))}</a>`).join(', ')}</p>` : '';
   const rows = session.results.map((r, i) => {

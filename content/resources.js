@@ -22,6 +22,26 @@ export const RESOURCES = {
     publisher: 'Industrial Commission of Arizona',
     url: 'https://www.azica.gov/labor-minimum-wage-main-page',
   },
+  'cfpb-credit-cards': {
+    title: 'Credit cards',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/consumer-tools/credit-cards/',
+  },
+  'cfpb-minimum-payments': {
+    title: 'Understanding minimum payments (activity guide)',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/documents/8331/cfpb_building_block_activities_understanding-minimum-payments_guide.pdf',
+  },
+  'cfpb-card-statement': {
+    title: 'Sample credit card statement (poster)',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://files.consumerfinance.gov/f/documents/cfpb_building_blocks_activities_understanding-credit-card-statement_poster.pdf',
+  },
+  'cfpb-bank-accounts': {
+    title: 'Bank accounts and services',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/consumer-tools/bank-accounts/',
+  },
 };
 
 // True when a URL is https and on an official domain (or a subdomain of one).
