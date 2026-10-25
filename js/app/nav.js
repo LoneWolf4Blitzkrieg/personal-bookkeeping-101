@@ -3,16 +3,9 @@
 // tested in Node; renderCourseMap puts it on the page.
 
 import { MODULES, PHASES, CHECKPOINTS } from '../../content/course.js';
+import { escapeHTML } from '../html.js';
 
 const CHECKPOINT_LABELS = { ca: 'Checkpoint A', cb: 'Checkpoint B', cc: 'Checkpoint C' };
-
-export function escapeHTML(text) {
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 function moduleLabel(m) {
   return m.id.startsWith('m') ? `${Number(m.id.slice(1))}. ${m.title}` : `${m.id.toUpperCase()}. ${m.title}`;

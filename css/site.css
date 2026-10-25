@@ -124,3 +124,5 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline
 @media (min-width: 760px) and (max-width: 1099px) {
   :root { --map-width: 12rem; }
 }
+
+button.button { border: none; font: inherit; font-weight: 600; cursor: pointer; }

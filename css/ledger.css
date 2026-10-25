@@ -1,0 +1,69 @@
+/* The ledger sheet: pale green ruled paper with the classic columns.
+   An original drawing of the traditional double-entry form. */
+
+.ledger-sheet {
+  --paper: #e4f0de;
+  --rule: #a9c7a6;
+  --rule-strong: #6f9a6e;
+  --ink: #1d3a1f;
+  --money-font: "Courier New", ui-monospace, Menlo, Consolas, monospace;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  padding: .55rem .6rem .7rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: .82rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+
+/* Header lines: Sheet No., Account No., Name, Account, ... */
+.ledger-head { margin-bottom: .45rem; }
+.ledger-head-row { display: flex; gap: 1rem; margin-bottom: .2rem; }
+.ledger-field { flex: 1; display: flex; align-items: baseline; gap: .35rem; min-width: 0; }
+.ledger-field-label { font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.ledger-field-value { flex: 1; border-bottom: 1px solid var(--rule-strong); min-height: 1.15em; padding: 0 .2rem; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-head-minor { opacity: .75; }
+
+/* The ruled table */
+.ledger { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ledger th {
+  font-size: .64rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  border-top: 2px solid var(--rule-strong); border-bottom: 2px solid var(--rule-strong);
+  border-left: 1px solid var(--rule); padding: .25rem .2rem; text-align: center;
+}
+.ledger td {
+  border-left: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  padding: .16rem .3rem; height: 1.55em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.ledger th:first-child, .ledger td:first-child { border-left: none; }
+
+/* Double rules mark off the money columns, as on printed ledger paper */
+.ledger .col-drTick, .ledger .col-crTick, .ledger .col-side { border-left: 3px double var(--rule-strong); }
+
+.ledger .col-date { width: 11%; }
+.ledger .col-items { width: 27%; }
+.ledger .col-folio { width: 7%; text-align: center; }
+.ledger .col-drTick, .ledger .col-crTick { width: 4%; text-align: center; }
+.ledger .col-debit, .ledger .col-credit, .ledger .col-balance { width: 13.5%; }
+.ledger .col-side { width: 6.5%; text-align: center; }
+.ledger td.money { text-align: right; font-family: var(--money-font); font-size: .8rem; }
+
+.ledger tr.highlight td { background: #fff1a8; }
+
+/* Columns not yet taught (modules 1–2) */
+.ledger .inactive { color: rgba(29, 58, 31, .3); background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(111, 154, 110, .1) 6px 12px); }
+
+/* A cell the learner must work out */
+.ledger .ask { display: block; border: 1px dashed #2f6fde; border-radius: 3px; min-height: 1.1em; background: rgba(255, 255, 255, .55); }
+
+/* Editable sheets */
+.ledger input {
+  width: 100%; border: none; background: transparent; font: inherit; color: inherit; padding: 0;
+}
+.ledger td.money input { text-align: right; font-family: var(--money-font); }
+.ledger input:focus { outline: 2px solid #b45309; outline-offset: 1px; background: #fff; }
+.ledger .tick {
+  width: 100%; min-height: 1.3em; border: none; background: transparent; font: inherit; color: inherit; cursor: pointer;
+}
+.ledger .tick:focus-visible { outline: 2px solid #b45309; }

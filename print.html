@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Print a ledger sheet · Personal Bookkeeping 101</title>
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/ledger.css">
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the sheet</a>
+
+  <header class="topbar">
+    <a class="brand" href="index.html">Personal Bookkeeping <span>101</span></a>
+  </header>
+
+  <main class="home print-page" id="main">
+    <h1 class="no-print" id="sheet-title">Print a ledger sheet</h1>
+    <p class="no-print">Use your browser's print command, or the button below. The sheet prints on one landscape page.</p>
+    <p class="no-print"><button class="button print-button" type="button" id="print-button">Print this sheet</button></p>
+    <div id="sheet"></div>
+  </main>
+
+  <footer class="site-footer">
+    <p><i>Personal Bookkeeping 101</i> by Raul Bautista is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">CC BY-NC-SA 4.0</a> (free for non-commercial use).</p>
+  </footer>
+
+  <script type="module">
+    import { renderPrintPage } from './js/app/print.js';
+    const name = new URLSearchParams(location.search).get('sheet') || 'blank';
+    const title = renderPrintPage(document.getElementById('sheet'), name);
+    if (title) {
+      document.getElementById('sheet-title').textContent = title;
+      document.title = `${title} · Personal Bookkeeping 101`;
+    }
+    document.getElementById('print-button').addEventListener('click', () => window.print());
+  </script>
+</body>
+</html>

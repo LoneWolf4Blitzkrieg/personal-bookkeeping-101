@@ -1,0 +1,19 @@
+/* Printing: only the ledger sheet, kept on one page, with no answers. */
+
+@media print {
+  @page { size: letter landscape; margin: .4in; }
+
+  body { background: #fff; }
+  .topbar, .site-footer, .no-print, .skip-link { display: none !important; }
+
+  .print-page { padding: 0; max-width: none; }
+  .ledger-sheet { break-inside: avoid; page-break-inside: avoid; box-shadow: none; font-size: 10pt; }
+
+  /* Ledger green prints as a light tint; rules stay visible in black-and-white */
+  .ledger-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Never print an answer: cells to work out stay empty boxes */
+  .answer { display: none !important; }
+  .ledger .ask { background: transparent; }
+  .ledger tr.highlight td { background: transparent; }
+}
