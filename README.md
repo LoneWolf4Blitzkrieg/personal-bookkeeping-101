@@ -4,6 +4,8 @@ A free, self-paced course in personal bookkeeping for people just starting to ea
 
 The course covers keeping your books, budgeting with logic instead of emotion, planning ahead and building an emergency fund, with add-on modules on the Federal Reserve, inflation and IRAs. It follows the teaching standard in [`docs/proposal.txt`](docs/proposal.txt); the full course design is in [`docs/design.md`](docs/design.md).
 
+**Take the course online, free:** <https://lonewolf4blitzkrieg.github.io/personal-bookkeeping-101/>
+
 ## What is in the course
 
 - **16 modules**, about 2.5 hours each (1 hour of lessons, 90 minutes of practice), in four phases: foundations, core bookkeeping, proving and planning, and saving ahead with the final project.
@@ -18,7 +20,7 @@ Every real-world figure (tax rates, the minimum wage, interest and inflation rat
 
 The course has no installation, no accounts and no tracking. There are three ways to open it:
 
-- **On the web**, at its web address once it is published (see [Publishing on GitHub Pages](#publishing-on-github-pages)).
+- **On the web**, at <https://lonewolf4blitzkrieg.github.io/personal-bookkeeping-101/>.
 - **By double-clicking**, with no internet needed: download the course (on GitHub, **Code → Download ZIP**), unzip it, open the folder and double-click `index.html`. It is tested only in Chrome and Firefox. See [Using the course without internet](#using-the-course-without-internet).
 - **From a local web server**, for example:
 
